@@ -17,12 +17,14 @@ local Waypoints = Pathwise:NewModule("Waypoints")
 -- Closer than this counts as arrived.
 Waypoints.ARRIVE_YARDS = 10
 
--- Spawn points the player reached (mob killed, node looted) are skipped for
--- this long when picking the next target, so the arrow moves on instead of
--- pointing at the spot the player is standing on.
+-- Where quest progress happened (mob killed, node looted), spawns within
+-- this radius are skipped for VISIT_MEMORY_SECONDS when picking the next
+-- target. The radius covers mobs that wander off their spawn point before
+-- they die.
+Waypoints.PROGRESS_RADIUS_YARDS = 20
 Waypoints.VISIT_MEMORY_SECONDS = 300
 
-local visited = {} -- { { mapID, x, y, time } }
+local visited = {} -- { { mapID, x, y, radius, time } }
 
 local manual -- manual target or nil
 local auto   -- target of the top Next Steps item, or nil
@@ -107,23 +109,31 @@ function Waypoints:ClearManual()
   end
 end
 
-function Waypoints:MarkVisited(point)
+-- Remembers a spot as done: spawns within radius (yards, default the
+-- arrival range) are skipped for a while.
+function Waypoints:MarkVisited(point, radius)
   local now = Platform.GetTime()
   for i = #visited, 1, -1 do
     if now - visited[i].time > Waypoints.VISIT_MEMORY_SECONDS then
       table.remove(visited, i)
     end
   end
-  visited[#visited + 1] = { mapID = point.mapID, x = point.x, y = point.y, time = now }
+  visited[#visited + 1] = {
+    mapID = point.mapID,
+    x = point.x,
+    y = point.y,
+    radius = radius or Waypoints.ARRIVE_YARDS,
+    time = now,
+  }
 end
 
--- True if the player recently reached a spot within arrival range of point.
+-- True if point lies within a recently visited spot.
 function Waypoints:IsVisited(point)
   local now = Platform.GetTime()
   for _, spot in ipairs(visited) do
     if now - spot.time <= Waypoints.VISIT_MEMORY_SECONDS then
       local distance = Waypoints.Vector(spot.mapID, spot.x, spot.y, point.mapID, point.x, point.y)
-      if distance and distance <= Waypoints.ARRIVE_YARDS then
+      if distance and distance <= spot.radius then
         return true
       end
     end
@@ -131,17 +141,26 @@ function Waypoints:IsVisited(point)
   return false
 end
 
+-- Skips the current spawn target (e.g. the node isn't there): the arrow
+-- moves on to the next one. Returns false if the target isn't a spawn.
+function Waypoints:SkipTarget()
+  local target, kind = self:GetTarget()
+  if kind ~= "auto" or not target.spawn then
+    return false
+  end
+  self:MarkVisited(target)
+  Pathwise:FireCallback("WAYPOINT_VISITED", target)
+  return true
+end
+
 -- Called by the UI when the player reaches the target.
 function Waypoints:OnArrived()
   local target, kind = self:GetTarget()
+  -- Quest targets stay until quest progress moves them on (see
+  -- QuestLocations), because the mob or node may not be there yet.
   if kind == "manual" then
     Pathwise:Printf(L.WAY_ARRIVED, target.label or "")
     self:ClearManual()
-  elseif target.spawn and not target.visited then
-    -- One of several spawns (QuestieDB): remember it and ask for the next.
-    target.visited = true
-    self:MarkVisited(target)
-    Pathwise:FireCallback("WAYPOINT_VISITED", target)
   end
 end
 

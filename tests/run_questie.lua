@@ -89,18 +89,39 @@ check("several objectives: nearest of all", antidote.target and Near(antidote.ta
 check("item dropped by a same-named object: name not repeated", antidote.target.label == "Moonpetal Lily")
 check("arrow follows a QuestieDB target right after accepting", Pathwise:GetModule("Waypoints"):GetTarget() ~= nil)
 
--- Reaching a spawn moves the arrow on to the next one.
+-- Reaching a spawn keeps the arrow there until progress happens.
 local arrow = _G.PathwiseArrow
 local Waypoints = Pathwise:GetModule("Waypoints")
+local function Same(a, b) return a and b and Near(a.x, b.x) and Near(a.y, b.y) end
 local first = Waypoints:GetTarget()
 S.mapX, S.mapY = first.x, first.y
-arrow._scripts.OnUpdate(arrow, 0.1) -- arrived: marks the spot visited
-WoW.RunTimers()                      -- quest advisor re-plans
+arrow._scripts.OnUpdate(arrow, 0.1)
+WoW.FireEvent("QUEST_LOG_UPDATE") -- e.g. an unrelated update while standing there
+WoW.RunTimers()
+check("arriving alone doesn't move the arrow", Same(Waypoints:GetTarget(), first)
+  and arrow.distance:GetText() == "You are here")
+
+-- Looting there (progress) moves it on
+local objective = WoW.questLog[3].objectives[2] -- Moonpetal Lily, the nearest target
+objective.text = "Moonpetal Lily: 1/4"
+WoW.FireEvent("QUEST_LOG_UPDATE")
+WoW.RunTimers()
 local second = Waypoints:GetTarget()
-check("after reaching a spawn the arrow moves on", second and not (Near(second.x, first.x) and Near(second.y, first.y)))
-check("visited spot remembered", Waypoints:IsVisited(first))
+check("progress moves the arrow to the next spawn", second and not Same(second, first))
+check("looted spot remembered", Waypoints:IsVisited(first))
 WoW.now = WoW.now + 301
 check("visited spot forgotten after 5 minutes", not Waypoints:IsVisited(first))
+
+-- Right-click skips an empty spawn
+local current = Waypoints:GetTarget()
+WoW.ClearChat()
+arrow._scripts.OnMouseUp(arrow, "RightButton")
+WoW.RunTimers()
+check("right-click skips to the next spawn", not Same(Waypoints:GetTarget(), current)
+  and WoW.ChatContains("Skipped that spot") and Pathwise.db.arrowAuto == true)
+
+WoW.now = WoW.now + 301
+objective.text = "Moonpetal Lily: 0/4"
 S.mapX, S.mapY = 0.58, 0.40
 UpdateLog(WoW.questLog)
 

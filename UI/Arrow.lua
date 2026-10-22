@@ -90,6 +90,8 @@ local function OnMouseUp(_, button)
   local _, kind = Waypoints:GetTarget()
   if kind == "manual" then
     Waypoints:ClearManual()
+  elseif Waypoints:SkipTarget() then
+    Pathwise:Print(L.ARROW_SKIPPED)
   else
     Pathwise.db.arrowAuto = false
     Pathwise:Print(L.ARROW_AUTO_OFF)

@@ -85,6 +85,9 @@ function QuestLocations:OnQuestsScanned(quests)
       if before and progress > before then
         local here = Here()
         if here then
+          -- Spawns around here are done for now; the arrow moves on.
+          local Waypoints = Pathwise:GetModule("Waypoints")
+          Waypoints:MarkVisited(here, Waypoints.PROGRESS_RADIUS_YARDS)
           local entry = Entry(id)
           entry.progress = entry.progress or {}
           table.insert(entry.progress, here)

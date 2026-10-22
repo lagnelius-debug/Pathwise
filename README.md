@@ -110,7 +110,8 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] Without QuestieDB: accept a quest, then make progress on it, e.g. kill one quest mob. The Next Steps line for that quest gets a blue `*`, and the arrow points to where you made progress.
 - [ ] When the quest is complete, the arrow points back to the quest giver (`Turn in: ... (where you got it)`).
 - [ ] Clicking a Next Steps line with a `*` points the arrow there.
-- [ ] Right-clicking the arrow while it follows your next step turns that off. `/pw arrow` turns it back on.
+- [ ] Reaching a quest spawn keeps the arrow there ("You are here") until you loot or kill something for the quest. Then it moves on to the next nearest spawn. Spawns within 20 yards of where the progress happened are skipped for 5 minutes.
+- [ ] Right-clicking the arrow on an empty spawn skips to the next one. `/pw arrow` turns following your next step off and on.
 - [ ] In a dungeon, or for a target on another continent, the arrow says `Can't point from here`.
 - [ ] The direction is correct, not mirrored or rotated by 90 degrees. Use `/pw way` with a known spot to check.
 

@@ -90,10 +90,11 @@ local function AddSpawns(points, spawnList, label)
   end
 end
 
--- The point closest to the player (same continent). Spots the player is
--- standing on or recently reached are skipped, so after a kill or a loot the
--- arrow moves on to the next spawn; if every spawn was skipped, the closest
--- one is used anyway (it has probably respawned by the time you get there).
+-- The point closest to the player (same continent). Spots where quest
+-- progress recently happened, or that the player skipped, are left out, so
+-- after a kill or a loot the arrow moves on to the next spawn; if every
+-- spawn is left out, the closest one is used anyway (it has probably
+-- respawned by the time you get there).
 local function Nearest(points)
   if #points == 0 then
     return nil
@@ -111,8 +112,7 @@ local function Nearest(points)
       if distance < fallbackDistance then
         fallback, fallbackDistance = point, distance
       end
-      local skip = distance <= Waypoints.ARRIVE_YARDS or Waypoints:IsVisited(point)
-      if not skip and distance < bestDistance then
+      if not Waypoints:IsVisited(point) and distance < bestDistance then
         best, bestDistance = point, distance
       end
     end
