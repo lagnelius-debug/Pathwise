@@ -78,24 +78,53 @@ local function Detail(quest)
   return lines
 end
 
+-- The step kind a quest needs an arrow target for, if any.
+local function TargetKind(quest, difficulty)
+  if quest.failed then
+    return nil
+  elseif quest.complete then
+    return "turnIn"
+  elseif quest.suggestedGroup >= 2 or difficulty == "RED" or difficulty == "GREY" then
+    return nil
+  end
+  return "do"
+end
+
+-- Is the quest in the player's area? The quest log header is often a zone
+-- name, but sometimes a subzone ("Shadowglen" while the client reports the
+-- zone as Teldrassil and the subzone as Aldrassil), so a target on the
+-- player's current map also counts.
+local function IsHere(quest, location, target)
+  if not location then
+    return false
+  end
+  if quest.zone and (quest.zone == location.zone or quest.zone == location.subZone) then
+    return true
+  end
+  return target ~= nil and location.mapID ~= nil and target.mapID == location.mapID
+end
+
 -- Pure function: quests -> Next Steps items, in recommended order.
+-- location: { zone, subZone, mapID } of the player.
 -- locate(quest, kind) optionally returns an arrow target for a quest
 -- ("turnIn" for complete quests, "do" for quests to work on).
-function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone, locate)
+function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local items = {}
 
   for _, quest in ipairs(quests) do
     local difficulty = QuestAdvisor.Difficulty(quest.level, playerLevel, greenRange)
     local progress = QuestAdvisor.Progress(quest)
-    local here = currentZone ~= nil and quest.zone == currentZone
+    local targetKind = TargetKind(quest, difficulty)
+    local target = targetKind and locate and locate(quest, targetKind) or nil
+    local here = IsHere(quest, location, target)
     local name = QuestText(quest, difficulty)
-    local priority, text, kind
+    local priority, text
 
     if quest.failed then
       priority, text = P.QUEST_FAILED, string.format(L.QA_FAILED, name)
     elseif quest.complete then
-      priority, text, kind = P.QUEST_TURN_IN, string.format(L.QA_TURN_IN, name), "turnIn"
+      priority, text = P.QUEST_TURN_IN, string.format(L.QA_TURN_IN, name)
     elseif quest.suggestedGroup >= 2 then
       priority, text = P.QUEST_LATER, string.format(L.QA_GROUP, name, quest.suggestedGroup)
     elseif difficulty == "RED" then
@@ -103,11 +132,11 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone, locate)
     elseif difficulty == "GREY" then
       priority, text = P.QUEST_GREY, string.format(L.QA_GREY, name)
     elseif progress and progress >= ALMOST_DONE then
-      priority, text, kind = P.QUEST_ALMOST_DONE, string.format(L.QA_ALMOST_DONE, name, progress * 100), "do"
+      priority, text = P.QUEST_ALMOST_DONE, string.format(L.QA_ALMOST_DONE, name, progress * 100)
     elseif here then
-      priority, text, kind = P.QUEST_HERE, string.format(L.QA_HERE, name), "do"
+      priority, text = P.QUEST_HERE, string.format(L.QA_HERE, name)
     else
-      priority, text, kind = P.QUEST_ELSEWHERE, string.format(L.QA_ELSEWHERE, name, quest.zone or "?"), "do"
+      priority, text = P.QUEST_ELSEWHERE, string.format(L.QA_ELSEWHERE, name, quest.zone or "?")
     end
     if difficulty == "ORANGE" and priority >= P.QUEST_ELSEWHERE and not quest.complete then
       text = text .. " " .. L.QA_HARD
@@ -118,7 +147,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone, locate)
       priority = priority,
       text = text,
       detail = Detail(quest),
-      target = kind and locate and locate(quest, kind) or nil,
+      target = target,
       -- Within a priority: current zone first, then most progress, then
       -- lowest level (easiest first).
       order = { here and 0 or 1, -(progress or 0), quest.level },
@@ -147,13 +176,16 @@ function QuestAdvisor:Update()
   local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
   local level = snapshot.level or 1
   local quests, collapsed = Platform.GetQuestLog()
-  local currentZone = snapshot.zone and snapshot.zone.zone
+  local zone = snapshot.zone or {}
+  local location = { zone = zone.zone, subZone = zone.subZone, mapID = Platform.GetPlayerMapPosition() }
   local QuestLocations = Pathwise:GetModule("QuestLocations")
+  local QuestieData = Pathwise:GetModule("QuestieData")
   QuestLocations:OnQuestsScanned(quests)
+  -- QuestieDB knows exact locations; learned spots are the fallback.
   local function Locate(quest, kind)
-    return QuestLocations:GetTarget(quest, kind)
+    return QuestieData:GetTarget(quest, kind) or QuestLocations:GetTarget(quest, kind)
   end
-  local items = QuestAdvisor.Plan(quests, level, Platform.GetQuestGreenRange(level), currentZone, Locate)
+  local items = QuestAdvisor.Plan(quests, level, Platform.GetQuestGreenRange(level), location, Locate)
 
   if #collapsed > 0 then
     items[#items + 1] = {

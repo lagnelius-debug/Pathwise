@@ -9,6 +9,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - M4 (trainer reminder and spellbook Training panel) is built and passes the offline tests. It has not been tested in game yet.
 - Quest log advisor and Next Steps window are built and pass the offline tests. They have not been tested in game yet. The quest advisor was planned for after M7, and the window is part of M7.
 - Navigation arrow and learned quest locations are built and pass the offline tests. They have not been tested in game yet.
+- Optional QuestieDB integration is built and passes the offline tests. It has not been tested in game yet. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects.
 
 ## Install
 
@@ -105,7 +106,8 @@ Test with a fresh level 1 Night Elf Hunter.
 
 - [ ] `/pw way 50 50 Test` shows an arrow near the top of the screen. It rotates as you turn, turns green when you face the target, and shows the distance in yards. Walking there prints `Arrived at Test.` and the arrow disappears.
 - [ ] The arrow can be dragged. Right-click clears a `/pw way` waypoint.
-- [ ] Accept a quest, then make progress on it, e.g. kill one quest mob. The Next Steps line for that quest gets a blue `*`, and the arrow points to where you made progress.
+- [ ] With QuestieDB installed, the arrow points to the nearest quest mob or object for a quest as soon as you accept it, and to the turn-in NPC once it's complete. Quests under a subzone header, like "Shadowglen", no longer say "in Shadowglen" while you're there.
+- [ ] Without QuestieDB: accept a quest, then make progress on it, e.g. kill one quest mob. The Next Steps line for that quest gets a blue `*`, and the arrow points to where you made progress.
 - [ ] When the quest is complete, the arrow points back to the quest giver (`Turn in: ... (where you got it)`).
 - [ ] Clicking a Next Steps line with a `*` points the arrow there.
 - [ ] Right-clicking the arrow while it follows your next step turns that off. `/pw arrow` turns it back on.
@@ -131,5 +133,6 @@ Test with a fresh level 1 Night Elf Hunter.
 
 - Layers: `Platform/` is the only place that calls flavor-specific WoW API. `Core/` holds the logic and never calls the WoW API directly. `UI/` may use frame and tooltip APIs. `Data/` holds plain tables.
 - Offline smoke tests run against a small mock of the WoW API. Run `lua5.1 tests/run.lua` from the repo root, and set `PATHWISE_ECHO=1` to see chat output. These tests catch Lua errors and logic bugs, but they don't replace testing in game.
+- Quest locations can come from [QuestieDB](https://github.com/Questie/QuestieDB) (GPL-3.0). It's an optional dependency read at runtime through its public `LibQuestieDB` API; Pathwise ships none of its data.
 - Hunter trainer data (`Data/Classic/ClassSpells.lua`) is based on [WhatsTraining](https://github.com/fusionpit/WhatsTraining) by fusionpit, MIT License.
 - The `tests/` and `docs/` folders aren't listed in the TOC, so WoW ignores them.

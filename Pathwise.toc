@@ -3,6 +3,7 @@
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
 ## Version: 0.1.0
+## OptionalDeps: QuestieDB
 ## SavedVariables: PathwiseDB
 ## SavedVariablesPerCharacter: PathwiseCharDB
 
@@ -19,7 +20,8 @@
 #  3. Core/Init   - namespace, saved variables, events, callbacks, commands
 #  4. Data        - plain Lua tables for this flavor
 #  5. Core        - logic modules (never call WoW API directly)
-#  6. UI          - frames, popups, slash command binding
+#  6. Integrations- optional data from other addons (QuestieDB)
+#  7. UI          - frames, popups, slash command binding
 
 Locales\enUS.lua
 
@@ -42,6 +44,8 @@ Core\Trainer.lua
 Core\QuestLocations.lua
 Core\QuestAdvisor.lua
 Core\Waypoints.lua
+
+Integrations\QuestieDB.lua
 
 UI\GoalPrompt.lua
 UI\Tooltip.lua
