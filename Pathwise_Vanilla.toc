@@ -23,4 +23,10 @@ Platform\Platform_Classic.lua
 
 Core\Init.lua
 
+Data\Classic\ClassSpecs.lua
+
+Core\Character.lua
+Core\Talents.lua
+
+UI\GoalPrompt.lua
 UI\SlashCommands.lua

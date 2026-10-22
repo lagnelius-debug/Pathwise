@@ -166,6 +166,8 @@ DEFAULT_CHAT_FRAME = {
   end,
 }
 BackdropTemplateMixin = {}
+GameTooltip = NewObject("GameTooltip", "GameTooltip", UIParent)
+time = os.time
 
 ---------------------------------------------------------------------------
 -- Timers
