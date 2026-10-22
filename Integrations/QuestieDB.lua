@@ -110,17 +110,30 @@ local function Nearest(points)
   return best or points[1]
 end
 
-local function NpcPoints(points, npcIds, labelFormat)
+-- Arrow label for a spawn of `name` (an NPC or object).
+-- labelFormat: e.g. "Turn in: Webwood Venom (%s)"; itemName: the quest item
+-- it drops, shown as "Item (Dropper)", or just "Item" when both names are
+-- the same (e.g. the Hyacinth Mushroom object drops Hyacinth Mushrooms).
+local function Label(name, labelFormat, itemName)
+  if labelFormat then
+    return string.format(labelFormat, name or "?")
+  elseif itemName and name and name ~= itemName then
+    return itemName .. " (" .. name .. ")"
+  end
+  return itemName or name
+end
+
+local function NpcPoints(points, npcIds, labelFormat, itemName)
   for _, npcId in ipairs(npcIds or {}) do
     local name = lib.Npc.Get(npcId, "name")
-    AddSpawns(points, lib.Npc.Get(npcId, "spawns"), labelFormat and string.format(labelFormat, name or "?") or name)
+    AddSpawns(points, lib.Npc.Get(npcId, "spawns"), Label(name, labelFormat, itemName))
   end
 end
 
-local function ObjectPoints(points, objectIds, labelFormat)
+local function ObjectPoints(points, objectIds, labelFormat, itemName)
   for _, objectId in ipairs(objectIds or {}) do
     local name = lib.Object.Get(objectId, "name")
-    AddSpawns(points, lib.Object.Get(objectId, "spawns"), labelFormat and string.format(labelFormat, name or "?") or name)
+    AddSpawns(points, lib.Object.Get(objectId, "spawns"), Label(name, labelFormat, itemName))
   end
 end
 
@@ -175,9 +188,8 @@ local function DoTarget(quest)
   for _, objective in ipairs(objectives[3] or {}) do
     local itemName = lib.Item.Get(objective[1], "name")
     if not IsFinished(quest, objective[2] or itemName) then
-      local labelFormat = itemName and (itemName .. " (%s)") or nil
-      NpcPoints(points, lib.Item.Get(objective[1], "npcDrops"), labelFormat)
-      ObjectPoints(points, lib.Item.Get(objective[1], "objectDrops"), labelFormat)
+      NpcPoints(points, lib.Item.Get(objective[1], "npcDrops"), nil, itemName)
+      ObjectPoints(points, lib.Item.Get(objective[1], "objectDrops"), nil, itemName)
     end
   end
   -- [5] kill credit: { { npcIds }, rootNpcId, text?, index }

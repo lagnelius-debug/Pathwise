@@ -86,6 +86,7 @@ check("item objective: nearest dropping NPC", venom.target and Near(venom.target
   and venom.target.label == "Webwood Venom Sac (Webwood Spider)")
 local antidote = Item(917)
 check("several objectives: nearest of all", antidote.target and Near(antidote.target.x, 0.61) and Near(antidote.target.y, 0.32))
+check("item dropped by a same-named object: name not repeated", antidote.target.label == "Moonpetal Lily")
 check("arrow follows a QuestieDB target right after accepting", Pathwise:GetModule("Waypoints"):GetTarget() ~= nil)
 
 -- Finished objectives are skipped
