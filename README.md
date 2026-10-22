@@ -33,6 +33,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw` | Show or hide the Next Steps window |
 | `/pw quests` | List your quests in the recommended order in chat |
 | `/pw way <x> <y> [name]` | Point the arrow at coordinates on your current zone map, e.g. `/pw way 45.2 63.1 Trainer`. `/pw way clear` removes it |
+| `/pw next` | Move the arrow on to the next spot or step (same as the arrow's Next button) |
 | `/pw arrow` | Turn the arrow following your next step on or off |
 
 ## In-game test checklist (M0 and M1)
@@ -111,7 +112,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] When the quest is complete, the arrow points back to the quest giver (`Turn in: ... (where you got it)`).
 - [ ] Clicking a Next Steps line with a `*` points the arrow there.
 - [ ] Reaching a quest spawn keeps the arrow there ("You are here") until you loot or kill something for the quest. Then it moves on to the next nearest spawn. Spawns within 20 yards of where the progress happened are skipped for 5 minutes.
-- [ ] Right-clicking the arrow on an empty spawn skips to the next one. `/pw arrow` turns following your next step off and on.
+- [ ] **Next >** under the arrow moves on to the next spawn. So do right-clicking the arrow, `/pw next`, and the key binding (Key Bindings → Pathwise → "Skip to next spot"). On a step that isn't a spawn, like a turn-in, or once all spawns are used up, it skips the whole step for 5 minutes and points at the next one. `/pw arrow` turns following your next step off and on.
 - [ ] In a dungeon, or for a target on another continent, the arrow says `Can't point from here`.
 - [ ] The direction is correct, not mirrored or rotated by 90 degrees. Use `/pw way` with a known spot to check.
 

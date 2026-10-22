@@ -54,3 +54,4 @@ UI\TrainerPanel.lua
 UI\NextStepsFrame.lua
 UI\Arrow.lua
 UI\SlashCommands.lua
+UI\Bindings.lua

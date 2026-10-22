@@ -28,6 +28,9 @@ local visited = {} -- { { mapID, x, y, radius, time } }
 
 local manual -- manual target or nil
 local auto   -- target of the top Next Steps item, or nil
+local autoItemId     -- id of the Next Steps item auto points at
+local lastItems = {} -- latest Next Steps items
+local skippedSteps = {} -- [Next Steps item id] = time the player skipped it
 
 ---------------------------------------------------------------------------
 -- Math (pure apart from the map rectangles)
@@ -141,16 +144,33 @@ function Waypoints:IsVisited(point)
   return false
 end
 
--- Skips the current spawn target (e.g. the node isn't there): the arrow
--- moves on to the next one. Returns false if the target isn't a spawn.
-function Waypoints:SkipTarget()
+local function RecentlySkipped(itemId)
+  local time = skippedSteps[itemId]
+  return time ~= nil and Platform.GetTime() - time <= Waypoints.VISIT_MEMORY_SECONDS
+end
+
+-- "Next": moves the arrow on. A spawn target (one of several mobs/nodes)
+-- goes to the next spawn; any other step, or a spawn step with no unvisited
+-- spawns left, is skipped for a while so the arrow points at the next Next
+-- Steps item; a manual waypoint is cleared.
+function Waypoints:Next()
   local target, kind = self:GetTarget()
-  if kind ~= "auto" or not target.spawn then
-    return false
+  if kind == "manual" then
+    self:ClearManual()
+    Pathwise:Print(L.WAY_CLEARED)
+  elseif kind == "auto" and target.spawn and not self:IsVisited(target) then
+    self:MarkVisited(target)
+    Pathwise:Print(L.ARROW_NEXT_SPAWN)
+    Pathwise:FireCallback("WAYPOINT_VISITED", target)
+  elseif kind == "auto" and autoItemId then
+    -- Not a spawn, or every spawn of this step was already visited (the
+    -- arrow fell back to one of them): skip the whole step.
+    skippedSteps[autoItemId] = Platform.GetTime()
+    Pathwise:Print(L.ARROW_NEXT_STEP)
+    self:RefreshAuto()
+  else
+    Pathwise:Print(L.ARROW_NOTHING_TO_SKIP)
   end
-  self:MarkVisited(target)
-  Pathwise:FireCallback("WAYPOINT_VISITED", target)
-  return true
 end
 
 -- Called by the UI when the player reaches the target.
@@ -164,23 +184,30 @@ function Waypoints:OnArrived()
   end
 end
 
-function Waypoints:OnNextStepsUpdated(_, items)
-  -- Follow the most important step that has a location; "later" and grey
-  -- quests are never worth walking to automatically.
+-- Picks the most important step that has a location; "later" and grey
+-- quests are never worth walking to automatically, and steps the player
+-- skipped are passed over for a while.
+function Waypoints:RefreshAuto()
   local minPriority = Pathwise:GetModule("NextSteps").PRIORITY.QUEST_ELSEWHERE
-  local newAuto
-  for _, item in ipairs(items) do
-    if item.target and item.priority >= minPriority then
-      newAuto = item.target
+  local chosen
+  for _, item in ipairs(lastItems) do
+    if item.target and item.priority >= minPriority and not RecentlySkipped(item.id) then
+      chosen = item
       break
     end
   end
+  local newAuto = chosen and chosen.target
   local changed = (newAuto and newAuto.label) ~= (auto and auto.label)
     or (newAuto and auto and (newAuto.x ~= auto.x or newAuto.y ~= auto.y))
-  auto = newAuto
+  auto, autoItemId = newAuto, chosen and chosen.id
   if changed and not manual then
     Changed()
   end
+end
+
+function Waypoints:OnNextStepsUpdated(_, items)
+  lastItems = items
+  self:RefreshAuto()
 end
 
 function Waypoints:OnInitialize()
@@ -214,6 +241,11 @@ Pathwise:RegisterCommand("way", function(args)
   Waypoints:SetManual({ mapID = mapID, x = x / 100, y = y / 100, label = label })
   Pathwise:Printf(L.WAY_SET, label)
 end, L.CMD_WAY)
+
+-- /pw next: same as the arrow's Next button.
+Pathwise:RegisterCommand("next", function()
+  Waypoints:Next()
+end, L.CMD_NEXT)
 
 -- /pw arrow: toggle following the Next Steps automatically.
 Pathwise:RegisterCommand("arrow", function()

@@ -129,11 +129,29 @@ check("recorded turn-in spot preferred", Waypoints:GetTarget().label == "Turn in
 ---------------------------------------------------------------------------
 section("Arrow: controls")
 
-Tick()
-arrow._scripts.OnMouseUp(arrow, "RightButton")
-check("right-click turns auto-follow off", Pathwise.db.arrowAuto == false and Waypoints:GetTarget() == nil)
+WoW.Slash("arrow")
+check("/pw arrow turns auto-follow off", Pathwise.db.arrowAuto == false and Waypoints:GetTarget() == nil)
 WoW.Slash("arrow")
 check("/pw arrow turns it back on", Pathwise.db.arrowAuto == true and Waypoints:GetTarget() ~= nil)
+
+-- Next on a step that isn't a spawn: skip the step, point at the next one
+WoW.questLog[3] = { title = "Second quest", level = 7, questID = 457, complete = 1, objectives = {} }
+Pathwise.db.questLocations[457] = { pickup = { mapID = 1438, x = 0.2, y = 0.2 } }
+WoW.FireEvent("QUEST_LOG_UPDATE")
+WoW.RunTimers()
+local before = Waypoints:GetTarget()
+WoW.ClearChat()
+WoW.Slash("next")
+local after = Waypoints:GetTarget()
+check("next skips a whole step", before and after and before.label ~= after.label
+  and WoW.ChatContains("Skipped that step for 5 minutes"))
+WoW.now = WoW.now + 301
+WoW.FireEvent("QUEST_LOG_UPDATE")
+WoW.RunTimers()
+check("skipped step returns after 5 minutes", Waypoints:GetTarget().label == before.label)
+table.remove(WoW.questLog, 3)
+WoW.FireEvent("QUEST_LOG_UPDATE")
+WoW.RunTimers()
 
 -- Clicking a Next Steps line sets a manual waypoint (standing away from it,
 -- otherwise it would count as arrived right away)
@@ -147,7 +165,7 @@ row._scripts.OnMouseUp(row, "LeftButton")
 local _, kind = Waypoints:GetTarget()
 check("clicking a step sets a manual waypoint", kind == "manual")
 arrow._scripts.OnMouseUp(arrow, "RightButton")
-check("right-click clears the manual waypoint first", select(2, Waypoints:GetTarget()) == "auto")
+check("right-click clears a manual waypoint", select(2, Waypoints:GetTarget()) == "auto")
 
 -- No position (instance): arrow can't point
 S.mapX = nil

@@ -83,25 +83,14 @@ local function OnUpdate(_, elapsed)
 end
 
 local function OnMouseUp(_, button)
-  if button ~= "RightButton" then
-    return
-  end
-  local Waypoints = GetWaypoints()
-  local _, kind = Waypoints:GetTarget()
-  if kind == "manual" then
-    Waypoints:ClearManual()
-  elseif Waypoints:SkipTarget() then
-    Pathwise:Print(L.ARROW_SKIPPED)
-  else
-    Pathwise.db.arrowAuto = false
-    Pathwise:Print(L.ARROW_AUTO_OFF)
-    Pathwise:FireCallback("WAYPOINT_CHANGED", nil)
+  if button == "RightButton" then
+    GetWaypoints():Next()
   end
 end
 
 local function CreateArrow()
   frame = CreateFrame("Frame", "PathwiseArrow", UIParent)
-  frame:SetSize(120, 92)
+  frame:SetSize(120, 116)
   frame:SetFrameStrata("MEDIUM")
   frame:SetClampedToScreen(true)
   frame:EnableMouse(true)
@@ -135,6 +124,16 @@ local function CreateArrow()
 
   frame.distance = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   frame.distance:SetPoint("TOP", frame.label, "BOTTOM", 0, -2)
+
+  -- "Next": the mob/node isn't there, or the player wants another step.
+  -- Same as right-clicking the arrow, /pw next or the key binding.
+  frame.next = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+  frame.next:SetSize(64, 20)
+  frame.next:SetPoint("TOP", frame.distance, "BOTTOM", 0, -4)
+  frame.next:SetText(L.ARROW_NEXT_BUTTON)
+  frame.next:SetScript("OnClick", function()
+    GetWaypoints():Next()
+  end)
 
   RestorePosition()
   frame:Hide()

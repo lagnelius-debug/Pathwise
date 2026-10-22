@@ -120,6 +120,20 @@ WoW.RunTimers()
 check("right-click skips to the next spawn", not Same(Waypoints:GetTarget(), current)
   and WoW.ChatContains("Skipped that spot") and Pathwise.db.arrowAuto == true)
 
+-- The Next button, /pw next and the key binding do the same
+current = Waypoints:GetTarget()
+arrow.next:Click()
+WoW.RunTimers()
+check("Next button skips", not Same(Waypoints:GetTarget(), current))
+current = Waypoints:GetTarget()
+WoW.Slash("next")
+WoW.RunTimers()
+check("/pw next skips", not Same(Waypoints:GetTarget(), current))
+current = Waypoints:GetTarget()
+PathwiseBinding_Next()
+WoW.RunTimers()
+check("key binding skips", not Same(Waypoints:GetTarget(), current))
+
 WoW.now = WoW.now + 301
 objective.text = "Moonpetal Lily: 0/4"
 S.mapX, S.mapY = 0.58, 0.40
