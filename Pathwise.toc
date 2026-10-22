@@ -20,8 +20,9 @@
 #  3. Core/Init   - namespace, saved variables, events, callbacks, commands
 #  4. Data        - plain Lua tables for this flavor
 #  5. Core        - logic modules (never call WoW API directly)
-#  6. Integrations- optional data from other addons (QuestieDB)
-#  7. UI          - frames, popups, slash command binding
+#  6. Classes     - class modules (they check the class themselves)
+#  7. Integrations- optional data from other addons (QuestieDB)
+#  8. UI          - frames, popups, slash command binding
 
 Locales\enUS.lua
 
@@ -34,6 +35,8 @@ Data\Classic\StatWeights.lua
 Data\Classic\ClassGear.lua
 Data\Classic\ClassSpells.lua
 Data\Classic\SpellPriority.lua
+Data\Classic\TalentBuilds.lua
+Data\Classic\HunterData.lua
 
 Core\Character.lua
 Core\Talents.lua
@@ -45,6 +48,8 @@ Core\QuestLocations.lua
 Core\QuestAdvisor.lua
 Core\Waypoints.lua
 Core\TargetMacro.lua
+
+Classes\Hunter.lua
 
 Integrations\QuestieDB.lua
 

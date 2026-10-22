@@ -9,7 +9,10 @@ local addonName, Pathwise = ...
 --     (asked once by the goal prompt, changeable with /pw spec).
 --  3. Without a goal, Data.DefaultGoal is used.
 --
--- The talent advisor (next talent point) is added here in M5.
+-- Talent advisor: suggests the next talent point from the build for the
+-- active spec/goal (Data/Classic/TalentBuilds.lua). If the player spent
+-- points differently, it doesn't nag: it suggests the first build talent
+-- that isn't filled yet and whose tier is open.
 --
 -- Callbacks fired:
 --   SPEC_CHANGED          (specInfo)  the active spec key changed
@@ -229,6 +232,7 @@ end
 
 function Talents:OnInitialize()
   self:RegisterCallback("CHARACTER_UPDATED", "OnCharacterUpdated")
+  self:RegisterCallback("SPEC_CHANGED", "OnSpecChangedAdvice")
   self:RegisterCallback("CHARACTER_RESET", "OnCharacterReset")
 end
 
@@ -239,6 +243,7 @@ function Talents:OnCharacterUpdated(_, snapshot, section)
     return
   end
   self:UpdateSpec()
+  self:UpdateAdvice(section ~= "talents")
 
   if section == "all" and not promptChecked then
     promptChecked = true
@@ -255,6 +260,168 @@ end
 function Talents:OnCharacterReset()
   self:UpdateSpec()
 end
+
+---------------------------------------------------------------------------
+-- Talent advisor
+---------------------------------------------------------------------------
+
+-- Number of upcoming picks shown by /pw talents and in the Next Steps detail.
+local PREVIEW_PICKS = 5
+
+-- Returns the build for the player's class and active spec/goal, its key.
+function Talents:GetBuild()
+  local builds = Data.TalentBuilds[GetSnapshot().class]
+  if not builds then
+    return nil
+  end
+  local key = builds.bySpec[self:GetSpecInfo().active] or builds.default
+  return builds.builds[key], key
+end
+
+-- The client's talent at a pick's position (tab, tier, column), or by its
+-- English name as a fallback.
+local function FindTalent(trees, pick)
+  local tree = trees[pick[1]]
+  if not tree then
+    return nil
+  end
+  for _, talent in ipairs(tree.talents) do
+    if talent.tier == pick[2] and talent.column == pick[3] then
+      return talent
+    end
+  end
+  for _, talent in ipairs(tree.talents) do
+    if talent.name == pick[5] then
+      return talent
+    end
+  end
+end
+
+-- Pure function: the upcoming points of a build the player hasn't spent yet.
+-- Returns a list of { pick, talent, rank, maxRank, name } (rank = the rank
+-- this point brings the talent to), at most `limit` long. Points whose tier
+-- isn't open yet are listed after the open ones.
+function Talents.UpcomingPoints(trees, build, limit)
+  local open, closed = {}, {}
+  local spentInTree = {}
+  for i, tree in ipairs(trees) do
+    spentInTree[i] = tree.points
+  end
+  for _, pick in ipairs(build.picks) do
+    local talent = FindTalent(trees, pick)
+    local have = talent and talent.rank or 0
+    for rank = 1, pick[4] do
+      if rank > have then
+        local tierOpen = (spentInTree[pick[1]] or 0) >= (pick[2] - 1) * 5
+        local point = {
+          pick = pick,
+          talent = talent,
+          rank = rank,
+          maxRank = talent and talent.maxRank or pick[4],
+          name = talent and talent.name or pick[5],
+        }
+        table.insert(tierOpen and open or closed, point)
+        if tierOpen then
+          -- Planning ahead: this point opens later tiers of its tree.
+          spentInTree[pick[1]] = (spentInTree[pick[1]] or 0) + 1
+        end
+      end
+    end
+  end
+  local result = {}
+  for _, list in ipairs({ open, closed }) do
+    for _, point in ipairs(list) do
+      if #result < limit then
+        result[#result + 1] = point
+      end
+    end
+  end
+  return result
+end
+
+local function PointText(point)
+  return string.format(L.TALENT_POINT, point.name, point.rank, point.maxRank)
+end
+
+function Talents:GetUpcoming(limit)
+  local build = self:GetBuild()
+  if not build then
+    return {}, nil
+  end
+  return Talents.UpcomingPoints(GetSnapshot().talents.trees, build, limit or PREVIEW_PICKS), build
+end
+
+-- Updates the Next Steps item and, once per level, the chat reminder.
+function Talents:UpdateAdvice(allowAnnounce)
+  local NextSteps = Pathwise:GetModule("NextSteps")
+  local snapshot = GetSnapshot()
+  local unspent = snapshot.talents.unspent or 0
+  local upcoming, build = self:GetUpcoming(PREVIEW_PICKS)
+  local items = {}
+  if unspent > 0 and #upcoming > 0 then
+    local detail = { build.name }
+    for i, point in ipairs(upcoming) do
+      detail[#detail + 1] = string.format("%d. %s", i, PointText(point))
+    end
+    items[1] = {
+      id = "talent",
+      priority = NextSteps.PRIORITY.TALENT,
+      text = string.format(unspent == 1 and L.TALENT_SPEND_ONE or L.TALENT_SPEND, unspent, PointText(upcoming[1])),
+      detail = detail,
+    }
+    local charDB = Pathwise.charDB
+    if allowAnnounce and charDB.talentAnnouncedLevel ~= snapshot.level and Pathwise.db.chatMessages then
+      charDB.talentAnnouncedLevel = snapshot.level
+      Pathwise:Printf(L.TALENT_ANNOUNCE, PointText(upcoming[1]))
+    end
+  end
+  NextSteps:SetItems("talents", items)
+end
+
+function Talents:OnSpecChangedAdvice()
+  self:UpdateAdvice(false)
+end
+
+-- /pw talents        the next points of the build
+-- /pw talents check  compare the build data with the client's talent names
+local function PrintCheck()
+  local build = Talents:GetBuild()
+  if not build then
+    Pathwise:Print(L.TALENT_NO_BUILD)
+    return
+  end
+  local trees = GetSnapshot().talents.trees
+  local problems = 0
+  for _, pick in ipairs(build.picks) do
+    local talent = FindTalent(trees, pick)
+    local atPosition = talent and talent.tier == pick[2] and talent.column == pick[3]
+    if not talent or not atPosition or talent.name ~= pick[5] then
+      problems = problems + 1
+      Pathwise:PrintLine(string.format("  " .. L.TALENT_CHECK_MISMATCH, pick[5], pick[1], pick[2], pick[3],
+        talent and talent.name or "-", talent and talent.tier or 0, talent and talent.column or 0))
+    end
+  end
+  Pathwise:Printf(L.TALENT_CHECK_RESULT, #build.picks, problems)
+end
+
+Pathwise:RegisterCommand("talents", function(args)
+  if args:lower() == "check" then
+    PrintCheck()
+    return
+  end
+  local upcoming, build = Talents:GetUpcoming(PREVIEW_PICKS)
+  if not build then
+    Pathwise:Print(L.TALENT_NO_BUILD)
+    return
+  end
+  Pathwise:Printf(L.TALENT_HEADER, build.name, GetSnapshot().talents.unspent or 0)
+  for i, point in ipairs(upcoming) do
+    Pathwise:PrintLine(string.format("  %d. %s", i, PointText(point)))
+  end
+  if #upcoming == 0 then
+    Pathwise:PrintLine("  " .. L.TALENT_BUILD_DONE)
+  end
+end, L.CMD_TALENTS)
 
 Pathwise:RegisterCommand("spec", function(args)
   if args == "" then

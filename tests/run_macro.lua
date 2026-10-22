@@ -75,7 +75,6 @@ WoW.Slash("macro on")
 check("/pw macro on resumes", Macro().body:find("Gilshalan", 1, true) ~= nil)
 
 -- Learned turn-in: the quest giver's name is remembered when accepting
-LibQuestieDB = nil -- as if QuestieDB weren't installed (its loader keeps the old one)
 Pathwise.db.questLocations = {}
 S.npcName = "Conservator Ilthalaine"
 WoW.FireEvent("QUEST_ACCEPTED", 1, 4500)

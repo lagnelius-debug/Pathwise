@@ -133,11 +133,13 @@ UpdateLog({
   { header = true, title = "Teldrassil" },
   { title = "The Balance of Nature", level = 7, questID = 2, complete = 1, objectives = {} },
 })
-local firstRow
+local turnInRow
 for _, f in ipairs(WoW.frames) do
-  if f.text and f._parent == frame and f._shown and f.item then firstRow = firstRow or f end
+  if f.text and f._parent == frame and f._shown and f.item and Strip(f.text:GetText()):find("Turn in", 1, true) then
+    turnInRow = f
+  end
 end
-check("window shows the top step", firstRow and Strip(firstRow.text:GetText()):find("Turn in", 1, true))
+check("window shows the turn-in step", turnInRow ~= nil)
 WoW.Slash("")
 check("/pw hides the window and remembers", not frame:IsShown() and Pathwise.db.nextSteps.shown == false)
 WoW.Slash("")

@@ -29,6 +29,8 @@ local DB_DEFAULTS = {
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
   targetMacro = true,           -- keep the "Pathwise" target macro up to date
   sellPrice = true,             -- show vendor sell prices in item tooltips
+  ammoWarn = 200,               -- hunter: warn below this much ammo
+  ammoCritical = 50,            -- hunter: urgent warning below this
   modules = {}, -- [moduleName] = false disables a module
 }
 
@@ -39,6 +41,8 @@ local CHAR_DEFAULTS = {
   goalPrompted = false, -- the one-time goal prompt has been shown
   dismissed = {},       -- dismissed reminders, by id
   trainerAnnouncedLevel = nil, -- level the trainer reminder was last shown for
+  talentAnnouncedLevel = nil,  -- level the talent reminder was last shown for
+  tamingReminded = false,      -- hunter: the taming quest reminder was shown
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 

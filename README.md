@@ -11,6 +11,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Navigation arrow and learned quest locations are built and pass the offline tests. They have not been tested in game yet.
 - Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
+- M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
 
 ## Install
 
@@ -36,6 +37,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw way <x> <y> [name]` | Point the arrow at coordinates on your current zone map, e.g. `/pw way 45.2 63.1 Trainer`. `/pw way clear` removes it |
 | `/pw next` | Move the arrow on to the next spot or step (same as the arrow's Next button) |
 | `/pw arrow` | Turn the arrow following your next step on or off |
+| `/pw talents` | Show your next talent points from the build for your path. `/pw talents check` compares the build data with the game's talent tree |
+| `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
 
 ## In-game test checklist (M0 and M1)
@@ -128,6 +131,22 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] At a vendor, only the game's own sell price is shown, not two.
 - [ ] Items that can't be sold have no sell price line.
 
+## In-game test checklist (M5 talent advisor)
+
+- [ ] At level 10, Next Steps shows `Spend 1 talent point: Improved Aspect of the Hawk (1/5)` (Leveling or Beast Mastery path), and chat says it once.
+- [ ] Hovering the line shows the build name and the next five points.
+- [ ] After you spend the point, the line disappears until your next level.
+- [ ] `/pw spec mm` (before you've spent points) switches to the Marksmanship build, which starts with Efficiency.
+- [ ] If you spend a point elsewhere, the advisor keeps suggesting the next build talent without complaining.
+- [ ] `/pw talents check` says `0 mismatches`. Any mismatch line means my talent data is wrong for that talent; send it to me.
+
+## In-game test checklist (M6 hunter module)
+
+- [ ] Below 200 arrows, Next Steps shows `Low ammo: N arrows left` and chat warns once. Below 50 the warning is urgent (top of the list). An empty ammo slot shows `No ammo equipped!`.
+- [ ] A gun says "bullets". A thrown weapon gives no ammo warnings.
+- [ ] When your pet is content or unhappy, Next Steps shows `Feed <pet> (content)`. Hovering shows what it eats. Chat says it once when the mood drops. The line goes away once the pet is happy.
+- [ ] At level 10, without Tame Beast, Next Steps shows the Taming the Beast step and chat reminds you once. With QuestieDB, the arrow points to your hunter trainer (Dazalar in Dolanaar for Night Elves). The step disappears once you've learned Tame Beast.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
@@ -144,6 +163,8 @@ Test with a fresh level 1 Night Elf Hunter.
 - The weapon and armor skill spell IDs in `Data/Classic/ClassGear.lua` (`Pathwise.Data.Proficiencies`). If an item you can use says "learn ... first", the ID for that skill is wrong.
 - Macro functions (`CreateMacro`, `EditMacro` with a texture name as icon) in Classic Era 1.15.9, and that `SetRaidTarget` on yourself works solo.
 - That bag item buttons keep their stack size in `.count` (sell price for stacks).
+- Talent positions in `Data/Classic/TalentBuilds.lua` (`/pw talents check`).
+- `GetInventoryItemCount("player", 0)` counts all your ammo of that type. `GetPetHappiness`, `GetPetFoodTypes`, `HasPetUI` and the `UNIT_HAPPINESS` event in Classic Era.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development

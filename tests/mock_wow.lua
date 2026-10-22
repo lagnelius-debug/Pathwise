@@ -273,12 +273,25 @@ function UnitAffectingCombat() return S.inCombat end
 
 function UnitName(unit)
   if unit == "npc" then return S.npcName end
+  if unit == "pet" then return S.pet and S.pet.name end
   return S.name
 end
 function UnitExists(unit)
   if unit == "npc" then return S.npcName ~= nil end
+  if unit == "pet" then return S.pet ~= nil end
   return true
 end
+
+-- Ammo: the ammo slot entry's .count is the total in bags.
+function GetInventoryItemCount(_, slot)
+  local item = S.inventory[slot]
+  return item and (item.count or 1) or 0
+end
+
+-- Pet: S.pet = { name, happiness, foods = { ... } } or nil
+function HasPetUI() return S.pet ~= nil, S.pet ~= nil end
+function GetPetHappiness() return S.pet and S.pet.happiness end
+function GetPetFoodTypes() return unpack(S.pet and S.pet.foods or {}) end
 
 -- Macros
 WoW.macros = {} -- list of { name, icon, body, perCharacter }

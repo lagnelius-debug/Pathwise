@@ -255,6 +255,35 @@ local function DoTarget(quest)
   return WithNames(Nearest(points), points)
 end
 
+-- Returns a target at the nearest NPC that gives quest questID (e.g. a
+-- class quest not yet in the log), labelled `label`, or nil.
+function QuestieData:GetQuestGiverTarget(questID, label)
+  if not Load() then
+    return nil
+  end
+  local ok, target = pcall(function()
+    local startedBy = lib.Quest.Get(questID, "startedBy") or {}
+    local points = {}
+    NpcPoints(points, startedBy[1], label .. " (%s)")
+    for _, point in ipairs(points) do
+      point.spawn = nil -- a destination, never skipped as visited
+    end
+    local best, bestDistance = points[1], math.huge
+    local mapID, x, y = Platform.GetPlayerMapPosition()
+    if mapID then
+      local Waypoints = Pathwise:GetModule("Waypoints")
+      for _, point in ipairs(points) do
+        local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+        if distance and distance < bestDistance then
+          best, bestDistance = point, distance
+        end
+      end
+    end
+    return WithNames(best, points)
+  end)
+  return ok and target or nil
+end
+
 -- Returns a target { mapID, x, y, label } for a quest step, or nil.
 -- kind: "turnIn" or "do".
 function QuestieData:GetTarget(quest, kind)

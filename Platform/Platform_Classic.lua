@@ -715,3 +715,39 @@ function Platform.PickupMacro(name)
   end
   return false
 end
+
+---------------------------------------------------------------------------
+-- Hunter: ammo and pet
+---------------------------------------------------------------------------
+
+-- Returns count, itemID of the equipped ammo (0, nil if none). For the ammo
+-- slot, GetInventoryItemCount counts that ammo in all bags and quivers.
+function Platform.GetAmmo()
+  local slot = INVSLOT_AMMO or 0
+  local itemID = GetInventoryItemID("player", slot)
+  if not itemID then
+    return 0, nil
+  end
+  return GetInventoryItemCount("player", slot) or 0, itemID
+end
+
+-- Returns { name, happiness, foodTypes } for the player's hunter pet, or nil
+-- when there is none. happiness: 1 = unhappy, 2 = content, 3 = happy.
+-- foodTypes: localized diet names ("Meat", "Fish", ...).
+function Platform.GetHunterPet()
+  if not UnitExists("pet") then
+    return nil
+  end
+  if HasPetUI then
+    local hasUI, isHunterPet = HasPetUI()
+    if not hasUI or not isHunterPet then
+      return nil
+    end
+  end
+  local happiness = GetPetHappiness and GetPetHappiness()
+  local foodTypes = {}
+  if GetPetFoodTypes then
+    foodTypes = { GetPetFoodTypes() }
+  end
+  return { name = UnitName("pet"), happiness = happiness, foodTypes = foodTypes }
+end

@@ -15,9 +15,15 @@ local NextSteps = Pathwise:NewModule("NextSteps")
 
 -- Shared priority scale, so modules interleave sensibly.
 NextSteps.PRIORITY = {
+  AMMO_CRITICAL = 95,
+  PET_UNHAPPY = 92,
   QUEST_TURN_IN = 90,
+  TAMING = 88,
   QUEST_FAILED = 85,
+  TALENT = 82,
   TRAINER = 80,
+  PET_FEED = 74,
+  AMMO_LOW = 72,
   QUEST_ALMOST_DONE = 70,
   QUEST_HERE = 60,
   QUEST_ELSEWHERE = 50,
