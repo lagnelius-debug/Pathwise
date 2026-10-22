@@ -139,3 +139,11 @@ L.SCORE_NO_WEIGHTS = "No stat weights for %s yet."
 L.CMD_STATS = "show an item's raw stats (shift-click the item after typing it)"
 L.STATS_USAGE = "Usage: /pw stats [item] (shift-click an item into the chat box)"
 L.STATS_HEADER = "%s: %s, class %s/%s, min level %d, score %s"
+
+-- Quest reward picker
+L.QUEST_BEST_UPGRADE_PERCENT = "Best reward: %s (+%.0f%% upgrade)."
+L.QUEST_BEST_UPGRADE = "Best reward: %s (upgrade)."
+L.QUEST_BEST_UPGRADE_LATER = "Best reward: %s (upgrade once you reach level %d)."
+L.QUEST_BEST_SELL = "No upgrade among the rewards. %s sells for the most (%s)."
+L.QUEST_LABEL_UPGRADE = "Best upgrade"
+L.QUEST_LABEL_SELL = "Best to sell"

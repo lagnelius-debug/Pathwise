@@ -444,3 +444,24 @@ function Platform.GetItemStats(link)
   end
   return copy
 end
+
+---------------------------------------------------------------------------
+-- Quest rewards
+---------------------------------------------------------------------------
+
+-- Returns the reward choices of the quest being turned in (QUEST_COMPLETE):
+-- { { index, link, name, count } }. link can be nil while the item isn't
+-- cached yet.
+function Platform.GetQuestRewardChoices()
+  local choices = {}
+  for i = 1, (GetNumQuestChoices and GetNumQuestChoices() or 0) do
+    local name, _, count = GetQuestItemInfo("choice", i)
+    choices[i] = {
+      index = i,
+      link = GetQuestItemLink("choice", i),
+      name = name,
+      count = count or 1,
+    }
+  end
+  return choices
+end

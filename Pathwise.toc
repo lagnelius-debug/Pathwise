@@ -34,7 +34,9 @@ Data\Classic\ClassGear.lua
 Core\Character.lua
 Core\Talents.lua
 Core\GearScore.lua
+Core\QuestRewards.lua
 
 UI\GoalPrompt.lua
 UI\Tooltip.lua
+UI\QuestRewardUI.lua
 UI\SlashCommands.lua

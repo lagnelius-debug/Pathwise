@@ -80,6 +80,11 @@ FrameMethods.__index = function(self, key)
   if method then
     return method
   end
+  -- Private mock fields ("_level") and lowercase fields addons set themselves
+  -- ("label", "type") are plain nil when unset.
+  if key:sub(1, 1) == "_" or key:sub(1, 1):match("%l") then
+    return nil
+  end
   -- Any unknown method is a no-op returning nil.
   return function() end
 end
@@ -122,6 +127,11 @@ function FrameMethods:SetHeight(h) self._height = h end
 function FrameMethods:SetSize(w, h) self._width, self._height = w, h end
 function FrameMethods:GetStringWidth() return #(self._text or "") * 6 end
 function FrameMethods:SetBackdrop() end
+function FrameMethods:GetID() return self._id or 0 end
+function FrameMethods:SetID(id) self._id = id end
+function FrameMethods:GetFrameLevel() return self._level or 1 end
+function FrameMethods:SetFrameLevel(level) self._level = level end
+function FrameMethods:SetParent(parent) self._parent = parent end
 
 local function NewObject(kind, name, parent)
   local object = setmetatable({
@@ -279,9 +289,9 @@ WoW.items = {
              stats = { RESISTANCE0_NAME = 10, ITEM_MOD_AGILITY_SHORT = 2 } },
   [9003] = { name = "Chain Vest", equipLoc = "INVTYPE_CHEST", classID = 4, subclassID = 3, minLevel = 15,
              stats = { RESISTANCE0_NAME = 80 } },
-  [9004] = { name = "Plate Helm", equipLoc = "INVTYPE_HEAD", classID = 4, subclassID = 4,
+  [9004] = { name = "Plate Helm", equipLoc = "INVTYPE_HEAD", classID = 4, subclassID = 4, sell = 50,
              stats = { RESISTANCE0_NAME = 200 } },
-  [9005] = { name = "Heavy Mace", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 4,
+  [9005] = { name = "Heavy Mace", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 4, sell = 120,
              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 9 } },
   [9006] = { name = "Hunting Bow", equipLoc = "INVTYPE_RANGED", classID = 2, subclassID = 2, minLevel = 8,
              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 5.0, ITEM_MOD_AGILITY_SHORT = 1 } },
@@ -302,7 +312,10 @@ function WoW.ItemLink(itemID)
   return string.format("|cffffffff|Hitem:%d::::::::1:::::::|h[%s]|h|r", itemID, item and item.name or "?")
 end
 
+WoW.uncachedItems = {} -- [itemID] = true: GetItemInfo returns nil
+
 local function IsUncached(itemID)
+  if WoW.uncachedItems[itemID] then return true end
   for _, item in pairs(S.inventory) do
     if item.id == itemID and item.uncached then return true end
   end
@@ -371,6 +384,36 @@ end
 function GetRealZoneText() return S.zone end
 function GetSubZoneText() return S.subZone end
 C_Map = { GetBestMapForUnit = function() return S.mapID end }
+
+---------------------------------------------------------------------------
+-- Quest turn-in
+---------------------------------------------------------------------------
+
+WoW.questChoices = {} -- item IDs offered as reward choices
+
+function GetNumQuestChoices() return #WoW.questChoices end
+function GetQuestItemLink(kind, index)
+  local itemID = WoW.questChoices[index]
+  if kind ~= "choice" or not itemID or WoW.uncachedItems[itemID] then return nil end
+  return WoW.ItemLink(itemID)
+end
+function GetQuestItemInfo(kind, index)
+  local itemID = WoW.questChoices[index]
+  local item = itemID and WoW.items[itemID]
+  return item and item.name, "icon", 1, 1, true
+end
+
+-- Reward buttons as the QuestInfo system builds them.
+function WoW.SetupRewardButtons(count)
+  QuestInfoRewardsFrame = NewObject("Frame", "QuestInfoRewardsFrame", UIParent)
+  QuestInfoRewardsFrame.RewardButtons = {}
+  for i = 1, count do
+    local button = NewObject("Button", "QuestInfoRewardsFrameQuestInfoItem" .. i, QuestInfoRewardsFrame)
+    button.type = "choice"
+    button:SetID(i)
+    QuestInfoRewardsFrame.RewardButtons[i] = button
+  end
+end
 
 ---------------------------------------------------------------------------
 -- Addon loading

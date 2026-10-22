@@ -4,7 +4,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 
 **Target:** WoW Classic Era. **Status:**
 - M0 (skeleton) and M1 (character tracker, spec detection, goal prompt) are tested in game on Classic Era 1.15.9 with a level 1 Night Elf Hunter.
-- M2 (gear advisor and tooltip line) is built and passes the offline tests. It has not been tested in game yet.
+- M2 (gear advisor and tooltip line) is working in game; a few checks are still open (see below).
+- M3 (quest reward picker) is built and passes the offline tests. It has not been tested in game yet.
 
 ## Install
 
@@ -61,6 +62,15 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] `/pw stats` on a piece of armor lists `RESISTANCE0_NAME` (armor). On a weapon it lists `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`.
 - [ ] With `/pw debug` on, the tooltip line also shows both scores, e.g. `(2.8 vs 0.6)`.
 
+## In-game test checklist (M3)
+
+- [ ] Turning in a quest with several reward choices puts a green border and a `Best upgrade` label on the best one, and prints `Pathwise: Best reward: [item] (+X% upgrade).` in chat.
+- [ ] If no reward is an upgrade, the label says `Best to sell` and chat names the item with the highest vendor price.
+- [ ] Pathwise never selects the reward itself.
+- [ ] The highlight disappears when the quest window closes. It doesn't show up on the next quest window.
+- [ ] Quests with only one reward, or none, show nothing.
+- [ ] If an item has a two-line name, check that the label doesn't cover it.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
@@ -68,6 +78,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - Weapon DPS is reported by `GetItemStats` as `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`. Use `/pw stats` on a weapon to check. Armor (`RESISTANCE0_NAME`) is verified in game.
 - Which tooltip hook Classic Era uses. `/pw debug` prints `Tooltip hook: ...` at login.
 - The weapon types hunters can use, and that dual wield starts at level 20 (`Data/Classic/ClassGear.lua`).
+- The names of the quest reward buttons. If the chat line appears but the border doesn't, `/pw debug` prints `Reward button N not found`.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development
