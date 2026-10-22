@@ -37,10 +37,13 @@ Core\Character.lua
 Core\Talents.lua
 Core\GearScore.lua
 Core\QuestRewards.lua
+Core\NextSteps.lua
 Core\Trainer.lua
+Core\QuestAdvisor.lua
 
 UI\GoalPrompt.lua
 UI\Tooltip.lua
 UI\QuestRewardUI.lua
 UI\TrainerPanel.lua
+UI\NextStepsFrame.lua
 UI\SlashCommands.lua

@@ -511,3 +511,97 @@ function Platform.GetSpellDisplay(spellID)
   end
   return name, subtext, icon
 end
+
+---------------------------------------------------------------------------
+-- Quest log
+---------------------------------------------------------------------------
+
+-- Parses "Webwood Venom Sac: 6/10" into 6, 10.
+local function ParseProgress(text)
+  local have, need = (text or ""):match("(%d+)%s*/%s*(%d+)")
+  return tonumber(have), tonumber(need)
+end
+
+local function GetObjectives(logIndex, questID)
+  local objectives = {}
+  if C_QuestLog and C_QuestLog.GetQuestObjectives and questID then
+    for i, objective in ipairs(C_QuestLog.GetQuestObjectives(questID) or {}) do
+      objectives[i] = {
+        text = objective.text,
+        finished = objective.finished and true or false,
+        have = objective.numFulfilled,
+        need = objective.numRequired,
+      }
+    end
+    return objectives
+  end
+  for i = 1, (GetNumQuestLeaderBoards and GetNumQuestLeaderBoards(logIndex) or 0) do
+    local text, _, finished = GetQuestLogLeaderBoard(i, logIndex)
+    local have, need = ParseProgress(text)
+    objectives[i] = { text = text, finished = finished and true or false, have = have, need = need }
+  end
+  return objectives
+end
+
+-- Returns quests, collapsedHeaders.
+-- quests: { { questID, title, level, zone, suggestedGroup, complete,
+--             failed, objectives = { { text, finished, have, need } } } }
+-- zone is the quest log header the quest is listed under (localized; usually
+-- the zone name). Quests under a header the player collapsed are not
+-- returned by the API; we don't expand headers because that would change
+-- the player's quest log.
+--
+-- Classic Era: GetQuestLogTitle returns title, level, suggestedGroup,
+-- isHeader, isCollapsed, isComplete (1 = complete, -1 = failed), frequency,
+-- questID.
+function Platform.GetQuestLog()
+  local quests, collapsedHeaders = {}, {}
+  if not (GetNumQuestLogEntries and GetQuestLogTitle) then
+    return quests, collapsedHeaders
+  end
+  local zone
+  for i = 1, GetNumQuestLogEntries() do
+    local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, _, questID = GetQuestLogTitle(i)
+    if isHeader then
+      zone = title
+      if isCollapsed then
+        collapsedHeaders[#collapsedHeaders + 1] = title
+      end
+    elseif title then
+      quests[#quests + 1] = {
+        logIndex = i,
+        questID = questID,
+        title = title,
+        level = level or 0,
+        zone = zone,
+        suggestedGroup = tonumber(suggestedGroup) or 0,
+        complete = isComplete == 1 or isComplete == true,
+        failed = isComplete == -1,
+        objectives = GetObjectives(i, questID),
+      }
+    end
+  end
+  return quests, collapsedHeaders
+end
+
+-- Highest quest level below the player's that still gives decent XP is
+-- playerLevel - greenRange; anything lower is grey. Uses the client's value
+-- when available. TODO verify the fallback against Classic Era.
+function Platform.GetQuestGreenRange(playerLevel)
+  if GetQuestGreenRange then
+    local range = GetQuestGreenRange()
+    if type(range) == "number" then
+      return range
+    end
+  end
+  if playerLevel <= 9 then
+    return 4
+  elseif playerLevel <= 19 then
+    return 5
+  elseif playerLevel <= 29 then
+    return 6
+  elseif playerLevel <= 39 then
+    return 7
+  end
+  return 8
+end

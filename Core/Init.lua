@@ -23,6 +23,7 @@ local DB_DEFAULTS = {
   debug = false,
   chatMessages = true,
   trainerPanel = true, -- show the Training panel next to the spellbook
+  nextSteps = { shown = true }, -- Next Steps window: visibility and position
   modules = {}, -- [moduleName] = false disables a module
 }
 

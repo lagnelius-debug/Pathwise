@@ -194,9 +194,28 @@ local function Announce()
   Pathwise:Printf(L.TRAINER_ANNOUNCE, text, Pathwise.FormatMoney(Trainer.TotalCost(recommended)))
 end
 
+local function UpdateNextSteps()
+  local NextSteps = Pathwise:GetModule("NextSteps")
+  local items = {}
+  if #list.recommended > 0 then
+    local detail = {}
+    for i, item in ipairs(list.recommended) do
+      detail[i] = Trainer.FormatName(item)
+    end
+    items[1] = {
+      id = "trainer",
+      priority = NextSteps.PRIORITY.TRAINER,
+      text = string.format(L.NS_TRAINER, #list.recommended, Pathwise.FormatMoney(Trainer.TotalCost(list.recommended))),
+      detail = detail,
+    }
+  end
+  NextSteps:SetItems("trainer", items)
+end
+
 function Trainer:Refresh(allowAnnounce)
   self:BuildList()
   Pathwise:FireCallback("TRAINING_UPDATED", list)
+  UpdateNextSteps()
 
   local level = GetSnapshot().level
   local charDB = Pathwise.charDB

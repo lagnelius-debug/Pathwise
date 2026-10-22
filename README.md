@@ -7,6 +7,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - M2 (gear advisor and tooltip line) is working in game; a few checks are still open (see below).
 - M3 (quest reward picker) is working in game.
 - M4 (trainer reminder and spellbook Training panel) is built and passes the offline tests. It has not been tested in game yet.
+- Quest log advisor and Next Steps window are built and pass the offline tests. They have not been tested in game yet. The quest advisor was planned for after M7, and the window is part of M7.
 
 ## Install
 
@@ -27,7 +28,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw training` | List the spells you can learn now (recommended and optional) and the ones coming soon |
 | `/pw debug` | Toggle debug output (`/pw debug on` or `/pw debug off` also work) |
 | `/pw reset` | Reset account settings. `/pw reset char` resets this character's data |
-| `/pw` | Opens the Next Steps panel once it exists (M7). For now it prints the command list |
+| `/pw` | Show or hide the Next Steps window |
+| `/pw quests` | List your quests in the recommended order in chat |
 
 ## In-game test checklist (M0 and M1)
 
@@ -85,6 +87,17 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] `/pw spec mm` moves Raptor Strike and Mongoose Bite to Optional. `/pw spec surv` makes them recommended again.
 - [ ] Mend Pet only shows up after you've learned Tame Beast from the level 10 quest.
 
+## In-game test checklist (quest advisor and Next Steps window)
+
+- [ ] After login, a **Pathwise: Next steps** window appears on the right side of the screen. It can be dragged, and it remembers where you put it. `/pw` hides or shows it.
+- [ ] It lists your quests in this order: **Turn in**, **Failed**, **Almost done** (with %), **Do** (current zone first), **Do ... in <zone>**, **Later (level X)**, **Group quest**, **Low XP**.
+- [ ] Quest titles are colored like in the quest log (red, orange, yellow, green, grey). Orange quests say "(hard)".
+- [ ] Hovering a line shows the quest's zone and objectives.
+- [ ] The list updates on its own when you kill quest mobs, accept, turn in or abandon quests, change zone or level up.
+- [ ] When a quest's last objective completes, chat says `Quest complete: <quest> - turn it in.` once.
+- [ ] With spells to learn, a `Visit your trainer: N recommended spells (cost)` line appears between turn-ins and other quests.
+- [ ] Collapsing a zone in the quest log adds a line asking you to expand it.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
@@ -95,6 +108,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - Every spell ID, level and cost in `Data/Classic/ClassSpells.lua`. The data comes from WhatsTraining.
 - That `IsSpellKnown`/`IsPlayerSpell` recognise passive spells like Parry, Dual Wield and Mail.
 - That the event `LEARNED_SPELL_IN_SKILL_LINE` fires when you learn a spell in 1.15.9.
+- The quest log API (`GetQuestLogTitle` return order, `GetQuestLogLeaderBoard`), and the quest-color fallback when `GetQuestGreenRange` is missing.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development

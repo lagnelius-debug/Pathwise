@@ -68,9 +68,12 @@ WoW.Slash("nonsense")
 check("unknown command reported", WoW.ChatContains("Unknown command 'nonsense'"))
 check("help listed after unknown command", WoW.ChatContains("/pw debug"))
 
-WoW.ClearChat()
+local nextSteps = _G.PathwiseNextSteps
+local wasShown = nextSteps:IsShown()
 WoW.Slash("")
-check("/pw without args responds", #WoW.chat > 0)
+check("/pw without args toggles the Next Steps window", nextSteps:IsShown() ~= wasShown)
+WoW.Slash("")
+check("/pw toggles back", nextSteps:IsShown() == wasShown)
 
 Pathwise.db.debug = true
 local dbRef = Pathwise.db
@@ -104,7 +107,7 @@ check("callbacks: in order, safe unregister during dispatch", table.concat(order
 
 ---------------------------------------------------------------------------
 -- Milestone-specific tests are appended below.
-for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua", "./tests/run_m3.lua", "./tests/run_m4.lua" }) do
+for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua", "./tests/run_m3.lua", "./tests/run_m4.lua", "./tests/run_quests.lua" }) do
   local chunk = assert(loadfile(file))
   chunk(WoW, Pathwise, check, section)
 end

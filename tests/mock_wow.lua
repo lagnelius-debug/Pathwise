@@ -416,6 +416,30 @@ function WoW.SetupRewardButtons(count)
 end
 
 ---------------------------------------------------------------------------
+-- Quest log
+---------------------------------------------------------------------------
+
+-- Entries: { header = true, title, collapsed } or
+-- { title, level, group, complete (1 / -1 / nil), questID, objectives = { { text, finished } } }
+WoW.questLog = {}
+
+function GetNumQuestLogEntries() return #WoW.questLog end
+function GetQuestLogTitle(i)
+  local e = WoW.questLog[i]
+  if not e then return nil end
+  if e.header then return e.title, 0, 0, true, e.collapsed or false end
+  return e.title, e.level, e.group or 0, false, false, e.complete, 0, e.questID
+end
+function GetNumQuestLeaderBoards(i)
+  local e = WoW.questLog[i]
+  return e and e.objectives and #e.objectives or 0
+end
+function GetQuestLogLeaderBoard(j, i)
+  local o = WoW.questLog[i].objectives[j]
+  return o.text, "monster", o.finished
+end
+
+---------------------------------------------------------------------------
 -- Spells and spellbook
 ---------------------------------------------------------------------------
 
