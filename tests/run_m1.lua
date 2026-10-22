@@ -91,7 +91,7 @@ S.inventory[16] = { id = 12345, name = "Uncached Axe", uncached = true }
 WoW.FireEvent("PLAYER_EQUIPMENT_CHANGED", 5, false)
 check("chest item", snapshot.equipment[5] and snapshot.equipment[5].name == "Novice's Robe" and snapshot.equipment[5].itemID == 6123)
 check("ranged item", snapshot.equipment[18] and snapshot.equipment[18].name == "Worn Shortbow")
-check("ammo slot 0", snapshot.equipment[0] and snapshot.equipment[0].name == "Rough Arrow")
+check("ammo slot 0 (link via GetItemInfo)", snapshot.equipment[0] and snapshot.equipment[0].name == "Rough Arrow" and not snapshot.equipment[0].pending)
 check("uncached item pending", snapshot.equipment[16] and snapshot.equipment[16].pending == true)
 S.inventory[16].uncached = nil
 WoW.RunTimers()

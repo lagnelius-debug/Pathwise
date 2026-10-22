@@ -46,7 +46,6 @@ Test with a fresh level 1 Night Elf Hunter.
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points.
-- `GetInventoryItemLink("player", 0)` returns the equipped ammo.
 - The talent tab order for each class in `Data/Classic/ClassSpecs.lua`, e.g. that hunter tab 1 is Beast Mastery.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 

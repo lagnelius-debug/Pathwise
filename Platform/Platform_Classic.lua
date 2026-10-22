@@ -167,8 +167,10 @@ end
 ---------------------------------------------------------------------------
 
 -- Equipment slots in display order. Classic Era still has the ammo slot,
--- which is inventory slot 0 (INVSLOT_AMMO). TODO verify that
--- GetInventoryItemLink("player", 0) returns the equipped ammo.
+-- which is inventory slot 0 (INVSLOT_AMMO). Verified in game (1.15.9):
+-- GetInventoryItemID("player", 0) returns the ammo's item ID, but
+-- GetInventoryItemLink("player", 0) returns nil, so the link is looked up
+-- from the item ID instead (see GetEquippedItems).
 local EQUIPMENT_SLOTS = {
   { id = 1, key = "HEAD" },
   { id = 2, key = "NECK" },
@@ -208,14 +210,30 @@ function Platform.ParseItemLink(link)
   return itemID, name
 end
 
+-- GetItemInfo moved to C_Item in newer clients; check which one exists.
+-- Returns name, link, or nil if the item isn't cached yet (the call also asks
+-- the server for it, so a later retry usually succeeds).
+local function GetItemNameAndLink(itemID)
+  local getItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+  if getItemInfo then
+    local name, link = getItemInfo(itemID)
+    return name, link
+  end
+end
+
 -- Returns { [slotId] = { slot, slotKey, itemID, link, name, pending } } for
 -- every occupied slot. `pending` means the client knows the item ID but has
--- not built the link yet (item data not cached); ask again a bit later.
+-- no link yet (item data not cached); ask again a bit later.
 function Platform.GetEquippedItems()
   local items = {}
   for _, slot in ipairs(EQUIPMENT_SLOTS) do
     local itemID = GetInventoryItemID("player", slot.id)
     local link = GetInventoryItemLink("player", slot.id)
+    if itemID and not link then
+      -- Always the case for the ammo slot; can also happen for uncached items.
+      local _
+      _, link = GetItemNameAndLink(itemID)
+    end
     if itemID or link then
       local linkID, name = Platform.ParseItemLink(link)
       items[slot.id] = {

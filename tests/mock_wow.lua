@@ -221,10 +221,21 @@ function GetInventoryItemID(_, slot)
   local item = S.inventory[slot]
   return item and item.id
 end
+local function MakeLink(item)
+  return string.format("|cffffffff|Hitem:%d::::::::1:::::::|h[%s]|h|r", item.id, item.name)
+end
+-- Like the real client, the ammo slot (0) never returns a link.
 function GetInventoryItemLink(_, slot)
   local item = S.inventory[slot]
-  if not item or item.uncached then return nil end
-  return string.format("|cffffffff|Hitem:%d::::::::1:::::::|h[%s]|h|r", item.id, item.name)
+  if not item or item.uncached or slot == 0 then return nil end
+  return MakeLink(item)
+end
+function GetItemInfo(itemID)
+  for _, item in pairs(S.inventory) do
+    if item.id == itemID and not item.uncached then
+      return item.name, MakeLink(item)
+    end
+  end
 end
 
 function GetNumTalentTabs() return #S.talentTabs end

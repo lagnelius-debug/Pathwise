@@ -14,7 +14,7 @@ local FRAME_WIDTH = 300
 local BUTTON_WIDTH = 220
 local BUTTON_HEIGHT = 24
 local BUTTON_SPACING = 6
-local BUTTONS_TOP = 96   -- distance from the top edge to the first button
+local BUTTONS_TOP = 80   -- distance from the top edge to the first button
 local BOTTOM_PADDING = 52 -- room for the hint text below the buttons
 
 local frame
@@ -64,6 +64,14 @@ local function CreatePromptFrame()
       edgeSize = 32,
       insets = { left = 11, right = 12, top = 12, bottom = 11 },
     })
+  end
+  -- The dialog background texture is partly see-through; darken it so the
+  -- game world (and e.g. the target frame) doesn't show through.
+  local shade = frame:CreateTexture(nil, "BACKGROUND", nil, 1)
+  if shade.SetColorTexture then
+    shade:SetPoint("TOPLEFT", frame, "TOPLEFT", 11, -12)
+    shade:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 11)
+    shade:SetColorTexture(0, 0, 0, 0.6)
   end
   frame:Hide()
 
