@@ -79,8 +79,9 @@ function GearScore:ScoreItem(link)
   return result
 end
 
--- Returns usable, reason, level. reason is "TYPE" (class can never use it),
--- "LEVEL" (usable from `level`), or nil.
+-- Returns usable, reason, level, skillSpell. reason is "TYPE" (class can
+-- never use it), "LEVEL" (usable from `level`), "TRAIN" (the weapon/armor
+-- skill skillSpell isn't learned yet), or nil.
 function GearScore:CheckUsable(info)
   local snapshot = GetSnapshot()
   local level = snapshot.level or 1
@@ -105,6 +106,19 @@ function GearScore:CheckUsable(info)
   local needed = math.max(typeLevel, info.minLevel or 0)
   if needed > level then
     return false, "LEVEL", needed
+  end
+
+  -- The class can use it, but has the player learned the skill yet (e.g.
+  -- Staves from a weapon master, Mail from the class trainer at 40)?
+  local skills
+  if info.classID == Platform.ITEM_CLASS_ARMOR then
+    skills = Data.Proficiencies.armor
+  elseif info.classID == Platform.ITEM_CLASS_WEAPON then
+    skills = Data.Proficiencies.weapons
+  end
+  local skillSpell = skills and skills[info.subclassID]
+  if skillSpell and not Platform.IsSpellKnown(skillSpell) then
+    return false, "TRAIN", nil, skillSpell
   end
   return true
 end
@@ -150,7 +164,8 @@ end
 --   percent  = change to the total score of all equipped gear, in percent
 --              (nil when nothing equipped scores above 0)
 --   empty    = true if compared against an empty slot
---   reason, level = from CheckUsable, for "unusable" and future upgrades
+--   reason, level, skillSpell = from CheckUsable, for "unusable" and for
+--              upgrades that need a level or a weapon/armor skill first
 --   newScore, oldScore
 function GearScore:Compare(link)
   local scored = self:ScoreItem(link)
@@ -167,7 +182,7 @@ function GearScore:Compare(link)
     end
   end
 
-  local usable, reason, level = self:CheckUsable(info)
+  local usable, reason, level, skillSpell = self:CheckUsable(info)
   if not usable and reason == "TYPE" then
     return { kind = "unusable", reason = reason, newScore = scored.score }
   end
@@ -209,7 +224,7 @@ function GearScore:Compare(link)
 
   local result = { newScore = scored.score, oldScore = oldScore, empty = empty }
   if not usable then
-    result.reason, result.level = reason, level
+    result.reason, result.level, result.skillSpell = reason, level, skillSpell
   end
 
   -- The percentage is the change to the total score of all equipped gear,

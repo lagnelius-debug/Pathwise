@@ -82,7 +82,13 @@ function QuestRewardUI:Apply(recommendation)
   highlight:ClearAllPoints()
   highlight:SetPoint("TOPLEFT", button, "TOPLEFT", -3, 3)
   highlight:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -3)
-  highlight.label:SetText(recommendation.reason == "SELL" and L.QUEST_LABEL_SELL or L.QUEST_LABEL_UPGRADE)
+  local label = L.QUEST_LABEL_UPGRADE
+  if recommendation.reason == "SELL" then
+    label = L.QUEST_LABEL_SELL
+  elseif recommendation.reason == "UPGRADE_LATER" then
+    label = recommendation.compare.reason == "TRAIN" and L.QUEST_LABEL_TRAIN or L.QUEST_LABEL_LATER
+  end
+  highlight.label:SetText(label)
   highlight:Show()
 end
 

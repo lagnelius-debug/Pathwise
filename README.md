@@ -64,6 +64,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] Hovering an item in your bags shows a `Pathwise:` line, e.g. `+8% upgrade` in green, `-8% downgrade` in red, or `about the same` in yellow. The percentage is the change to the total score of all your equipped gear, so swapping an item and swapping back give about the same size number.
 - [ ] An armor-only item, like boots with only an Armor value, beats an equipped item with no armor.
 - [ ] A plate or mail item, or a mace, says `not usable by your class`. Mail says `... at level 40` instead.
+- [ ] A weapon your class can use but you haven't learned yet (red in the tooltip, e.g. a staff) says `... (learn Staves first)`. In the quest reward window it gets `Needs training` instead of `Best upgrade`, and a reward you can use right away wins over it.
 - [ ] An item above your level ends with `at level X`.
 - [ ] Equipped items don't get a line. Neither do the comparison tooltips that appear next to the main tooltip.
 - [ ] Hovering the same item repeatedly never shows the line twice.
@@ -140,6 +141,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - The quest log API (`GetQuestLogTitle` return order, `GetQuestLogLeaderBoard`), and the quest-color fallback when `GetQuestGreenRange` is missing.
 - `GetPlayerFacing`, `C_Map.GetPlayerMapPosition` and `C_Map.GetWorldPosFromMapPos` behave as expected in Classic Era (arrow direction and distance).
 - `QUEST_ACCEPTED` arguments (questLogIndex, questID) and that `QUEST_TURNED_IN` exists.
+- The weapon and armor skill spell IDs in `Data/Classic/ClassGear.lua` (`Pathwise.Data.Proficiencies`). If an item you can use says "learn ... first", the ID for that skill is wrong.
 - Macro functions (`CreateMacro`, `EditMacro` with a texture name as icon) in Classic Era 1.15.9, and that `SetRaidTarget` on yourself works solo.
 - That bag item buttons keep their stack size in `.count` (sell price for stacks).
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.

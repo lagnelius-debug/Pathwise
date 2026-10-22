@@ -22,8 +22,8 @@ local waits = 0
 -- Pure function. candidates: { { index, compare, sellPrice, count } } where
 -- compare is a GearScore:Compare result or nil. Returns nil or
 --   { index, reason = "UPGRADE" | "UPGRADE_LATER" | "SELL", compare, value }
--- Upgrades usable now beat upgrades usable at a later level, which beat the
--- highest vendor value.
+-- Upgrades usable now beat upgrades that need a level or a weapon/armor
+-- skill first, which beat the highest vendor value.
 function QuestRewards.Pick(candidates)
   local best = {}
   for _, candidate in ipairs(candidates) do
@@ -56,6 +56,9 @@ local function Announce(recommendation, link)
     else
       Pathwise:Printf(L.QUEST_BEST_UPGRADE, link)
     end
+  elseif recommendation.reason == "UPGRADE_LATER" and compare.reason == "TRAIN" then
+    local skill = Platform.GetSpellDisplay(compare.skillSpell) or "?"
+    Pathwise:Printf(L.QUEST_BEST_UPGRADE_TRAIN, link, skill)
   elseif recommendation.reason == "UPGRADE_LATER" then
     Pathwise:Printf(L.QUEST_BEST_UPGRADE_LATER, link, compare.level)
   else

@@ -8,6 +8,7 @@ local addonName, Pathwise = ...
 -- Which one Classic Era 1.15.9 has is checked at runtime.
 
 local L = Pathwise.L
+local Platform = Pathwise.Platform
 
 local Tooltip = Pathwise:NewModule("Tooltip")
 
@@ -52,6 +53,9 @@ function Tooltip.FormatResult(result)
 
   if result.reason == "LEVEL" then
     text = text .. " " .. string.format(L.TOOLTIP_AT_LEVEL, result.level)
+  elseif result.reason == "TRAIN" then
+    local skill = Platform.GetSpellDisplay(result.skillSpell) or "?"
+    text = text .. " " .. string.format(L.TOOLTIP_NEEDS_SKILL, skill)
   end
   if Pathwise.db.debug then
     text = text .. string.format(" (%.1f vs %.1f)", result.newScore, result.oldScore or 0)

@@ -359,6 +359,14 @@ WoW.items = {
   [9010] = { name = "Big Axe", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 1,
              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 6, ITEM_MOD_AGILITY_SHORT = 4 } },
   [9012] = { name = "Quest Token", equipLoc = "", classID = 12, subclassID = 0, sell = 0, stats = {} },
+  [9013] = { name = "Thistlewood Staff", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 10,
+              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 4, ITEM_MOD_AGILITY_SHORT = 2 } },
+  [9014] = { name = "Thistlewood Maul", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 5,
+              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 4 } },
+  [9015] = { name = "Thistlewood Dagger", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 15,
+              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.5 } },
+  [9016] = { name = "Thistlewood Blade", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 7,
+              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.6 } },
   [9011] = { name = "Sharp Dagger", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 15,
              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 3, ITEM_MOD_AGILITY_SHORT = 1 } },
 }
@@ -527,8 +535,21 @@ end
 WoW.knownSpells = {} -- [spellID] = true
 WoW.spellNames = {}  -- [spellID] = name; filled from the addon's data after loading
 
-function IsSpellKnown(id) return WoW.knownSpells[id] == true end
-function IsPlayerSpell(id) return WoW.knownSpells[id] == true end
+-- Weapon/armor skills the test hunter has learned (kept separate so tests
+-- can reset WoW.knownSpells without losing them).
+WoW.skills = {
+  [264] = true,  -- Bows
+  [1180] = true, -- Daggers
+  [196] = true,  -- One-Handed Axes
+  [197] = true,  -- Two-Handed Axes
+  [9078] = true, -- Cloth
+  [9077] = true, -- Leather
+}
+function IsSpellKnown(id) return WoW.knownSpells[id] == true or WoW.skills[id] == true end
+function IsPlayerSpell(id) return IsSpellKnown(id) end
+WoW.spellNames[227] = "Staves"
+WoW.spellNames[201] = "One-Handed Swords"
+WoW.spellNames[8737] = "Mail"
 function GetSpellInfo(id)
   local name = WoW.spellNames[id]
   if not name then return nil end

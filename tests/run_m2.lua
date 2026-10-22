@@ -85,6 +85,14 @@ Equip(16, 9010) -- two-hander equipped
 check("one-hander vs equipped two-hander", WoW.HoverItem(9011) == "Pathwise: -22% downgrade")
 Equip(16, 9011)
 
+-- Weapon skills: the class can use staves, but this hunter hasn't learned them
+check("unlearned weapon skill: upgrade after training", (WoW.HoverItem(9013) or ""):find("(learn Staves first)", 1, true) ~= nil)
+check("learned weapon skill: no training note", not (WoW.HoverItem(9015) or ""):find("learn", 1, true))
+check("class can't use maces at all", WoW.HoverItem(9014) == "Pathwise: not usable by your class")
+WoW.skills[227] = true
+check("after learning Staves the note is gone", not (WoW.HoverItem(9013) or ""):find("learn", 1, true))
+WoW.skills[227] = nil
+
 check("chat link tooltip", WoW.HoverItem(9001, ItemRefTooltip) == "Pathwise: +17% upgrade")
 
 -- No duplicate line when OnTooltipSetItem fires twice

@@ -24,3 +24,35 @@ Pathwise.Data.ClassGear = {
     dualWieldLevel = 20, -- TODO verify
   },
 }
+
+-- The weapon/armor skill behind each item subclass, as the passive spell the
+-- player knows once it's learned (e.g. Staves from a weapon master). Spell
+-- IDs are locale-free. Subclasses without an entry need no skill (rings,
+-- necks, trinkets, fishing poles, miscellaneous weapons).
+-- TODO verify the IDs in game (/pw stats on a weapon shows usability).
+Pathwise.Data.Proficiencies = {
+  weapons = {
+    [0] = 196,    -- One-Handed Axes
+    [1] = 197,    -- Two-Handed Axes
+    [2] = 264,    -- Bows
+    [3] = 266,    -- Guns
+    [4] = 198,    -- One-Handed Maces
+    [5] = 199,    -- Two-Handed Maces
+    [6] = 200,    -- Polearms
+    [7] = 201,    -- One-Handed Swords
+    [8] = 202,    -- Two-Handed Swords
+    [10] = 227,   -- Staves
+    [13] = 15590, -- Fist Weapons
+    [15] = 1180,  -- Daggers
+    [16] = 2567,  -- Thrown
+    [18] = 5011,  -- Crossbows
+    [19] = 5009,  -- Wands
+  },
+  armor = {
+    [1] = 9078, -- Cloth
+    [2] = 9077, -- Leather
+    [3] = 8737, -- Mail
+    [4] = 750,  -- Plate Mail
+    [6] = 9116, -- Shield
+  },
+}

@@ -61,6 +61,18 @@ check("label says best upgrade", highlight.label:GetText() == "Best upgrade")
 WoW.FireEvent("QUEST_FINISHED")
 check("highlight hidden when the window closes", not highlight:IsShown())
 
+-- Your screenshot: Maul (maces: never), Dagger (usable), Staff and Blade
+-- (usable after learning the weapon skill). A usable-now upgrade wins.
+TurnIn(9014, 9015, 9013, 9016)
+check("usable dagger beats untrained staff", WoW.ChatContains("Best reward: [Thistlewood Dagger]")
+  and highlight._parent == QuestInfoRewardsFrame.RewardButtons[2] and highlight.label:GetText() == "Best upgrade")
+WoW.FireEvent("QUEST_FINISHED")
+-- Only untrained upgrades: recommended, but marked as needing training
+TurnIn(9014, 9013)
+check("untrained upgrade: needs training", WoW.ChatContains("Best reward: [Thistlewood Staff] (upgrade once you learn Staves")
+  and highlight.label:GetText() == "Needs training")
+WoW.FireEvent("QUEST_FINISHED")
+
 TurnIn(9004, 9005)
 check("no upgrade: best to sell", WoW.ChatContains("No upgrade among the rewards. [Heavy Mace] sells for the most (1s 20c)."))
 check("sell highlight on choice 2", highlight:IsShown() and highlight._parent == QuestInfoRewardsFrame.RewardButtons[2]

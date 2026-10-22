@@ -132,6 +132,7 @@ L.TOOLTIP_DOWNGRADE = "downgrade"
 L.TOOLTIP_SAME = "about the same"
 L.TOOLTIP_UNUSABLE = "not usable by your class"
 L.TOOLTIP_AT_LEVEL = "at level %d"
+L.TOOLTIP_NEEDS_SKILL = "(learn %s first)"
 L.CMD_SCORE = "print scores of your equipped items"
 L.SCORE_HEADER = "Gear scores (%s, %s weights):"
 L.SCORE_TOTAL = "Total: %.1f"
@@ -147,6 +148,9 @@ L.QUEST_BEST_UPGRADE_LATER = "Best reward: %s (upgrade once you reach level %d).
 L.QUEST_BEST_SELL = "No upgrade among the rewards. %s sells for the most (%s)."
 L.QUEST_LABEL_UPGRADE = "Best upgrade"
 L.QUEST_LABEL_SELL = "Best to sell"
+L.QUEST_LABEL_TRAIN = "Needs training"
+L.QUEST_LABEL_LATER = "Upgrade later"
+L.QUEST_BEST_UPGRADE_TRAIN = "Best reward: %s (upgrade once you learn %s at a weapon master or trainer)."
 
 -- Trainer reminder and spellbook Training panel
 L.CMD_TRAINING = "list spells you can learn at your trainer"
