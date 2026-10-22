@@ -20,6 +20,12 @@ end
 ---------------------------------------------------------------------------
 section("M2: setup")
 
+-- Start from no talents and the Leveling goal, so the goal picks the weights.
+for tab = 1, #S.talentTabs do
+  for i = 1, #S.talentTabs[tab].talents do WoW.SetTalentRank(tab, i, 0) end
+end
+WoW.FireEvent("CHARACTER_POINTS_CHANGED", 0)
+WoW.Slash("spec leveling")
 SetLevel(5)
 S.inventory = {}
 Equip(8, 148)    -- Rugged Trapper's Boots (no stats)
@@ -27,7 +33,7 @@ Equip(18, 2504)  -- Worn Shortbow
 Equip(16, 2092)  -- Worn Dagger
 Equip(5, 6123)   -- Novice's Robe
 check("level 5 set", snapshot.level == 5)
-check("weights fall back to LEVELING", select(2, GearScore:GetWeights()) == "LEVELING")
+check("Leveling weights in use", select(2, GearScore:GetWeights()) == "LEVELING")
 
 ---------------------------------------------------------------------------
 section("M2: scoring")
@@ -98,12 +104,24 @@ Pathwise.db.debug = false
 ---------------------------------------------------------------------------
 section("M2: spec change and other classes")
 
-Pathwise.Data.StatWeights.HUNTER.BEAST_MASTERY = { ITEM_MOD_AGILITY_SHORT = 1, ITEM_MOD_STAMINA_SHORT = 2 }
+-- Switching goal (no talents spent) switches weights and clears the cache.
+-- Stamina ring vs spirit ring: Leveling 1.2 vs 0.2, BM 1.65 vs 0.3,
+-- MM 0.75 vs 0.1, Survival 1.2 vs 0.1.
+WoW.Slash("spec bm")
+check("goal BM uses BM weights", select(2, GearScore:GetWeights()) == "BEAST_MASTERY")
+check("BM verdict", WoW.HoverItem(9008) == "Pathwise: +450% upgrade")
+WoW.Slash("spec mm")
+check("MM verdict", WoW.HoverItem(9008) == "Pathwise: +650% upgrade")
+WoW.Slash("spec surv")
+check("Survival verdict", WoW.HoverItem(9008) == "Pathwise: +1100% upgrade")
+
+-- A spec without weights falls back to Leveling.
+local survival = Pathwise.Data.StatWeights.HUNTER.SURVIVAL
+Pathwise.Data.StatWeights.HUNTER.SURVIVAL = nil
 Pathwise:FireCallback("SPEC_CHANGED", {})
--- spirit has no BM weight here, so the weaker ring scores 0
-check("cache cleared on spec change", WoW.HoverItem(9008) == "Pathwise: upgrade")
-Pathwise.Data.StatWeights.HUNTER.BEAST_MASTERY = nil
-Pathwise:FireCallback("SPEC_CHANGED", {})
+check("missing spec falls back to LEVELING", select(2, GearScore:GetWeights()) == "LEVELING")
+Pathwise.Data.StatWeights.HUNTER.SURVIVAL = survival
+WoW.Slash("spec leveling")
 
 snapshot.class = "WARRIOR"
 check("no weights for other classes: no line", WoW.HoverItem(9001) == nil)
