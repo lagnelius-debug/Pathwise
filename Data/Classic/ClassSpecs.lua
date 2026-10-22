@@ -28,7 +28,7 @@ Pathwise.Data.HybridMargin = 3
 
 Pathwise.Data.ClassSpecs = {
   HUNTER = {
-    trees = { "BEAST_MASTERY", "MARKSMANSHIP", "SURVIVAL" }, -- TODO verify tab order
+    trees = { "BEAST_MASTERY", "MARKSMANSHIP", "SURVIVAL" }, -- verified in game (1.15.9)
     goals = { "LEVELING", "BEAST_MASTERY", "MARKSMANSHIP", "SURVIVAL" },
   },
   WARRIOR = {

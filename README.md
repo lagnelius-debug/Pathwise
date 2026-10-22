@@ -2,7 +2,7 @@
 
 A World of Warcraft addon that follows your character's progression and tells you what to do next. The full design is in [docs/PATHWISE_DESIGN.md](docs/PATHWISE_DESIGN.md).
 
-**Target:** WoW Classic Era. **Status:** milestones M0 (skeleton) and M1 (character tracker, spec detection and goal prompt) are built. Neither has been tested in game yet.
+**Target:** WoW Classic Era. **Status:** milestones M0 (skeleton) and M1 (character tracker, spec detection and goal prompt) are built and tested in game on Classic Era 1.15.9 with a level 1 Night Elf Hunter.
 
 ## Install
 
@@ -45,8 +45,8 @@ Test with a fresh level 1 Night Elf Hunter.
 
 ## Things to verify in game (marked `TODO verify` in code)
 
-- `UnitCharacterPoints("player")` returns unspent talent points.
-- The talent tab order for each class in `Data/Classic/ClassSpecs.lua`, e.g. that hunter tab 1 is Beast Mastery.
+- `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
+- The talent tab order for each non-hunter class in `Data/Classic/ClassSpecs.lua`. The hunter order is verified.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development
