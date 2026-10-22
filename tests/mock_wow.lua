@@ -416,6 +416,40 @@ function WoW.SetupRewardButtons(count)
 end
 
 ---------------------------------------------------------------------------
+-- Spells and spellbook
+---------------------------------------------------------------------------
+
+WoW.knownSpells = {} -- [spellID] = true
+WoW.spellNames = {}  -- [spellID] = name; filled from the addon's data after loading
+
+function IsSpellKnown(id) return WoW.knownSpells[id] == true end
+function IsPlayerSpell(id) return WoW.knownSpells[id] == true end
+function GetSpellInfo(id)
+  local name = WoW.spellNames[id]
+  if not name then return nil end
+  return name, nil, "icon" .. id
+end
+function GetSpellSubtext() return nil end
+
+function hooksecurefunc(a, b, c)
+  local tbl, name, fn = a, b, c
+  if type(a) == "string" then tbl, name, fn = _G, a, b end
+  local original = tbl[name]
+  tbl[name] = function(...)
+    local results = { original(...) }
+    fn(...)
+    return unpack(results)
+  end
+end
+
+SpellBookFrame = CreateFrame("Frame", "SpellBookFrame", UIParent)
+SpellBookFrame._shown = false
+function SpellBookFrame:UpdateSkillLineTabs() end
+for i = 1, 4 do
+  CreateFrame("CheckButton", "SpellBookSkillLineTab" .. i, SpellBookFrame)
+end
+
+---------------------------------------------------------------------------
 -- Addon loading
 ---------------------------------------------------------------------------
 

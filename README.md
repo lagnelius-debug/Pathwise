@@ -6,6 +6,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - M0 (skeleton) and M1 (character tracker, spec detection, goal prompt) are tested in game on Classic Era 1.15.9 with a level 1 Night Elf Hunter.
 - M2 (gear advisor and tooltip line) is working in game; a few checks are still open (see below).
 - M3 (quest reward picker) is working in game.
+- M4 (trainer reminder and spellbook Training panel) is built and passes the offline tests. It has not been tested in game yet.
 
 ## Install
 
@@ -23,6 +24,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw spec <goal>` | Set the goal directly, e.g. `bm`, `mm`, `surv`, `leveling`. `/pw spec clear` removes it |
 | `/pw score` | Print the score of each equipped item and the total |
 | `/pw stats [item]` | Print an item's raw stats as the game reports them. Type `/pw stats `, then shift-click an item |
+| `/pw training` | List the spells you can learn now (recommended and optional) and the ones coming soon |
 | `/pw debug` | Toggle debug output (`/pw debug on` or `/pw debug off` also work) |
 | `/pw reset` | Reset account settings. `/pw reset char` resets this character's data |
 | `/pw` | Opens the Next Steps panel once it exists (M7). For now it prints the command list |
@@ -71,6 +73,18 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] Quests with only one reward, or none, show nothing.
 - [ ] If an item has a two-line name, check that the label doesn't cover it.
 
+## In-game test checklist (M4)
+
+- [ ] Opening the spellbook shows a book icon tab below the spellbook's own tabs, with the number of recommended spells on it.
+- [ ] The **Pathwise: Training** panel appears to the right of the spellbook. It lists **Recommended for <your path>** with costs and a total, then **Optional (can skip)**, then **Coming soon**.
+- [ ] Each spell's name and icon in the panel matches what the trainer offers. A wrong name or icon means a wrong spell ID in the data.
+- [ ] Hovering a spell in the panel shows its tooltip.
+- [ ] Clicking the tab hides or shows the panel, and the choice is remembered.
+- [ ] After you learn spells at the trainer, they disappear from the list right away.
+- [ ] On level up, one chat line names the new recommended spells. It doesn't repeat for the same level.
+- [ ] `/pw spec mm` moves Raptor Strike and Mongoose Bite to Optional. `/pw spec surv` makes them recommended again.
+- [ ] Mend Pet only shows up after you've learned Tame Beast from the level 10 quest.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
@@ -78,10 +92,14 @@ Test with a fresh level 1 Night Elf Hunter.
 - Weapon DPS is reported by `GetItemStats` as `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`. Use `/pw stats` on a weapon to check. Armor (`RESISTANCE0_NAME`) is verified in game.
 - Which tooltip hook Classic Era uses. `/pw debug` prints `Tooltip hook: ...` at login.
 - The weapon types hunters can use, and that dual wield starts at level 20 (`Data/Classic/ClassGear.lua`).
+- Every spell ID, level and cost in `Data/Classic/ClassSpells.lua`. The data comes from WhatsTraining.
+- That `IsSpellKnown`/`IsPlayerSpell` recognise passive spells like Parry, Dual Wield and Mail.
+- That the event `LEARNED_SPELL_IN_SKILL_LINE` fires when you learn a spell in 1.15.9.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development
 
 - Layers: `Platform/` is the only place that calls flavor-specific WoW API. `Core/` holds the logic and never calls the WoW API directly. `UI/` may use frame and tooltip APIs. `Data/` holds plain tables.
 - Offline smoke tests run against a small mock of the WoW API. Run `lua5.1 tests/run.lua` from the repo root, and set `PATHWISE_ECHO=1` to see chat output. These tests catch Lua errors and logic bugs, but they don't replace testing in game.
+- Hunter trainer data (`Data/Classic/ClassSpells.lua`) is based on [WhatsTraining](https://github.com/fusionpit/WhatsTraining) by fusionpit, MIT License.
 - The `tests/` and `docs/` folders aren't listed in the TOC, so WoW ignores them.

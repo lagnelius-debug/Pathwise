@@ -22,6 +22,7 @@ local DB_DEFAULTS = {
   schema = 1,
   debug = false,
   chatMessages = true,
+  trainerPanel = true, -- show the Training panel next to the spellbook
   modules = {}, -- [moduleName] = false disables a module
 }
 
@@ -31,6 +32,7 @@ local CHAR_DEFAULTS = {
   goal = nil,           -- chosen goal/spec key, e.g. "LEVELING"
   goalPrompted = false, -- the one-time goal prompt has been shown
   dismissed = {},       -- dismissed reminders, by id
+  trainerAnnouncedLevel = nil, -- level the trainer reminder was last shown for
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 
@@ -118,6 +120,24 @@ function Pathwise:Debugf(fmt, ...)
   if self.db and self.db.debug then
     Platform.Print(DEBUG_PREFIX .. string.format(fmt, ...))
   end
+end
+
+-- Formats copper as "1g 2s 3c" (plain text; the UI may use coin icons).
+function Pathwise.FormatMoney(copper)
+  copper = copper or 0
+  local gold = math.floor(copper / 10000)
+  local silver = math.floor(copper / 100) % 100
+  local parts = {}
+  if gold > 0 then
+    parts[#parts + 1] = gold .. "g"
+  end
+  if silver > 0 then
+    parts[#parts + 1] = silver .. "s"
+  end
+  if copper % 100 > 0 or #parts == 0 then
+    parts[#parts + 1] = (copper % 100) .. "c"
+  end
+  return table.concat(parts, " ")
 end
 
 ---------------------------------------------------------------------------

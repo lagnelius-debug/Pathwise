@@ -43,22 +43,7 @@ function QuestRewards.Pick(candidates)
   return best.UPGRADE or best.UPGRADE_LATER or best.SELL
 end
 
--- Formats copper as "1g 2s 3c" (plain text; the UI may use coin icons).
-function QuestRewards.FormatMoney(copper)
-  local gold = math.floor(copper / 10000)
-  local silver = math.floor(copper / 100) % 100
-  local parts = {}
-  if gold > 0 then
-    parts[#parts + 1] = gold .. "g"
-  end
-  if silver > 0 then
-    parts[#parts + 1] = silver .. "s"
-  end
-  if copper % 100 > 0 or #parts == 0 then
-    parts[#parts + 1] = (copper % 100) .. "c"
-  end
-  return table.concat(parts, " ")
-end
+QuestRewards.FormatMoney = Pathwise.FormatMoney
 
 local function Announce(recommendation, link)
   if not Pathwise.db.chatMessages then

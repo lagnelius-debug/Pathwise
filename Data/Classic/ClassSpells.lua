@@ -1,0 +1,157 @@
+local addonName, Pathwise = ...
+
+-- Class trainer spells per class (Classic Era).
+--
+-- Entry: { id, name, rank, level, cost, requires, talent }
+--   id       spell ID (used to check if the spell is known; locale-free)
+--   name     English name, only a fallback: the UI shows the client's name
+--   rank     rank number, or nil for spells without ranks
+--   level    level the trainer offers it
+--   cost     training cost in copper
+--   requires spell ID that must be known first, besides the previous rank
+--            (e.g. Mend Pet needs Tame Beast)
+--   talent   true for a rank that comes from a talent, not the trainer. It
+--            is never listed as trainable, but higher ranks require it.
+-- A rank also requires the previous rank of the same spell in this list.
+--
+-- Not included: pet trainer abilities (Great Stamina, Natural Armor,
+-- resistances, Growl), and Tame Beast / Call Pet / Dismiss Pet / Feed Pet /
+-- Revive Pet, which come from the level 10 hunter quests.
+--
+-- Spell IDs, levels and costs are based on the data of the WhatsTraining
+-- addon (https://github.com/fusionpit/WhatsTraining), MIT License,
+-- Copyright (c) 2019 fusionpit. TODO verify in game: the UI shows the
+-- client's spell name for each ID, so a wrong ID shows up as a wrong name.
+
+local TAME_BEAST = 1515
+
+Pathwise.Data.ClassSpells = {
+  HUNTER = {
+    -- Talent ranks (base of the trainable ranks below)
+    { id = 19434, name = "Aimed Shot", rank = 1, talent = true },
+    { id = 19306, name = "Counterattack", rank = 1, talent = true },
+    { id = 19506, name = "Trueshot Aura", rank = 1, talent = true },
+    { id = 19386, name = "Wyvern Sting", rank = 1, talent = true },
+
+    { id = 1494, name = "Track Beasts", level = 1, cost = 10 },
+    { id = 13163, name = "Aspect of the Monkey", level = 4, cost = 100 },
+    { id = 1978, name = "Serpent Sting", rank = 1, level = 4, cost = 100 },
+    { id = 3044, name = "Arcane Shot", rank = 1, level = 6, cost = 100 },
+    { id = 1130, name = "Hunter's Mark", rank = 1, level = 6, cost = 100 },
+    { id = 5116, name = "Concussive Shot", level = 8, cost = 200 },
+    { id = 3127, name = "Parry", level = 8, cost = 200 },
+    { id = 14260, name = "Raptor Strike", rank = 2, level = 8, cost = 200 },
+    { id = 13165, name = "Aspect of the Hawk", rank = 1, level = 10, cost = 400 },
+    { id = 13549, name = "Serpent Sting", rank = 2, level = 10, cost = 400 },
+    { id = 19883, name = "Track Humanoids", level = 10, cost = 400 },
+    { id = 14281, name = "Arcane Shot", rank = 2, level = 12, cost = 600 },
+    { id = 20736, name = "Distracting Shot", rank = 1, level = 12, cost = 600 },
+    { id = 136, name = "Mend Pet", rank = 1, level = 12, cost = 600, requires = TAME_BEAST },
+    { id = 2974, name = "Wing Clip", rank = 1, level = 12, cost = 600 },
+    { id = 6197, name = "Eagle Eye", level = 14, cost = 1200 },
+    { id = 1002, name = "Eyes of the Beast", level = 14, cost = 1200 },
+    { id = 1513, name = "Scare Beast", rank = 1, level = 14, cost = 1200 },
+    { id = 13795, name = "Immolation Trap", rank = 1, level = 16, cost = 1800 },
+    { id = 1495, name = "Mongoose Bite", rank = 1, level = 16, cost = 1800 },
+    { id = 14261, name = "Raptor Strike", rank = 3, level = 16, cost = 1800 },
+    { id = 14318, name = "Aspect of the Hawk", rank = 2, level = 18, cost = 2000 },
+    { id = 2643, name = "Multi-Shot", rank = 1, level = 18, cost = 2000 },
+    { id = 13550, name = "Serpent Sting", rank = 3, level = 18, cost = 2000 },
+    { id = 19884, name = "Track Undead", level = 18, cost = 2000 },
+    { id = 14282, name = "Arcane Shot", rank = 3, level = 20, cost = 2200 },
+    { id = 5118, name = "Aspect of the Cheetah", level = 20, cost = 2200 },
+    { id = 781, name = "Disengage", rank = 1, level = 20, cost = 2200 },
+    { id = 14274, name = "Distracting Shot", rank = 2, level = 20, cost = 2200 },
+    { id = 674, name = "Dual Wield", level = 20, cost = 2200 },
+    { id = 1499, name = "Freezing Trap", rank = 1, level = 20, cost = 2200 },
+    { id = 3111, name = "Mend Pet", rank = 2, level = 20, cost = 2200 },
+    { id = 14323, name = "Hunter's Mark", rank = 2, level = 22, cost = 6000 },
+    { id = 3043, name = "Scorpid Sting", rank = 1, level = 22, cost = 6000 },
+    { id = 1462, name = "Beast Lore", level = 24, cost = 7000 },
+    { id = 14262, name = "Raptor Strike", rank = 4, level = 24, cost = 7000 },
+    { id = 19885, name = "Track Hidden", level = 24, cost = 7000 },
+    { id = 14302, name = "Immolation Trap", rank = 2, level = 26, cost = 7000 },
+    { id = 3045, name = "Rapid Fire", level = 26, cost = 7000 },
+    { id = 13551, name = "Serpent Sting", rank = 4, level = 26, cost = 7000 },
+    { id = 19880, name = "Track Elementals", level = 26, cost = 7000 },
+    { id = 20900, name = "Aimed Shot", rank = 2, level = 28, cost = 400 },
+    { id = 14283, name = "Arcane Shot", rank = 4, level = 28, cost = 8000 },
+    { id = 14319, name = "Aspect of the Hawk", rank = 3, level = 28, cost = 8000 },
+    { id = 13809, name = "Frost Trap", level = 28, cost = 8000 },
+    { id = 3661, name = "Mend Pet", rank = 3, level = 28, cost = 8000 },
+    { id = 13161, name = "Aspect of the Beast", level = 30, cost = 8000 },
+    { id = 15629, name = "Distracting Shot", rank = 3, level = 30, cost = 8000 },
+    { id = 5384, name = "Feign Death", level = 30, cost = 8000 },
+    { id = 14269, name = "Mongoose Bite", rank = 2, level = 30, cost = 8000 },
+    { id = 14288, name = "Multi-Shot", rank = 2, level = 30, cost = 8000 },
+    { id = 14326, name = "Scare Beast", rank = 2, level = 30, cost = 8000 },
+    { id = 1543, name = "Flare", level = 32, cost = 10000 },
+    { id = 14263, name = "Raptor Strike", rank = 5, level = 32, cost = 10000 },
+    { id = 14275, name = "Scorpid Sting", rank = 2, level = 32, cost = 10000 },
+    { id = 19878, name = "Track Demons", level = 32, cost = 10000 },
+    { id = 14272, name = "Disengage", rank = 2, level = 34, cost = 12000 },
+    { id = 13813, name = "Explosive Trap", rank = 1, level = 34, cost = 12000 },
+    { id = 13552, name = "Serpent Sting", rank = 5, level = 34, cost = 12000 },
+    { id = 20901, name = "Aimed Shot", rank = 3, level = 36, cost = 700 },
+    { id = 14284, name = "Arcane Shot", rank = 5, level = 36, cost = 14000 },
+    { id = 14303, name = "Immolation Trap", rank = 3, level = 36, cost = 14000 },
+    { id = 3662, name = "Mend Pet", rank = 4, level = 36, cost = 14000 },
+    { id = 3034, name = "Viper Sting", rank = 1, level = 36, cost = 14000 },
+    { id = 14320, name = "Aspect of the Hawk", rank = 4, level = 38, cost = 16000 },
+    { id = 14267, name = "Wing Clip", rank = 2, level = 38, cost = 16000 },
+    { id = 13159, name = "Aspect of the Pack", level = 40, cost = 18000 },
+    { id = 15630, name = "Distracting Shot", rank = 4, level = 40, cost = 18000 },
+    { id = 14310, name = "Freezing Trap", rank = 2, level = 40, cost = 18000 },
+    { id = 14324, name = "Hunter's Mark", rank = 3, level = 40, cost = 18000 },
+    { id = 8737, name = "Mail", level = 40, cost = 18000 },
+    { id = 14264, name = "Raptor Strike", rank = 6, level = 40, cost = 18000 },
+    { id = 19882, name = "Track Giants", level = 40, cost = 18000 },
+    { id = 1510, name = "Volley", rank = 1, level = 40, cost = 18000 },
+    { id = 20909, name = "Counterattack", rank = 2, level = 42, cost = 1200 },
+    { id = 14289, name = "Multi-Shot", rank = 3, level = 42, cost = 24000 },
+    { id = 14276, name = "Scorpid Sting", rank = 3, level = 42, cost = 24000 },
+    { id = 13553, name = "Serpent Sting", rank = 6, level = 42, cost = 24000 },
+    { id = 20902, name = "Aimed Shot", rank = 4, level = 44, cost = 1300 },
+    { id = 14285, name = "Arcane Shot", rank = 6, level = 44, cost = 26000 },
+    { id = 14316, name = "Explosive Trap", rank = 2, level = 44, cost = 26000 },
+    { id = 13542, name = "Mend Pet", rank = 5, level = 44, cost = 26000 },
+    { id = 14270, name = "Mongoose Bite", rank = 3, level = 44, cost = 26000 },
+    { id = 20043, name = "Aspect of the Wild", rank = 1, level = 46, cost = 28000 },
+    { id = 14304, name = "Immolation Trap", rank = 4, level = 46, cost = 28000 },
+    { id = 14327, name = "Scare Beast", rank = 3, level = 46, cost = 28000 },
+    { id = 14279, name = "Viper Sting", rank = 2, level = 46, cost = 28000 },
+    { id = 14321, name = "Aspect of the Hawk", rank = 5, level = 48, cost = 32000 },
+    { id = 14273, name = "Disengage", rank = 3, level = 48, cost = 32000 },
+    { id = 14265, name = "Raptor Strike", rank = 7, level = 48, cost = 32000 },
+    { id = 15631, name = "Distracting Shot", rank = 5, level = 50, cost = 36000 },
+    { id = 13554, name = "Serpent Sting", rank = 7, level = 50, cost = 36000 },
+    { id = 19879, name = "Track Dragonkin", level = 50, cost = 36000 },
+    { id = 20905, name = "Trueshot Aura", rank = 2, level = 50, cost = 1800 },
+    { id = 14294, name = "Volley", rank = 2, level = 50, cost = 36000 },
+    { id = 24132, name = "Wyvern Sting", rank = 2, level = 50, cost = 1800 },
+    { id = 20903, name = "Aimed Shot", rank = 5, level = 52, cost = 2000 },
+    { id = 14286, name = "Arcane Shot", rank = 7, level = 52, cost = 40000 },
+    { id = 13543, name = "Mend Pet", rank = 6, level = 52, cost = 40000 },
+    { id = 14277, name = "Scorpid Sting", rank = 4, level = 52, cost = 40000 },
+    { id = 20910, name = "Counterattack", rank = 3, level = 54, cost = 2100 },
+    { id = 14317, name = "Explosive Trap", rank = 3, level = 54, cost = 42000 },
+    { id = 14290, name = "Multi-Shot", rank = 4, level = 54, cost = 42000 },
+    { id = 20190, name = "Aspect of the Wild", rank = 2, level = 56, cost = 46000 },
+    { id = 14305, name = "Immolation Trap", rank = 5, level = 56, cost = 46000 },
+    { id = 14266, name = "Raptor Strike", rank = 8, level = 56, cost = 46000 },
+    { id = 14280, name = "Viper Sting", rank = 3, level = 56, cost = 46000 },
+    { id = 14322, name = "Aspect of the Hawk", rank = 6, level = 58, cost = 48000 },
+    { id = 14325, name = "Hunter's Mark", rank = 4, level = 58, cost = 48000 },
+    { id = 14271, name = "Mongoose Bite", rank = 4, level = 58, cost = 48000 },
+    { id = 13555, name = "Serpent Sting", rank = 8, level = 58, cost = 48000 },
+    { id = 14295, name = "Volley", rank = 3, level = 58, cost = 48000 },
+    { id = 20904, name = "Aimed Shot", rank = 6, level = 60, cost = 2500 },
+    { id = 14287, name = "Arcane Shot", rank = 8, level = 60, cost = 50000 },
+    { id = 15632, name = "Distracting Shot", rank = 6, level = 60, cost = 50000 },
+    { id = 14311, name = "Freezing Trap", rank = 3, level = 60, cost = 50000 },
+    { id = 13544, name = "Mend Pet", rank = 7, level = 60, cost = 50000 },
+    { id = 20906, name = "Trueshot Aura", rank = 3, level = 60, cost = 2500 },
+    { id = 14268, name = "Wing Clip", rank = 3, level = 60, cost = 50000 },
+    { id = 24133, name = "Wyvern Sting", rank = 3, level = 60, cost = 2500 },
+  },
+}

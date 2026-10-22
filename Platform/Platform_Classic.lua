@@ -465,3 +465,49 @@ function Platform.GetQuestRewardChoices()
   end
   return choices
 end
+
+---------------------------------------------------------------------------
+-- Spells
+---------------------------------------------------------------------------
+
+-- True if the player knows the spell. In Classic Era both checks are
+-- needed: IsSpellKnown misses some spells (e.g. talent-granted ranks) that
+-- IsPlayerSpell reports, and vice versa. Note: learning a higher rank can
+-- make lower ranks report as unknown; Core handles that through rank chains.
+function Platform.IsSpellKnown(spellID)
+  if IsSpellKnown and IsSpellKnown(spellID) then
+    return true
+  end
+  if IsPlayerSpell and IsPlayerSpell(spellID) then
+    return true
+  end
+  return false
+end
+
+-- Returns name, rankText ("Rank 2" or nil), icon for a spell ID, or nil if
+-- the client doesn't know the ID. Newer clients return a table from
+-- C_Spell.GetSpellInfo; older ones return values from GetSpellInfo.
+function Platform.GetSpellDisplay(spellID)
+  local name, icon
+  if GetSpellInfo then
+    local _
+    name, _, icon = GetSpellInfo(spellID)
+  elseif C_Spell and C_Spell.GetSpellInfo then
+    local info = C_Spell.GetSpellInfo(spellID)
+    if info then
+      name, icon = info.name, info.iconID
+    end
+  end
+  if not name then
+    return nil
+  end
+  local subtext
+  local getSubtext = GetSpellSubtext or (C_Spell and C_Spell.GetSpellSubtext)
+  if getSubtext then
+    subtext = getSubtext(spellID)
+    if subtext == "" then
+      subtext = nil
+    end
+  end
+  return name, subtext, icon
+end

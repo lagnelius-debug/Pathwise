@@ -30,13 +30,17 @@ Core\Init.lua
 Data\Classic\ClassSpecs.lua
 Data\Classic\StatWeights.lua
 Data\Classic\ClassGear.lua
+Data\Classic\ClassSpells.lua
+Data\Classic\SpellPriority.lua
 
 Core\Character.lua
 Core\Talents.lua
 Core\GearScore.lua
 Core\QuestRewards.lua
+Core\Trainer.lua
 
 UI\GoalPrompt.lua
 UI\Tooltip.lua
 UI\QuestRewardUI.lua
+UI\TrainerPanel.lua
 UI\SlashCommands.lua
