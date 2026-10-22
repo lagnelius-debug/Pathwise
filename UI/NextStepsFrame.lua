@@ -79,10 +79,17 @@ local function GetRow(index)
   return row
 end
 
+local function UpdatePath()
+  local active = Pathwise:GetModule("Talents"):GetSpecInfo().active
+  frame.path.text:SetText(string.format(L.NS_PATH, L["SPEC_" .. active]))
+  frame.path:SetWidth(frame.path.text:GetStringWidth() + 4)
+end
+
 function NextStepsFrame:Render()
   if not frame or not frame:IsShown() then
     return
   end
+  UpdatePath()
   local items = Pathwise:GetModule("NextSteps"):GetItems()
   local shown = math.min(#items, MAX_ROWS)
   local count = shown
@@ -148,6 +155,27 @@ local function CreateWindow()
     NextStepsFrame:SetShown(false)
   end)
 
+  -- "Path: Marksmanship" - click to change path (opens the path chooser).
+  local path = CreateFrame("Button", nil, frame)
+  path:SetHeight(16)
+  path:SetPoint("RIGHT", close, "LEFT", -2, 0)
+  path.text = path:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  path.text:SetPoint("RIGHT", path, "RIGHT", 0, 0)
+  path:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+  path:SetScript("OnClick", function()
+    Pathwise:GetModule("Talents"):RequestGoalPrompt()
+  end)
+  path:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText(self.text:GetText())
+    GameTooltip:AddLine(L.NS_PATH_TOOLTIP, 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  path:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+  end)
+  frame.path = path
+
   RestorePosition()
   frame:Hide()
 end
@@ -169,6 +197,7 @@ end
 function NextStepsFrame:OnInitialize()
   CreateWindow()
   self:RegisterCallback("NEXT_STEPS_UPDATED", "OnUpdated")
+  self:RegisterCallback("SPEC_CHANGED", "OnUpdated")
   self:RegisterCallback("SETTINGS_RESET", "OnSettingsReset")
 end
 

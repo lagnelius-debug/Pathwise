@@ -96,10 +96,13 @@ local function BuildSpecInfo()
     goal = goal,
     points = table.concat(points, "/"),
   }
-  if detected then
-    info.active, info.source = detected, "talents"
-  elseif goal then
+  -- The path the player chose wins, so changing it (e.g. Marksmanship to
+  -- Beast Mastery) switches gear weights, trainer advice and the talent
+  -- build at once. Without a choice, the talents decide.
+  if goal then
     info.active, info.source = goal, "goal"
+  elseif detected then
+    info.active, info.source = detected, "talents"
   else
     info.active, info.source = Data.DefaultGoal, "default"
   end
@@ -132,19 +135,15 @@ end
 -- One-line description for /pw status.
 function Talents:DescribeSpec()
   local info = self:GetSpecInfo()
-  local goalText = info.goal and SpecName(info.goal) or L.GOAL_NOT_SET
-  if info.source == "talents" then
-    return string.format(L.SPEC_FROM_TALENTS, SpecName(info.active), info.points, goalText)
-  end
-  local reason
-  if info.hybrid then
-    reason = string.format(L.SPEC_HYBRID, info.points)
-  else
-    reason = L.SPEC_NO_POINTS
-  end
   if info.source == "goal" then
-    return string.format(L.SPEC_USING_GOAL, reason, SpecName(info.active))
+    if info.detected and info.detected ~= info.goal then
+      return string.format(L.SPEC_GOAL_TALENTS_DIFFER, SpecName(info.goal), SpecName(info.detected), info.points)
+    end
+    return string.format(L.SPEC_GOAL, SpecName(info.goal), info.points)
+  elseif info.source == "talents" then
+    return string.format(L.SPEC_FROM_TALENTS, SpecName(info.active), info.points)
   end
+  local reason = info.hybrid and string.format(L.SPEC_HYBRID, info.points) or L.SPEC_NO_POINTS
   return string.format(L.SPEC_USING_DEFAULT, reason, SpecName(info.active))
 end
 
@@ -339,6 +338,27 @@ function Talents.UpcomingPoints(trees, build, limit)
   return result
 end
 
+-- Talent points spent beyond what the build ever puts in that talent.
+function Talents.OffBuildPoints(trees, build)
+  local planned = {} -- [talent table] = ranks the build wants
+  for _, pick in ipairs(build.picks) do
+    local talent = FindTalent(trees, pick)
+    if talent then
+      planned[talent] = (planned[talent] or 0) + pick[4]
+    end
+  end
+  local off = 0
+  for _, tree in ipairs(trees) do
+    for _, talent in ipairs(tree.talents) do
+      off = off + math.max(0, talent.rank - (planned[talent] or 0))
+    end
+  end
+  return off
+end
+
+-- From this many points outside the build, suggest unlearning talents.
+local RESPEC_THRESHOLD = 3
+
 local function PointText(point)
   return string.format(L.TALENT_POINT, point.name, point.rank, point.maxRank)
 end
@@ -373,6 +393,17 @@ function Talents:UpdateAdvice(allowAnnounce)
     if allowAnnounce and charDB.talentAnnouncedLevel ~= snapshot.level and Pathwise.db.chatMessages then
       charDB.talentAnnouncedLevel = snapshot.level
       Pathwise:Printf(L.TALENT_ANNOUNCE, PointText(upcoming[1]))
+    end
+  end
+  if build then
+    local off = Talents.OffBuildPoints(snapshot.talents.trees, build)
+    if off >= RESPEC_THRESHOLD then
+      items[#items + 1] = {
+        id = "talent-respec",
+        priority = NextSteps.PRIORITY.TALENT_RESPEC,
+        text = string.format(L.TALENT_RESPEC, SpecName(self:GetSpecInfo().active)),
+        detail = { string.format(L.TALENT_RESPEC_DETAIL, off, build.name) },
+      }
     end
   end
   NextSteps:SetItems("talents", items)

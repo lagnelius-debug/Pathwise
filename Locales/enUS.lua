@@ -66,10 +66,11 @@ L.SLOT_RANGED = "Ranged"
 L.SLOT_AMMO = "Ammo"
 
 -- Spec description (/pw status)
-L.SPEC_FROM_TALENTS = "%s (from talents %s) - goal: %s"
+L.SPEC_FROM_TALENTS = "%s (from talents %s) - no path chosen, /pw spec to choose one"
+L.SPEC_GOAL = "%s (your choice), talents %s"
+L.SPEC_GOAL_TALENTS_DIFFER = "%s (your choice) - your talents look like %s (%s)"
 L.SPEC_HYBRID = "hybrid talents %s"
 L.SPEC_NO_POINTS = "no talent points spent"
-L.SPEC_USING_GOAL = "%s, using goal: %s"
 L.SPEC_USING_DEFAULT = "%s, using default: %s (choose a goal with /pw spec)"
 L.GOAL_NOT_SET = "not set"
 
@@ -113,14 +114,14 @@ L.SPEC_DESC_MARKSMANSHIP = "Ranged damage focus, the classic raid build."
 L.SPEC_DESC_SURVIVAL = "Agility and utility focus."
 
 -- Goal prompt and /pw spec
-L.CMD_SPEC = "choose your goal ('/pw spec mm', '/pw spec clear')"
-L.GOAL_PROMPT_QUESTION = "What is your goal for this character?"
-L.GOAL_PROMPT_HINT = "Used to pick stat weights and talent builds. Change it any time with /pw spec."
+L.CMD_SPEC = "choose your path ('/pw spec bm', '/pw spec mm', '/pw spec clear')"
+L.GOAL_PROMPT_QUESTION = "Which path do you want to follow?"
+L.GOAL_PROMPT_HINT = "Sets gear weights, trainer advice and the talent build. Change it any time with the Path button or /pw spec."
 L.GOAL_CURRENT = "%s (current)"
-L.GOAL_SET = "Goal set to %s."
-L.GOAL_CLEARED = "Goal cleared. Pathwise will follow your talents."
-L.GOAL_DISMISSED = "No goal chosen, using %s. Change it any time with /pw spec."
-L.GOAL_UNKNOWN = "Unknown goal '%s'. Options: %s."
+L.GOAL_SET = "Path set to %s."
+L.GOAL_CLEARED = "Path cleared. Pathwise will follow your talents."
+L.GOAL_DISMISSED = "No path chosen, using %s. Change it any time with /pw spec or the Path button."
+L.GOAL_UNKNOWN = "Unknown path '%s'. Options: %s."
 
 -- Gear advisor (tooltip line and /pw score)
 L.TOOLTIP_UPGRADE_PERCENT = "+%.0f%% upgrade"
@@ -274,3 +275,9 @@ L.TAMING_STEP = "Get your pet: Taming the Beast quest from your hunter trainer"
 L.TAMING_DETAIL = "Your hunter trainer gives the Taming the Beast quests at level 10. They teach Tame Beast, so you can get a pet."
 L.TAMING_TARGET = "Taming the Beast"
 L.TAMING_CHAT = "You're level 10: visit your hunter trainer for the Taming the Beast quests to get a pet."
+
+-- Changing path
+L.TALENT_RESPEC = "Talents don't fit %s: unlearn them at your class trainer"
+L.TALENT_RESPEC_DETAIL = "%d points are outside the %s build. Unlearning talents costs 1g the first time, then more each time (up to 50g). Until then, the advisor suggests the build talents you can still take."
+L.NS_PATH = "Path: %s"
+L.NS_PATH_TOOLTIP = "Click to choose your path. It sets the gear weights, trainer advice and talent build."

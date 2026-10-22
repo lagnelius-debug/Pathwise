@@ -30,7 +30,7 @@ check("goalPrompted saved", PathwiseCharDB.goalPrompted == true)
 
 WoW.ClearChat()
 prompt:Hide()
-check("dismiss message", WoW.ChatContains("No goal chosen, using Leveling"))
+check("dismiss message", WoW.ChatContains("No path chosen, using Leveling"))
 check("default goal active", Talents:GetSpecInfo().active == "LEVELING" and Talents:GetSpecInfo().source == "default")
 
 -- Re-login: prompt must not show again
@@ -51,7 +51,7 @@ check("hunter goal buttons exist", mmButton ~= nil)
 WoW.ClearChat()
 mmButton:Click()
 check("button sets goal", PathwiseCharDB.goal == "MARKSMANSHIP" and not prompt:IsShown())
-check("no dismiss message after choosing", not WoW.ChatContains("No goal chosen"))
+check("no dismiss message after choosing", not WoW.ChatContains("No path chosen"))
 check("goal used without talents", Talents:GetSpecInfo().active == "MARKSMANSHIP" and Talents:GetSpecInfo().source == "goal")
 
 ---------------------------------------------------------------------------
@@ -101,7 +101,11 @@ check("pending item resolved by retry", snapshot.equipment[16].pending == false 
 WoW.SetTalentRank(1, 1, 3)
 WoW.FireEvent("CHARACTER_POINTS_CHANGED", -1)
 local info = Talents:GetSpecInfo()
-check("BM detected from talents", info.detected == "BEAST_MASTERY" and info.active == "BEAST_MASTERY" and info.source == "talents")
+check("BM detected from talents, chosen path still wins", info.detected == "BEAST_MASTERY" and info.active == "LEVELING" and info.source == "goal")
+WoW.Slash("spec clear")
+info = Talents:GetSpecInfo()
+check("no path chosen: talents decide", info.active == "BEAST_MASTERY" and info.source == "talents")
+WoW.Slash("spec lvl")
 check("unspent decreased", snapshot.talents.unspent == 0 and snapshot.talents.spent == 3)
 
 -- Hybrid: BM 3 / MM 2
@@ -119,7 +123,7 @@ WoW.SetTalentRank(1, 1, 5)
 WoW.SetTalentRank(1, 2, 2)
 WoW.FireEvent("CHARACTER_POINTS_CHANGED", -1)
 info = Talents:GetSpecInfo()
-check("clear lead wins over goal", info.detected == "BEAST_MASTERY" and not info.hybrid)
+check("clear lead detected", info.detected == "BEAST_MASTERY" and not info.hybrid)
 
 check("DetectSpec: all zero", Talents.DetectSpec("HUNTER", { { index = 1, points = 0 }, { index = 2, points = 0 } }) == nil)
 check("DetectSpec: margin counts as hybrid", select(2, Talents.DetectSpec("HUNTER", { { index = 1, points = 5 }, { index = 2, points = 8 } })) == true)
@@ -134,7 +138,7 @@ WoW.Slash("status")
 check("status identity", WoW.ChatContains("Testhunter-Mockrealm: level 18 Night Elf Hunter (Alliance)"))
 check("status xp with rested", WoW.ChatContains("XP: 1,500 / 7,000 (21%), rested 3,200"))
 check("status zone", WoW.ChatContains("Zone: Teldrassil - Shadowglen (map 1438)"))
-check("status spec", WoW.ChatContains("Spec: Beast Mastery (from talents 7/2/0) - goal: Leveling"))
+check("status spec", WoW.ChatContains("Spec: Leveling (your choice) - your talents look like Beast Mastery (7/2/0)"))
 check("status talents", WoW.ChatContains("Talents: Beast Mastery 7 / Marksmanship 2 / Survival 0 - unspent"))
 check("status talent ranks", WoW.ChatContains("Improved Aspect of the Hawk 5/5, Endurance Training 2/5"))
 check("status gear", WoW.ChatContains("Ranged: [Worn Shortbow]") and WoW.ChatContains("Ammo: [Rough Arrow]"))

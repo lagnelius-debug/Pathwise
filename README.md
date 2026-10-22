@@ -25,8 +25,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 |---|---|
 | `/pw help` | List commands |
 | `/pw status` | Print the character snapshot: class, level, XP, zone, spec, talents, gear, skills |
-| `/pw spec` | Open the goal prompt |
-| `/pw spec <goal>` | Set the goal directly, e.g. `bm`, `mm`, `surv`, `leveling`. `/pw spec clear` removes it |
+| `/pw spec` | Open the path chooser (same as the **Path** button in the Next Steps window) |
+| `/pw spec <path>` | Set the path directly, e.g. `bm`, `mm`, `surv`, `leveling`. `/pw spec clear` removes it, and Pathwise then follows your talents |
 | `/pw score` | Print the score of each equipped item and the total |
 | `/pw stats [item]` | Print an item's raw stats as the game reports them. Type `/pw stats `, then shift-click an item |
 | `/pw training` | List the spells you can learn now (recommended and optional) and the ones coming soon |
@@ -139,6 +139,13 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] `/pw spec mm` (before you've spent points) switches to the Marksmanship build, which starts with Efficiency.
 - [ ] If you spend a point elsewhere, the advisor keeps suggesting the next build talent without complaining.
 - [ ] `/pw talents check` says `0 mismatches`. Any mismatch line means my talent data is wrong for that talent; send it to me.
+
+## In-game test checklist (changing path)
+
+- [ ] The Next Steps window shows **Path: <your path>** at the top right. Clicking it opens the path chooser.
+- [ ] Changing the path switches the gear verdicts, the trainer's recommended or optional spells, and the talent build at once, even with talent points already spent.
+- [ ] With points spent that the new path's build doesn't use (3 or more), Next Steps suggests unlearning them at your class trainer.
+- [ ] `/pw status` shows e.g. `Beast Mastery (your choice) - your talents look like Marksmanship (0/12/0)`.
 
 ## In-game test checklist (M6 hunter module)
 

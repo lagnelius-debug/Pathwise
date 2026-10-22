@@ -110,6 +110,37 @@ S.talentTabs[1].talents[2][3] = 3
 WoW.FireEvent("CHARACTER_POINTS_CHANGED", -1)
 
 ---------------------------------------------------------------------------
+section("M5: changing path")
+
+-- BM talents spent (Hawk 5, Thick Hide 3), then switch to Marksmanship.
+-- Hawk is part of the MM build too (later), Thick Hide isn't: 3 points off.
+SetLevel(18) -- 9 points earned, 8 spent
+Rank(1, "Thick Hide", 3)
+WoW.ClearChat()
+WoW.Slash("spec mm")
+check("path change wins over talents", Talents:GetSpecInfo().active == "MARKSMANSHIP"
+  and Talents:GetBuild().name:find("Marksmanship", 1, true))
+check("talent advice follows the new path", Item("talent").text:find("Efficiency (1/5)", 1, true))
+check("off-build points suggest unlearning", Item("talent-respec")
+  and Item("talent-respec").text == "Talents don't fit Marksmanship: unlearn them at your class trainer")
+check("weights follow the new path", select(2, Pathwise:GetModule("GearScore"):GetWeights()) == "MARKSMANSHIP")
+WoW.Slash("spec bm")
+check("back to Beast Mastery: no unlearn hint (only 2 points off)", Item("talent-respec") == nil)
+Rank(1, "Thick Hide", 1)
+WoW.Slash("spec leveling")
+
+-- The Path button in the Next Steps window
+local frame = _G.PathwiseNextSteps
+Pathwise:GetModule("NextStepsFrame"):SetShown(true)
+check("path button shows the path", frame.path.text:GetText() == "Path: Leveling")
+frame.path:Click()
+check("path button opens the chooser", _G.PathwiseGoalPrompt:IsShown())
+_G.PathwiseGoalPrompt:Hide()
+WoW.Slash("spec mm")
+check("path button updates", frame.path.text:GetText() == "Path: Marksmanship")
+WoW.Slash("spec leveling")
+
+---------------------------------------------------------------------------
 section("M6: ammo")
 
 local H = Pathwise:GetModule("Hunter")
