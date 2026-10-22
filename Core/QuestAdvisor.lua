@@ -78,11 +78,18 @@ local function Detail(quest)
   return lines
 end
 
+-- Ready to hand in: the client marks it complete, or it has no objectives
+-- at all ("talk to X", "deliver this letter"), which the client never
+-- reports as complete even though only the turn-in is left.
+function QuestAdvisor.IsReady(quest)
+  return quest.complete or (#quest.objectives == 0 and not quest.failed)
+end
+
 -- The step kind a quest needs an arrow target for, if any.
 local function TargetKind(quest, difficulty)
   if quest.failed then
     return nil
-  elseif quest.complete then
+  elseif QuestAdvisor.IsReady(quest) then
     return "turnIn"
   elseif quest.suggestedGroup >= 2 or difficulty == "RED" or difficulty == "GREY" then
     return nil
@@ -123,7 +130,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
 
     if quest.failed then
       priority, text = P.QUEST_FAILED, string.format(L.QA_FAILED, name)
-    elseif quest.complete then
+    elseif QuestAdvisor.IsReady(quest) then
       priority, text = P.QUEST_TURN_IN, string.format(L.QA_TURN_IN, name)
     elseif quest.suggestedGroup >= 2 then
       priority, text = P.QUEST_LATER, string.format(L.QA_GROUP, name, quest.suggestedGroup)
@@ -138,7 +145,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     else
       priority, text = P.QUEST_ELSEWHERE, string.format(L.QA_ELSEWHERE, name, quest.zone or "?")
     end
-    if difficulty == "ORANGE" and priority >= P.QUEST_ELSEWHERE and not quest.complete then
+    if difficulty == "ORANGE" and priority >= P.QUEST_ELSEWHERE and not QuestAdvisor.IsReady(quest) then
       text = text .. " " .. L.QA_HARD
     end
 

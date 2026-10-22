@@ -153,6 +153,13 @@ venom = Item(916)
 check("turn-in at the finishing NPC", venom.target and Near(venom.target.x, 0.55) and Near(venom.target.y, 0.50)
   and venom.target.label == "Turn in: Webwood Venom (Gilshalan Windwalker)")
 
+-- Talk-to quest (no objectives): arrow goes to the NPC that finishes it
+db.Quest[3116] = { finishedBy = { { 1235 } }, objectives = {} }
+UpdateLog({ { header = true, title = "Shadowglen" },
+  { title = "Tenaron's Summons", level = 5, questID = 3116, objectives = {} } })
+check("talk-to quest: arrow to the finishing NPC", Item(3116).target and Near(Item(3116).target.x, 0.51)
+  and Item(3116).target.label == "Turn in: Tenaron's Summons (Iverron)")
+
 -- Kill quest; unknown area IDs are ignored
 UpdateLog({ { header = true, title = "Teldrassil" },
   { title = "Kill quest", level = 4, questID = 999, objectives = { { text = "Young Nightsaber slain: 0/7" } } } })
