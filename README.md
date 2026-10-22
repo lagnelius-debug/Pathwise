@@ -8,6 +8,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - M3 (quest reward picker) is working in game.
 - M4 (trainer reminder and spellbook Training panel) is built and passes the offline tests. It has not been tested in game yet.
 - Quest log advisor and Next Steps window are built and pass the offline tests. They have not been tested in game yet. The quest advisor was planned for after M7, and the window is part of M7.
+- Navigation arrow and learned quest locations are built and pass the offline tests. They have not been tested in game yet.
 
 ## Install
 
@@ -30,6 +31,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw reset` | Reset account settings. `/pw reset char` resets this character's data |
 | `/pw` | Show or hide the Next Steps window |
 | `/pw quests` | List your quests in the recommended order in chat |
+| `/pw way <x> <y> [name]` | Point the arrow at coordinates on your current zone map, e.g. `/pw way 45.2 63.1 Trainer`. `/pw way clear` removes it |
+| `/pw arrow` | Turn the arrow following your next step on or off |
 
 ## In-game test checklist (M0 and M1)
 
@@ -98,6 +101,17 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] With spells to learn, a `Visit your trainer: N recommended spells (cost)` line appears between turn-ins and other quests.
 - [ ] Collapsing a zone in the quest log adds a line asking you to expand it.
 
+## In-game test checklist (navigation arrow)
+
+- [ ] `/pw way 50 50 Test` shows an arrow near the top of the screen. It rotates as you turn, turns green when you face the target, and shows the distance in yards. Walking there prints `Arrived at Test.` and the arrow disappears.
+- [ ] The arrow can be dragged. Right-click clears a `/pw way` waypoint.
+- [ ] Accept a quest, then make progress on it, e.g. kill one quest mob. The Next Steps line for that quest gets a blue `*`, and the arrow points to where you made progress.
+- [ ] When the quest is complete, the arrow points back to the quest giver (`Turn in: ... (where you got it)`).
+- [ ] Clicking a Next Steps line with a `*` points the arrow there.
+- [ ] Right-clicking the arrow while it follows your next step turns that off. `/pw arrow` turns it back on.
+- [ ] In a dungeon, or for a target on another continent, the arrow says `Can't point from here`.
+- [ ] The direction is correct, not mirrored or rotated by 90 degrees. Use `/pw way` with a known spot to check.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
@@ -109,6 +123,8 @@ Test with a fresh level 1 Night Elf Hunter.
 - That `IsSpellKnown`/`IsPlayerSpell` recognise passive spells like Parry, Dual Wield and Mail.
 - That the event `LEARNED_SPELL_IN_SKILL_LINE` fires when you learn a spell in 1.15.9.
 - The quest log API (`GetQuestLogTitle` return order, `GetQuestLogLeaderBoard`), and the quest-color fallback when `GetQuestGreenRange` is missing.
+- `GetPlayerFacing`, `C_Map.GetPlayerMapPosition` and `C_Map.GetWorldPosFromMapPos` behave as expected in Classic Era (arrow direction and distance).
+- `QUEST_ACCEPTED` arguments (questLogIndex, questID) and that `QUEST_TURNED_IN` exists.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development

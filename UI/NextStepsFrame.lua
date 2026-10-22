@@ -34,16 +34,27 @@ local function RestorePosition()
 end
 
 local function OnRowEnter(row)
-  local detail = row.item and row.item.detail
-  if not detail or #detail == 0 then
+  local item = row.item
+  local detail = item and item.detail
+  if not item or ((not detail or #detail == 0) and not item.target) then
     return
   end
   GameTooltip:SetOwner(row, "ANCHOR_LEFT")
   GameTooltip:SetText(row.text:GetText(), 1, 1, 1, 1, true)
-  for _, line in ipairs(detail) do
+  for _, line in ipairs(detail or {}) do
     GameTooltip:AddLine(line, 0.9, 0.9, 0.9, true)
   end
+  if item.target then
+    GameTooltip:AddLine(L.NS_CLICK_ARROW, 0.4, 0.8, 1, true)
+  end
   GameTooltip:Show()
+end
+
+-- Clicking a step with a known location points the arrow there.
+local function OnRowClick(row, button)
+  if button == "LeftButton" and row.item and row.item.target then
+    Pathwise:GetModule("Waypoints"):SetManual(row.item.target)
+  end
 end
 
 local function OnRowLeave()
@@ -59,6 +70,7 @@ local function GetRow(index)
     row:EnableMouse(true)
     row:SetScript("OnEnter", OnRowEnter)
     row:SetScript("OnLeave", OnRowLeave)
+    row:SetScript("OnMouseUp", OnRowClick)
     row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.text:SetAllPoints(row)
     row.text:SetJustifyH("LEFT")
@@ -78,7 +90,7 @@ function NextStepsFrame:Render()
   for i = 1, shown do
     local row = GetRow(i)
     row.item = items[i]
-    row.text:SetText(items[i].text)
+    row.text:SetText(items[i].target and (items[i].text .. " " .. L.NS_HAS_LOCATION) or items[i].text)
     row:Show()
   end
   if #items == 0 then

@@ -127,6 +127,8 @@ function FrameMethods:SetHeight(h) self._height = h end
 function FrameMethods:SetSize(w, h) self._width, self._height = w, h end
 function FrameMethods:GetStringWidth() return #(self._text or "") * 6 end
 function FrameMethods:SetBackdrop() end
+function FrameMethods:SetRotation(radians) self._rotation = radians end
+function FrameMethods:SetVertexColor(r, g, b) self._color = { r, g, b } end
 function FrameMethods:GetID() return self._id or 0 end
 function FrameMethods:SetID(id) self._id = id end
 function FrameMethods:GetFrameLevel() return self._level or 1 end
@@ -383,7 +385,32 @@ end
 
 function GetRealZoneText() return S.zone end
 function GetSubZoneText() return S.subZone end
-C_Map = { GetBestMapForUnit = function() return S.mapID end }
+-- Maps: world rectangles in yards (top > bottom, left > right).
+WoW.mapRects = {
+  [1438] = { continent = 1, top = 10000, left = 12000, bottom = 7000, right = 9000 }, -- Teldrassil
+  [1439] = { continent = 1, top = 7000, left = 12000, bottom = 3000, right = 8000 },  -- Darkshore
+  [1429] = { continent = 0, top = 1000, left = 1000, bottom = 0, right = 0 },          -- Elwynn
+}
+S.mapX, S.mapY, S.facing = 0.5, 0.5, 0
+
+local function Vector(x, y)
+  return { x = x, y = y, GetXY = function(self) return self.x, self.y end }
+end
+CreateVector2D = Vector
+C_Map = {
+  GetBestMapForUnit = function() return S.mapID end,
+  GetPlayerMapPosition = function(mapID)
+    if S.mapX == nil then return nil end
+    return Vector(S.mapX, S.mapY)
+  end,
+  GetWorldPosFromMapPos = function(mapID, pos)
+    local r = WoW.mapRects[mapID]
+    if not r then return nil end
+    return r.continent, Vector(r.top - pos.y * (r.top - r.bottom), r.left - pos.x * (r.left - r.right))
+  end,
+  GetMapInfo = function(mapID) return { name = "Map " .. mapID } end,
+}
+function GetPlayerFacing() return S.facing end
 
 ---------------------------------------------------------------------------
 -- Quest turn-in

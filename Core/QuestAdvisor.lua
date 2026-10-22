@@ -79,7 +79,9 @@ local function Detail(quest)
 end
 
 -- Pure function: quests -> Next Steps items, in recommended order.
-function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone)
+-- locate(quest, kind) optionally returns an arrow target for a quest
+-- ("turnIn" for complete quests, "do" for quests to work on).
+function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone, locate)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local items = {}
 
@@ -88,12 +90,12 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone)
     local progress = QuestAdvisor.Progress(quest)
     local here = currentZone ~= nil and quest.zone == currentZone
     local name = QuestText(quest, difficulty)
-    local priority, text
+    local priority, text, kind
 
     if quest.failed then
       priority, text = P.QUEST_FAILED, string.format(L.QA_FAILED, name)
     elseif quest.complete then
-      priority, text = P.QUEST_TURN_IN, string.format(L.QA_TURN_IN, name)
+      priority, text, kind = P.QUEST_TURN_IN, string.format(L.QA_TURN_IN, name), "turnIn"
     elseif quest.suggestedGroup >= 2 then
       priority, text = P.QUEST_LATER, string.format(L.QA_GROUP, name, quest.suggestedGroup)
     elseif difficulty == "RED" then
@@ -101,11 +103,11 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone)
     elseif difficulty == "GREY" then
       priority, text = P.QUEST_GREY, string.format(L.QA_GREY, name)
     elseif progress and progress >= ALMOST_DONE then
-      priority, text = P.QUEST_ALMOST_DONE, string.format(L.QA_ALMOST_DONE, name, progress * 100)
+      priority, text, kind = P.QUEST_ALMOST_DONE, string.format(L.QA_ALMOST_DONE, name, progress * 100), "do"
     elseif here then
-      priority, text = P.QUEST_HERE, string.format(L.QA_HERE, name)
+      priority, text, kind = P.QUEST_HERE, string.format(L.QA_HERE, name), "do"
     else
-      priority, text = P.QUEST_ELSEWHERE, string.format(L.QA_ELSEWHERE, name, quest.zone or "?")
+      priority, text, kind = P.QUEST_ELSEWHERE, string.format(L.QA_ELSEWHERE, name, quest.zone or "?"), "do"
     end
     if difficulty == "ORANGE" and priority >= P.QUEST_ELSEWHERE and not quest.complete then
       text = text .. " " .. L.QA_HARD
@@ -116,6 +118,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, currentZone)
       priority = priority,
       text = text,
       detail = Detail(quest),
+      target = kind and locate and locate(quest, kind) or nil,
       -- Within a priority: current zone first, then most progress, then
       -- lowest level (easiest first).
       order = { here and 0 or 1, -(progress or 0), quest.level },
@@ -145,7 +148,12 @@ function QuestAdvisor:Update()
   local level = snapshot.level or 1
   local quests, collapsed = Platform.GetQuestLog()
   local currentZone = snapshot.zone and snapshot.zone.zone
-  local items = QuestAdvisor.Plan(quests, level, Platform.GetQuestGreenRange(level), currentZone)
+  local QuestLocations = Pathwise:GetModule("QuestLocations")
+  QuestLocations:OnQuestsScanned(quests)
+  local function Locate(quest, kind)
+    return QuestLocations:GetTarget(quest, kind)
+  end
+  local items = QuestAdvisor.Plan(quests, level, Platform.GetQuestGreenRange(level), currentZone, Locate)
 
   if #collapsed > 0 then
     items[#items + 1] = {

@@ -605,3 +605,64 @@ function Platform.GetQuestGreenRange(playerLevel)
   end
   return 8
 end
+
+---------------------------------------------------------------------------
+-- Map position and facing (navigation arrow)
+---------------------------------------------------------------------------
+
+-- Returns mapID, x, y (0..1) of the player on the best map for their
+-- location, or nil where the client hides the position (e.g. instances).
+function Platform.GetPlayerMapPosition()
+  if not (C_Map and C_Map.GetBestMapForUnit and C_Map.GetPlayerMapPosition) then
+    return nil
+  end
+  local mapID = C_Map.GetBestMapForUnit("player")
+  if not mapID then
+    return nil
+  end
+  local position = C_Map.GetPlayerMapPosition(mapID, "player")
+  if not position then
+    return nil
+  end
+  local x, y = position:GetXY()
+  if not x or (x == 0 and y == 0) then
+    return nil
+  end
+  return mapID, x, y
+end
+
+-- Player facing in radians, counterclockwise from north; nil if unavailable.
+function Platform.GetPlayerFacing()
+  if GetPlayerFacing then
+    return GetPlayerFacing()
+  end
+end
+
+-- World-space rectangle of a map, in yards: { continent, top, left, bottom,
+-- right }. World coordinates grow towards north (top) and west (left), so
+-- top > bottom and left > right. Cached; nil if the API is missing.
+local mapRects = {}
+function Platform.GetMapWorldRect(mapID)
+  if mapRects[mapID] ~= nil then
+    return mapRects[mapID] or nil
+  end
+  local rect = false
+  if C_Map and C_Map.GetWorldPosFromMapPos and CreateVector2D then
+    local continent, topLeft = C_Map.GetWorldPosFromMapPos(mapID, CreateVector2D(0, 0))
+    local _, bottomRight = C_Map.GetWorldPosFromMapPos(mapID, CreateVector2D(1, 1))
+    if topLeft and bottomRight then
+      local top, left = topLeft:GetXY()
+      local bottom, right = bottomRight:GetXY()
+      rect = { continent = continent, top = top, left = left, bottom = bottom, right = right }
+    end
+  end
+  mapRects[mapID] = rect
+  return rect or nil
+end
+
+function Platform.GetMapName(mapID)
+  if C_Map and C_Map.GetMapInfo then
+    local info = C_Map.GetMapInfo(mapID)
+    return info and info.name
+  end
+end

@@ -24,6 +24,9 @@ local DB_DEFAULTS = {
   chatMessages = true,
   trainerPanel = true, -- show the Training panel next to the spellbook
   nextSteps = { shown = true }, -- Next Steps window: visibility and position
+  arrow = {},                   -- arrow position
+  arrowAuto = true,             -- arrow follows the top Next Steps item
+  questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
   modules = {}, -- [moduleName] = false disables a module
 }
 

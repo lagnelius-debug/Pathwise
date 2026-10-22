@@ -107,7 +107,7 @@ check("callbacks: in order, safe unregister during dispatch", table.concat(order
 
 ---------------------------------------------------------------------------
 -- Milestone-specific tests are appended below.
-for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua", "./tests/run_m3.lua", "./tests/run_m4.lua", "./tests/run_quests.lua" }) do
+for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua", "./tests/run_m3.lua", "./tests/run_m4.lua", "./tests/run_quests.lua", "./tests/run_arrow.lua" }) do
   local chunk = assert(loadfile(file))
   chunk(WoW, Pathwise, check, section)
 end
