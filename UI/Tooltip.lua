@@ -101,14 +101,23 @@ end
 -- OnTooltipSetItem runs after the tooltip was laid out, so it must be
 -- re-shown to resize for the new line. TooltipDataProcessor post-calls run
 -- before that, so they don't.
+-- Adds all Pathwise lines (gear verdict, sell price); true if any added.
+local function AddLines(tooltip)
+  local added = AddPathwiseLine(tooltip)
+  if Pathwise:GetModule("SellPrice").AddLine(tooltip) then
+    added = true
+  end
+  return added
+end
+
 local function OnTooltipSetItem(tooltip)
-  if AddPathwiseLine(tooltip) then
+  if AddLines(tooltip) then
     tooltip:Show()
   end
 end
 
 local function OnTooltipPostCall(tooltip)
-  AddPathwiseLine(tooltip)
+  AddLines(tooltip)
 end
 
 function Tooltip:OnInitialize()

@@ -27,6 +27,8 @@ local DB_DEFAULTS = {
   arrow = {},                   -- arrow position
   arrowAuto = true,             -- arrow follows the top Next Steps item
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
+  targetMacro = true,           -- keep the "Pathwise" target macro up to date
+  sellPrice = true,             -- show vendor sell prices in item tooltips
   modules = {}, -- [moduleName] = false disables a module
 }
 

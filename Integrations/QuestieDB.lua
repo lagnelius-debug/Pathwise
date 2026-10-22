@@ -76,14 +76,21 @@ end
 
 -- Adds the spawn points of a QuestieDB spawn list ({ [AreaId] = { {x, y},
 -- ... } }, coordinates 0-100) as map targets.
-local function AddSpawns(points, spawnList, label)
+local function AddSpawns(points, spawnList, label, npcName)
   for areaId, coordinates in pairs(spawnList or {}) do
     local uiMapId = areaToUiMap[areaId]
     if uiMapId and uiMapId ~= 0 then
       for _, coordinate in ipairs(coordinates) do
         local x, y = coordinate[1], coordinate[2]
         if x and y and x >= 0 and y >= 0 then
-          points[#points + 1] = { mapID = uiMapId, x = x / 100, y = y / 100, label = label, spawn = true }
+          points[#points + 1] = {
+            mapID = uiMapId,
+            x = x / 100,
+            y = y / 100,
+            label = label,
+            spawn = true,
+            npcName = npcName, -- nil for objects (they can't be targeted)
+          }
         end
       end
     end
@@ -136,7 +143,7 @@ end
 local function NpcPoints(points, npcIds, labelFormat, itemName)
   for _, npcId in ipairs(npcIds or {}) do
     local name = lib.Npc.Get(npcId, "name")
-    AddSpawns(points, lib.Npc.Get(npcId, "spawns"), Label(name, labelFormat, itemName))
+    AddSpawns(points, lib.Npc.Get(npcId, "spawns"), Label(name, labelFormat, itemName), name)
   end
 end
 
@@ -167,6 +174,27 @@ local function IsFinished(quest, name)
   return false
 end
 
+-- NPC names for the target macro: the chosen point's NPC first, then the
+-- other NPCs of the step.
+local function WithNames(best, points)
+  if not best then
+    return nil
+  end
+  local names, seen = {}, {}
+  local function Add(name)
+    if name and not seen[name] then
+      seen[name] = true
+      names[#names + 1] = name
+    end
+  end
+  Add(best.npcName)
+  for _, point in ipairs(points) do
+    Add(point.npcName)
+  end
+  best.names = names
+  return best
+end
+
 local function TurnInTarget(quest)
   local finishedBy = lib.Quest.Get(quest.questID, "finishedBy") or {}
   local points = {}
@@ -188,7 +216,7 @@ local function TurnInTarget(quest)
       end
     end
   end
-  return best
+  return WithNames(best, points)
 end
 
 local function DoTarget(quest)
@@ -224,7 +252,7 @@ local function DoTarget(quest)
       NpcPoints(points, objective[1])
     end
   end
-  return Nearest(points)
+  return WithNames(Nearest(points), points)
 end
 
 -- Returns a target { mapID, x, y, label } for a quest step, or nil.

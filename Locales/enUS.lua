@@ -221,3 +221,17 @@ BINDING_NAME_PATHWISE_NEXT = "Skip to next spot"
 L.NS_CLICK_ARROW = "Click to point the arrow here."
 L.NS_HAS_LOCATION = "|cff66ccff*|r"
 L.ARROW_QUESTIE_TURN_IN = "Turn in: %s (%s)"
+
+-- Target macro
+L.CMD_MACRO = "put the Pathwise target macro on your cursor ('/pw macro off' stops updating it)"
+L.MACRO_NOTHING = "Pathwise: nothing to target for this step."
+L.MACRO_FULL = "Can't create the Pathwise target macro: your character macros are full."
+L.MACRO_PICKED_UP = "Drop the Pathwise macro on an action bar. It targets the mobs or NPC of your current step and updates by itself."
+L.MACRO_COMBAT = "Can't pick up macros in combat. Try again after the fight."
+L.MACRO_ON = "The Pathwise target macro is updated again."
+L.MACRO_OFF = "The Pathwise target macro is no longer updated."
+
+-- Sell price
+L.SELL_PRICE_PREFIX = "Sell price:"
+L.SELL_PRICE = "Sell price: %s"
+L.SELL_PRICE_STACK = "Sell price: %s (%d x %s)"

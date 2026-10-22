@@ -195,15 +195,17 @@ local function NewTooltip(name)
     self._link = nil
   end
   function tooltip:GetItem() return self._link and "name", self._link end
+  function tooltip:GetOwner() return self._owner end
   return tooltip
 end
 GameTooltip = NewTooltip("GameTooltip")
 ItemRefTooltip = NewTooltip("ItemRefTooltip")
 
 -- Shows an item in a tooltip like hovering it would, returns the Pathwise line.
-function WoW.HoverItem(itemID, tooltip)
+function WoW.HoverItem(itemID, tooltip, owner)
   tooltip = tooltip or GameTooltip
   tooltip:ClearLines()
+  tooltip._owner = owner
   tooltip._link = WoW.ItemLink(itemID)
   tooltip:AddLine(WoW.items[itemID].name)
   if tooltip._scripts.OnTooltipSetItem then
@@ -223,6 +225,19 @@ WoW.errors = {}
 function geterrorhandler()
   return function(err) WoW.errors[#WoW.errors + 1] = err end
 end
+
+-- All text lines of a tooltip (color codes stripped).
+function WoW.TooltipLines(tooltip)
+  local lines = {}
+  for i = 1, tooltip._lines do
+    local text = _G[tooltip:GetName() .. "TextLeft" .. i]._text
+    lines[#lines + 1] = text and (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) or ""
+  end
+  return lines
+end
+
+MerchantFrame = NewObject("Frame", "MerchantFrame", UIParent)
+MerchantFrame._shown = false
 
 ---------------------------------------------------------------------------
 -- Timers
@@ -256,7 +271,43 @@ C_AddOns = {
 function InCombatLockdown() return S.inCombat end
 function UnitAffectingCombat() return S.inCombat end
 
-function UnitName() return S.name end
+function UnitName(unit)
+  if unit == "npc" then return S.npcName end
+  return S.name
+end
+function UnitExists(unit)
+  if unit == "npc" then return S.npcName ~= nil end
+  return true
+end
+
+-- Macros
+WoW.macros = {} -- list of { name, icon, body, perCharacter }
+WoW.cursor = nil
+MAX_CHARACTER_MACROS = 18
+function GetMacroIndexByName(name)
+  for i, macro in ipairs(WoW.macros) do
+    if macro.name == name then return i end
+  end
+  return 0
+end
+function GetNumMacros()
+  local general, character = 0, 0
+  for _, macro in ipairs(WoW.macros) do
+    if macro.perCharacter then character = character + 1 else general = general + 1 end
+  end
+  return general, character
+end
+function CreateMacro(name, icon, body, perCharacter)
+  if S.inCombat then error("CreateMacro in combat") end
+  WoW.macros[#WoW.macros + 1] = { name = name, icon = icon, body = body, perCharacter = perCharacter }
+  return #WoW.macros
+end
+function EditMacro(index, name, icon, body)
+  if S.inCombat then error("EditMacro in combat") end
+  local macro = WoW.macros[index]
+  macro.name, macro.icon, macro.body = name, icon, body
+end
+function PickupMacro(index) WoW.cursor = WoW.macros[index] end
 function GetRealmName() return S.realm end
 function UnitClass() return S.class[1], S.class[2], S.class[3] end
 function UnitRace() return S.race[1], S.race[2], S.race[3] end
@@ -307,6 +358,7 @@ WoW.items = {
              stats = { ITEM_MOD_SPIRIT_SHORT = 2 } },
   [9010] = { name = "Big Axe", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 1,
              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 6, ITEM_MOD_AGILITY_SHORT = 4 } },
+  [9012] = { name = "Quest Token", equipLoc = "", classID = 12, subclassID = 0, sell = 0, stats = {} },
   [9011] = { name = "Sharp Dagger", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 15,
              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 3, ITEM_MOD_AGILITY_SHORT = 1 } },
 }

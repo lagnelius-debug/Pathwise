@@ -665,9 +665,53 @@ function Platform.GetMapWorldRect(mapID)
   return rect or nil
 end
 
+-- Name of the NPC the player is talking to (quest giver dialogs), or nil.
+function Platform.GetInteractionNPCName()
+  if UnitExists("npc") then
+    return UnitName("npc")
+  end
+end
+
 function Platform.GetMapName(mapID)
   if C_Map and C_Map.GetMapInfo then
     local info = C_Map.GetMapInfo(mapID)
     return info and info.name
   end
+end
+
+---------------------------------------------------------------------------
+-- Macros
+---------------------------------------------------------------------------
+
+-- Creates or updates a character-specific macro. Returns true, or false and
+-- a reason: "combat" (macros can't be changed in combat), "full" (no free
+-- character macro slot) or "api" (macro functions missing).
+function Platform.SetMacro(name, icon, body)
+  if not (GetMacroIndexByName and CreateMacro and EditMacro) then
+    return false, "api"
+  end
+  if Platform.InCombat() then
+    return false, "combat"
+  end
+  local index = GetMacroIndexByName(name)
+  if index and index > 0 then
+    EditMacro(index, name, icon, body)
+    return true
+  end
+  local _, numCharacter = GetNumMacros()
+  if numCharacter >= (MAX_CHARACTER_MACROS or 18) then
+    return false, "full"
+  end
+  index = CreateMacro(name, icon, body, true)
+  return index ~= nil and index > 0, "api"
+end
+
+-- Puts the macro on the cursor so the player can drop it on an action bar.
+function Platform.PickupMacro(name)
+  local index = GetMacroIndexByName and GetMacroIndexByName(name)
+  if index and index > 0 and not Platform.InCombat() then
+    PickupMacro(index)
+    return true
+  end
+  return false
 end

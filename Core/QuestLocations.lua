@@ -18,10 +18,11 @@ local MAX_PROGRESS_POINTS = 8
 
 local lastProgress = {} -- [questID] = progress 0..1 at the previous scan
 
+-- The player's position, plus the name of the NPC they're talking to.
 local function Here()
   local mapID, x, y = Platform.GetPlayerMapPosition()
   if mapID then
-    return { mapID = mapID, x = x, y = y }
+    return { mapID = mapID, x = x, y = y, npcName = Platform.GetInteractionNPCName() }
   end
 end
 
@@ -47,7 +48,7 @@ function QuestLocations:GetTarget(quest, kind)
     if spot then
       local label = entry.turnIn and string.format(L.ARROW_TURN_IN, quest.title)
         or string.format(L.ARROW_TURN_IN_PICKUP, quest.title)
-      return { mapID = spot.mapID, x = spot.x, y = spot.y, label = label }
+      return { mapID = spot.mapID, x = spot.x, y = spot.y, label = label, names = { spot.npcName } }
     end
     return nil
   end

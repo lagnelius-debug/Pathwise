@@ -44,10 +44,12 @@ Core\Trainer.lua
 Core\QuestLocations.lua
 Core\QuestAdvisor.lua
 Core\Waypoints.lua
+Core\TargetMacro.lua
 
 Integrations\QuestieDB.lua
 
 UI\GoalPrompt.lua
+UI\SellPrice.lua
 UI\Tooltip.lua
 UI\QuestRewardUI.lua
 UI\TrainerPanel.lua

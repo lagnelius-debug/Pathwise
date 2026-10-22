@@ -9,7 +9,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - M4 (trainer reminder and spellbook Training panel) is built and passes the offline tests. It has not been tested in game yet.
 - Quest log advisor and Next Steps window are built and pass the offline tests. They have not been tested in game yet. The quest advisor was planned for after M7, and the window is part of M7.
 - Navigation arrow and learned quest locations are built and pass the offline tests. They have not been tested in game yet.
-- Optional QuestieDB integration is built and passes the offline tests. It has not been tested in game yet. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects.
+- Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
+- Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 
 ## Install
 
@@ -35,6 +36,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw way <x> <y> [name]` | Point the arrow at coordinates on your current zone map, e.g. `/pw way 45.2 63.1 Trainer`. `/pw way clear` removes it |
 | `/pw next` | Move the arrow on to the next spot or step (same as the arrow's Next button) |
 | `/pw arrow` | Turn the arrow following your next step on or off |
+| `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
 
 ## In-game test checklist (M0 and M1)
 
@@ -116,6 +118,15 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] In a dungeon, or for a target on another continent, the arrow says `Can't point from here`.
 - [ ] The direction is correct, not mirrored or rotated by 90 degrees. Use `/pw way` with a known spot to check.
 
+## In-game test checklist (target macro and sell price)
+
+- [ ] `/pw macro` puts a macro called **Pathwise** on the cursor. Drop it on an action bar.
+- [ ] With a quest step active, pressing it targets the nearest quest mob (with QuestieDB) and puts a skull on it. On a turn-in step it targets the turn-in NPC when you're near it.
+- [ ] The macro's contents update by themselves when the step changes. Check in Esc → Macros → Character Specific. Changes made in combat happen right after combat.
+- [ ] Item tooltips in your bags show `Sell price: ...` with coin icons. A stack shows the total and the price per item, e.g. `Sell price: 6s (5 x 1s 20c)`.
+- [ ] At a vendor, only the game's own sell price is shown, not two.
+- [ ] Items that can't be sold have no sell price line.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
@@ -129,6 +140,8 @@ Test with a fresh level 1 Night Elf Hunter.
 - The quest log API (`GetQuestLogTitle` return order, `GetQuestLogLeaderBoard`), and the quest-color fallback when `GetQuestGreenRange` is missing.
 - `GetPlayerFacing`, `C_Map.GetPlayerMapPosition` and `C_Map.GetWorldPosFromMapPos` behave as expected in Classic Era (arrow direction and distance).
 - `QUEST_ACCEPTED` arguments (questLogIndex, questID) and that `QUEST_TURNED_IN` exists.
+- Macro functions (`CreateMacro`, `EditMacro` with a texture name as icon) in Classic Era 1.15.9, and that `SetRaidTarget` on yourself works solo.
+- That bag item buttons keep their stack size in `.count` (sell price for stacks).
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development
