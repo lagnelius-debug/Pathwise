@@ -1,0 +1,26 @@
+## Interface: 11509
+## Title: Pathwise
+## Notes: Follows your character's progression and tells you what to do next.
+## Author: noelagnelius
+## Version: 0.1.0
+## SavedVariables: PathwiseDB
+## SavedVariablesPerCharacter: PathwiseCharDB
+
+# Interface number: 11509 = Classic Era 1.15.9 (last known build). TODO verify in
+# game with  /dump select(4, GetBuildInfo())  and replace the number above.
+
+# Load order matters:
+#  1. Locales     - string table (Pathwise.L)
+#  2. Platform    - the only layer that calls flavor-specific WoW API
+#  3. Core/Init   - namespace, saved variables, events, callbacks, commands
+#  4. Data        - plain Lua tables for this flavor
+#  5. Core        - logic modules (never call WoW API directly)
+#  6. UI          - frames, popups, slash command binding
+
+Locales\enUS.lua
+
+Platform\Platform_Classic.lua
+
+Core\Init.lua
+
+UI\SlashCommands.lua
