@@ -6,8 +6,8 @@
 ## SavedVariables: PathwiseDB
 ## SavedVariablesPerCharacter: PathwiseCharDB
 
-# Interface number: 11509 = Classic Era 1.15.9 (last known build). TODO verify in
-# game with  /dump select(4, GetBuildInfo())  and replace the number above.
+# Interface number: 11509 = Classic Era 1.15.9. Verified in game 2026-10-22 with
+#  /dump select(4, GetBuildInfo())  - re-check after each Classic Era patch.
 
 # Load order matters:
 #  1. Locales     - string table (Pathwise.L)

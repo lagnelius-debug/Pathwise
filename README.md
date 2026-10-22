@@ -7,7 +7,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 ## Install
 
 1. Copy this folder to `World of Warcraft/_classic_era_/Interface/AddOns/Pathwise/`. The folder must be named `Pathwise` and contain `Pathwise_Vanilla.toc` directly.
-2. In game, run `/dump select(4, GetBuildInfo())`. If the number differs from `## Interface:` in `Pathwise_Vanilla.toc` (currently `11509`), put the number from the game in the TOC.
+2. The TOC uses interface `11509`, verified in game on 2026-10-22. After a Classic Era patch, run `/dump select(4, GetBuildInfo())` and update `## Interface:` in `Pathwise_Vanilla.toc` if the number changed.
 3. Turn on Lua errors with `/console scriptErrors 1`, or install BugGrabber and BugSack.
 
 ## Commands
@@ -45,7 +45,6 @@ Test with a fresh level 1 Night Elf Hunter.
 
 ## Things to verify in game (marked `TODO verify` in code)
 
-- The TOC interface number.
 - `UnitCharacterPoints("player")` returns unspent talent points.
 - `GetInventoryItemLink("player", 0)` returns the equipped ammo.
 - The talent tab order for each class in `Data/Classic/ClassSpecs.lua`, e.g. that hunter tab 1 is Beast Mastery.
