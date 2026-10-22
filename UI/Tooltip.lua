@@ -30,7 +30,9 @@ function Tooltip.FormatResult(result)
     return COLOR_GREY .. PREFIX .. L.TOOLTIP_UNUSABLE .. "|r"
   elseif kind == "upgrade" then
     color = COLOR_UP
-    if result.empty then
+    if result.empty and result.percent then
+      text = string.format(L.TOOLTIP_UPGRADE_EMPTY_PERCENT, result.percent)
+    elseif result.empty then
       text = L.TOOLTIP_UPGRADE_EMPTY
     elseif result.percent then
       text = string.format(L.TOOLTIP_UPGRADE_PERCENT, result.percent)

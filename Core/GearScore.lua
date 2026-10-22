@@ -131,11 +131,24 @@ local function EquippedScore(slot)
   return scored.score, false, scored
 end
 
+-- Sum of the scores of all equipped items (items that can't be scored, like
+-- shirts, ammo or not-yet-cached items, count as 0).
+function GearScore:GetEquippedTotal()
+  local total = 0
+  for _, item in pairs(GetSnapshot().equipment) do
+    local scored = self:ScoreItem(item.link)
+    if scored then
+      total = total + scored.score
+    end
+  end
+  return total
+end
+
 -- Compares an item with the equipped gear. Returns nil if it can't be
 -- scored, otherwise a table:
 --   kind     = "upgrade", "downgrade", "same", "equipped" or "unusable"
---   percent  = change in percent (nil when the compared slot is empty or
---              scores 0)
+--   percent  = change to the total score of all equipped gear, in percent
+--              (nil when nothing equipped scores above 0)
 --   empty    = true if compared against an empty slot
 --   reason, level = from CheckUsable, for "unusable" and future upgrades
 --   newScore, oldScore
@@ -199,26 +212,24 @@ function GearScore:Compare(link)
     result.reason, result.level = reason, level
   end
 
+  -- The percentage is the change to the total score of all equipped gear,
+  -- not item vs item: comparing two items directly gives lopsided numbers
+  -- (2 -> 17 armor is +750%, but 17 -> 2 is only -88%).
   local diff = scored.score - oldScore
+  local total = self:GetEquippedTotal()
+  if total > 0 then
+    result.percent = diff / total * 100
+  end
   if empty then
     result.kind = "upgrade"
-  elseif oldScore <= 0 then
-    if diff > 0 then
-      result.kind = "upgrade"
-    elseif diff < 0 then
-      result.kind = "downgrade"
-    else
-      result.kind = "same"
-    end
+  elseif result.percent and math.abs(result.percent) < SAME_THRESHOLD_PERCENT then
+    result.kind = "same"
+  elseif diff > 0 then
+    result.kind = "upgrade"
+  elseif diff < 0 then
+    result.kind = "downgrade"
   else
-    result.percent = diff / oldScore * 100
-    if math.abs(result.percent) < SAME_THRESHOLD_PERCENT then
-      result.kind = "same"
-    elseif diff > 0 then
-      result.kind = "upgrade"
-    else
-      result.kind = "downgrade"
-    end
+    result.kind = "same"
   end
   return result
 end

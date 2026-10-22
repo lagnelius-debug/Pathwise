@@ -49,7 +49,7 @@ Test with a fresh level 1 Night Elf Hunter.
 
 ## In-game test checklist (M2)
 
-- [ ] Hovering an item in your bags shows a `Pathwise:` line, e.g. `+40% upgrade` in green, `-20% downgrade` in red, or `about the same` in yellow.
+- [ ] Hovering an item in your bags shows a `Pathwise:` line, e.g. `+8% upgrade` in green, `-8% downgrade` in red, or `about the same` in yellow. The percentage is the change to the total score of all your equipped gear, so swapping an item and swapping back give about the same size number.
 - [ ] An armor-only item, like boots with only an Armor value, beats an equipped item with no armor.
 - [ ] A plate or mail item, or a mace, says `not usable by your class`. Mail says `... at level 40` instead.
 - [ ] An item above your level ends with `at level X`.
@@ -65,7 +65,7 @@ Test with a fresh level 1 Night Elf Hunter.
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
 - The talent tab order for each non-hunter class in `Data/Classic/ClassSpecs.lua`. The hunter order is verified.
-- Armor and weapon DPS are reported by `GetItemStats` as `RESISTANCE0_NAME` and `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`. Use `/pw stats` to check.
+- Weapon DPS is reported by `GetItemStats` as `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`. Use `/pw stats` on a weapon to check. Armor (`RESISTANCE0_NAME`) is verified in game.
 - Which tooltip hook Classic Era uses. `/pw debug` prints `Tooltip hook: ...` at login.
 - The weapon types hunters can use, and that dual wield starts at level 20 (`Data/Classic/ClassGear.lua`).
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
