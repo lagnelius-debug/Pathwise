@@ -104,9 +104,9 @@ check("callbacks: in order, safe unregister during dispatch", table.concat(order
 
 ---------------------------------------------------------------------------
 -- Milestone-specific tests are appended below.
-local extra = loadfile("./tests/run_m1.lua")
-if extra then
-  extra(WoW, Pathwise, check, section)
+for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua" }) do
+  local chunk = assert(loadfile(file))
+  chunk(WoW, Pathwise, check, section)
 end
 
 print(string.format("%d passed, %d failed", passed, failed))

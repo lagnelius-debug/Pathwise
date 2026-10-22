@@ -166,7 +166,44 @@ DEFAULT_CHAT_FRAME = {
   end,
 }
 BackdropTemplateMixin = {}
-GameTooltip = NewObject("GameTooltip", "GameTooltip", UIParent)
+-- Tooltips: lines are stored as TextLeftN font strings like the real ones.
+local function NewTooltip(name)
+  local tooltip = NewObject("GameTooltip", name, UIParent)
+  tooltip._lines = 0
+  function tooltip:NumLines() return self._lines end
+  function tooltip:AddLine(text)
+    self._lines = self._lines + 1
+    local fontString = _G[name .. "TextLeft" .. self._lines] or NewObject("FontString")
+    fontString._text = text
+    _G[name .. "TextLeft" .. self._lines] = fontString
+  end
+  function tooltip:ClearLines()
+    for i = 1, self._lines do _G[name .. "TextLeft" .. i]._text = nil end
+    self._lines = 0
+    self._link = nil
+  end
+  function tooltip:GetItem() return self._link and "name", self._link end
+  return tooltip
+end
+GameTooltip = NewTooltip("GameTooltip")
+ItemRefTooltip = NewTooltip("ItemRefTooltip")
+
+-- Shows an item in a tooltip like hovering it would, returns the Pathwise line.
+function WoW.HoverItem(itemID, tooltip)
+  tooltip = tooltip or GameTooltip
+  tooltip:ClearLines()
+  tooltip._link = WoW.ItemLink(itemID)
+  tooltip:AddLine(WoW.items[itemID].name)
+  if tooltip._scripts.OnTooltipSetItem then
+    tooltip._scripts.OnTooltipSetItem(tooltip)
+  end
+  for i = 1, tooltip._lines do
+    local text = _G[tooltip:GetName() .. "TextLeft" .. i]._text
+    if text and text:find("Pathwise: ", 1, true) then
+      return (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+  end
+end
 time = os.time
 WoW.errors = {}
 function geterrorhandler()
@@ -221,21 +258,83 @@ function GetInventoryItemID(_, slot)
   local item = S.inventory[slot]
   return item and item.id
 end
-local function MakeLink(item)
-  return string.format("|cffffffff|Hitem:%d::::::::1:::::::|h[%s]|h|r", item.id, item.name)
+-- Item database for GetItemInfo / GetItemStats. Inventory entries refer to
+-- these by id. Fields: name, quality, minLevel, equipLoc, classID, subclassID,
+-- sell, stats.
+WoW.items = {
+  [2504] = { name = "Worn Shortbow", equipLoc = "INVTYPE_RANGED", classID = 2, subclassID = 2,
+             stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.5 } },
+  [2092] = { name = "Worn Dagger", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 15,
+             stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 1.6 } },
+  [2512] = { name = "Rough Arrow", equipLoc = "INVTYPE_AMMO", classID = 6, subclassID = 2, stats = {} },
+  [6123] = { name = "Novice's Robe", equipLoc = "INVTYPE_ROBE", classID = 4, subclassID = 1, stats = {} },
+  [12345] = { name = "Uncached Axe", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 0,
+              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.0 } },
+  [148] = { name = "Rugged Trapper's Boots", equipLoc = "INVTYPE_FEET", classID = 4, subclassID = 2, stats = {} },
+  [2309] = { name = "Ragged Leather Boots", equipLoc = "INVTYPE_FEET", classID = 4, subclassID = 2,
+             stats = { RESISTANCE0_NAME = 16 } },
+  [9001] = { name = "Agile Boots", equipLoc = "INVTYPE_FEET", classID = 4, subclassID = 2,
+             stats = { RESISTANCE0_NAME = 20, ITEM_MOD_AGILITY_SHORT = 2 } },
+  [9002] = { name = "Flimsy Boots", equipLoc = "INVTYPE_FEET", classID = 4, subclassID = 1,
+             stats = { RESISTANCE0_NAME = 10, ITEM_MOD_AGILITY_SHORT = 2 } },
+  [9003] = { name = "Chain Vest", equipLoc = "INVTYPE_CHEST", classID = 4, subclassID = 3, minLevel = 15,
+             stats = { RESISTANCE0_NAME = 80 } },
+  [9004] = { name = "Plate Helm", equipLoc = "INVTYPE_HEAD", classID = 4, subclassID = 4,
+             stats = { RESISTANCE0_NAME = 200 } },
+  [9005] = { name = "Heavy Mace", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 4,
+             stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 9 } },
+  [9006] = { name = "Hunting Bow", equipLoc = "INVTYPE_RANGED", classID = 2, subclassID = 2, minLevel = 8,
+             stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 5.0, ITEM_MOD_AGILITY_SHORT = 1 } },
+  [9007] = { name = "Ring of Agility", equipLoc = "INVTYPE_FINGER", classID = 4, subclassID = 0,
+             stats = { ITEM_MOD_AGILITY_SHORT = 3 } },
+  [9008] = { name = "Ring of Stamina", equipLoc = "INVTYPE_FINGER", classID = 4, subclassID = 0,
+             stats = { ITEM_MOD_STAMINA_SHORT = 3 } },
+  [9009] = { name = "Ring of Spirit", equipLoc = "INVTYPE_FINGER", classID = 4, subclassID = 0,
+             stats = { ITEM_MOD_SPIRIT_SHORT = 2 } },
+  [9010] = { name = "Big Axe", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 1,
+             stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 6, ITEM_MOD_AGILITY_SHORT = 4 } },
+  [9011] = { name = "Sharp Dagger", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 15,
+             stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 3, ITEM_MOD_AGILITY_SHORT = 1 } },
+}
+
+function WoW.ItemLink(itemID)
+  local item = WoW.items[itemID]
+  return string.format("|cffffffff|Hitem:%d::::::::1:::::::|h[%s]|h|r", itemID, item and item.name or "?")
 end
+
+local function IsUncached(itemID)
+  for _, item in pairs(S.inventory) do
+    if item.id == itemID and item.uncached then return true end
+  end
+  return false
+end
+
 -- Like the real client, the ammo slot (0) never returns a link.
 function GetInventoryItemLink(_, slot)
   local item = S.inventory[slot]
   if not item or item.uncached or slot == 0 then return nil end
-  return MakeLink(item)
+  return WoW.ItemLink(item.id)
 end
-function GetItemInfo(itemID)
-  for _, item in pairs(S.inventory) do
-    if item.id == itemID and not item.uncached then
-      return item.name, MakeLink(item)
-    end
-  end
+
+local function ItemIDOf(item)
+  if type(item) == "number" then return item end
+  return tonumber(tostring(item):match("item:(%d+)"))
+end
+
+function GetItemInfo(item)
+  local itemID = ItemIDOf(item)
+  local data = WoW.items[itemID]
+  if not data or IsUncached(itemID) then return nil end
+  return data.name, WoW.ItemLink(itemID), data.quality or 1, 5, data.minLevel or 0, "Type", "SubType", 1,
+    data.equipLoc, "icon", data.sell or 1, data.classID, data.subclassID
+end
+
+function GetItemStats(link)
+  local data = WoW.items[ItemIDOf(link)]
+  if not data then return nil end
+  local copy = {}
+  for k, v in pairs(data.stats) do copy[k] = v end
+  return copy
 end
 
 function GetNumTalentTabs() return #S.talentTabs end

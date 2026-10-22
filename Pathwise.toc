@@ -28,9 +28,13 @@ Platform\Platform_Classic.lua
 Core\Init.lua
 
 Data\Classic\ClassSpecs.lua
+Data\Classic\StatWeights.lua
+Data\Classic\ClassGear.lua
 
 Core\Character.lua
 Core\Talents.lua
+Core\GearScore.lua
 
 UI\GoalPrompt.lua
+UI\Tooltip.lua
 UI\SlashCommands.lua

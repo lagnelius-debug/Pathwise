@@ -346,3 +346,101 @@ function Platform.GetSkills()
   end
   return skills, collapsedHeaders
 end
+
+---------------------------------------------------------------------------
+-- Items
+---------------------------------------------------------------------------
+
+-- Item class IDs (GetItemInfo returns 12/13). These numbers are the same in
+-- every current client.
+Platform.ITEM_CLASS_WEAPON = 2
+Platform.ITEM_CLASS_ARMOR = 4
+
+-- Inventory type -> equipment slots it can go in. Classic Era has a ranged
+-- slot (18) for bows, guns, crossbows, wands and thrown weapons.
+local EQUIP_LOC_SLOTS = {
+  INVTYPE_HEAD = { 1 },
+  INVTYPE_NECK = { 2 },
+  INVTYPE_SHOULDER = { 3 },
+  INVTYPE_CLOAK = { 15 },
+  INVTYPE_CHEST = { 5 },
+  INVTYPE_ROBE = { 5 },
+  INVTYPE_WRIST = { 9 },
+  INVTYPE_HAND = { 10 },
+  INVTYPE_WAIST = { 6 },
+  INVTYPE_LEGS = { 7 },
+  INVTYPE_FEET = { 8 },
+  INVTYPE_FINGER = { 11, 12 },
+  INVTYPE_TRINKET = { 13, 14 },
+  INVTYPE_WEAPON = { 16, 17 }, -- one-hand: off hand only with dual wield
+  INVTYPE_2HWEAPON = { 16 },
+  INVTYPE_WEAPONMAINHAND = { 16 },
+  INVTYPE_WEAPONOFFHAND = { 17 },
+  INVTYPE_SHIELD = { 17 },
+  INVTYPE_HOLDABLE = { 17 },
+  INVTYPE_RANGED = { 18 },
+  INVTYPE_RANGEDRIGHT = { 18 },
+  INVTYPE_THROWN = { 18 },
+}
+
+local RANGED_EQUIP_LOCS = {
+  INVTYPE_RANGED = true,
+  INVTYPE_RANGEDRIGHT = true,
+  INVTYPE_THROWN = true,
+}
+
+Platform.SLOT_MAINHAND = 16
+Platform.SLOT_OFFHAND = 17
+
+-- Returns item info as a table, or nil if the item isn't cached yet (the
+-- request also asks the server for it; GET_ITEM_INFO_RECEIVED fires later).
+-- slots is nil for items that don't go in a scored equipment slot (shirts,
+-- tabards, bags, ammo, ...).
+function Platform.GetItemInfo(item)
+  local getItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+  if not getItemInfo or not item then
+    return nil
+  end
+  local name, link, quality, itemLevel, minLevel, _, subTypeName, _, equipLoc, _, sellPrice, classID, subclassID =
+    getItemInfo(item)
+  if not name then
+    return nil
+  end
+  return {
+    itemID = Platform.ParseItemLink(link),
+    name = name,
+    link = link,
+    quality = quality,
+    itemLevel = itemLevel,
+    minLevel = minLevel or 0,
+    subTypeName = subTypeName,
+    equipLoc = equipLoc,
+    sellPrice = sellPrice or 0,
+    classID = classID,
+    subclassID = subclassID,
+    slots = EQUIP_LOC_SLOTS[equipLoc],
+    isRanged = RANGED_EQUIP_LOCS[equipLoc] or false,
+    isTwoHand = equipLoc == "INVTYPE_2HWEAPON",
+  }
+end
+
+-- Returns { [statKey] = value } for an item link, or nil if not available.
+-- Keys are the locale-independent global string names, e.g.
+-- ITEM_MOD_AGILITY_SHORT, RESISTANCE0_NAME (armor) and
+-- ITEM_MOD_DAMAGE_PER_SECOND_SHORT (weapon DPS). TODO verify that Classic Era
+-- reports armor and weapon DPS through GetItemStats.
+function Platform.GetItemStats(link)
+  local getItemStats = (C_Item and C_Item.GetItemStats) or GetItemStats
+  if not getItemStats or not link then
+    return nil
+  end
+  local stats = getItemStats(link)
+  if not stats then
+    return nil
+  end
+  local copy = {}
+  for key, value in pairs(stats) do
+    copy[key] = value
+  end
+  return copy
+end

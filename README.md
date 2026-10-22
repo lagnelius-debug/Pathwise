@@ -2,7 +2,9 @@
 
 A World of Warcraft addon that follows your character's progression and tells you what to do next. The full design is in [docs/PATHWISE_DESIGN.md](docs/PATHWISE_DESIGN.md).
 
-**Target:** WoW Classic Era. **Status:** milestones M0 (skeleton) and M1 (character tracker, spec detection and goal prompt) are built and tested in game on Classic Era 1.15.9 with a level 1 Night Elf Hunter.
+**Target:** WoW Classic Era. **Status:**
+- M0 (skeleton) and M1 (character tracker, spec detection, goal prompt) are tested in game on Classic Era 1.15.9 with a level 1 Night Elf Hunter.
+- M2 (gear advisor and tooltip line) is built and passes the offline tests. It has not been tested in game yet.
 
 ## Install
 
@@ -18,6 +20,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw status` | Print the character snapshot: class, level, XP, zone, spec, talents, gear, skills |
 | `/pw spec` | Open the goal prompt |
 | `/pw spec <goal>` | Set the goal directly, e.g. `bm`, `mm`, `surv`, `leveling`. `/pw spec clear` removes it |
+| `/pw score` | Print the score of each equipped item and the total |
+| `/pw stats [item]` | Print an item's raw stats as the game reports them. Type `/pw stats `, then shift-click an item |
 | `/pw debug` | Toggle debug output (`/pw debug on` or `/pw debug off` also work) |
 | `/pw reset` | Reset account settings. `/pw reset char` resets this character's data |
 | `/pw` | Opens the Next Steps panel once it exists (M7). For now it prints the command list |
@@ -43,10 +47,27 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] From level 10, "unspent" in `/pw status` matches the talent window. After spending points, the talent ranks are listed and the spec line says e.g. "Beast Mastery (from talents 5/0/0)".
 - [ ] After `/reload`, `WTF/Account/<account>/<realm>/<char>/SavedVariables/Pathwise.lua` contains the goal and the last snapshot.
 
+## In-game test checklist (M2)
+
+- [ ] Hovering an item in your bags shows a `Pathwise:` line, e.g. `+40% upgrade` in green, `-20% downgrade` in red, or `about the same` in yellow.
+- [ ] An armor-only item, like boots with only an Armor value, beats an equipped item with no armor.
+- [ ] A plate or mail item, or a mace, says `not usable by your class`. Mail says `... at level 40` instead.
+- [ ] An item above your level ends with `at level X`.
+- [ ] Equipped items don't get a line. Neither do the comparison tooltips that appear next to the main tooltip.
+- [ ] Hovering the same item repeatedly never shows the line twice.
+- [ ] A better bow beats the Worn Shortbow by a large margin. Ranged DPS is weighted heavily.
+- [ ] Items linked in chat (click the link) also get the line.
+- [ ] `/pw score` lists your equipped items with scores.
+- [ ] `/pw stats` on a piece of armor lists `RESISTANCE0_NAME` (armor). On a weapon it lists `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`.
+- [ ] With `/pw debug` on, the tooltip line also shows both scores, e.g. `(2.8 vs 0.6)`.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
 - The talent tab order for each non-hunter class in `Data/Classic/ClassSpecs.lua`. The hunter order is verified.
+- Armor and weapon DPS are reported by `GetItemStats` as `RESISTANCE0_NAME` and `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`. Use `/pw stats` to check.
+- Which tooltip hook Classic Era uses. `/pw debug` prints `Tooltip hook: ...` at login.
+- The weapon types hunters can use, and that dual wield starts at level 20 (`Data/Classic/ClassGear.lua`).
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development
