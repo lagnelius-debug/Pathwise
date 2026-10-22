@@ -84,6 +84,11 @@ function Platform.SafeCall(fn, ...)
   end, geterrorhandler())
 end
 
+-- Seconds since an arbitrary start, with sub-second precision.
+function Platform.GetTime()
+  return GetTime()
+end
+
 function Platform.InCombat()
   if InCombatLockdown then
     return InCombatLockdown() and true or false

@@ -89,6 +89,21 @@ check("several objectives: nearest of all", antidote.target and Near(antidote.ta
 check("item dropped by a same-named object: name not repeated", antidote.target.label == "Moonpetal Lily")
 check("arrow follows a QuestieDB target right after accepting", Pathwise:GetModule("Waypoints"):GetTarget() ~= nil)
 
+-- Reaching a spawn moves the arrow on to the next one.
+local arrow = _G.PathwiseArrow
+local Waypoints = Pathwise:GetModule("Waypoints")
+local first = Waypoints:GetTarget()
+S.mapX, S.mapY = first.x, first.y
+arrow._scripts.OnUpdate(arrow, 0.1) -- arrived: marks the spot visited
+WoW.RunTimers()                      -- quest advisor re-plans
+local second = Waypoints:GetTarget()
+check("after reaching a spawn the arrow moves on", second and not (Near(second.x, first.x) and Near(second.y, first.y)))
+check("visited spot remembered", Waypoints:IsVisited(first))
+WoW.now = WoW.now + 301
+check("visited spot forgotten after 5 minutes", not Waypoints:IsVisited(first))
+S.mapX, S.mapY = 0.58, 0.40
+UpdateLog(WoW.questLog)
+
 -- Finished objectives are skipped
 WoW.questLog[3].objectives[2] = { text = "Moonpetal Lily: 4/4", finished = true }
 UpdateLog(WoW.questLog)

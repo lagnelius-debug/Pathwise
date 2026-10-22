@@ -17,6 +17,13 @@ local Waypoints = Pathwise:NewModule("Waypoints")
 -- Closer than this counts as arrived.
 Waypoints.ARRIVE_YARDS = 10
 
+-- Spawn points the player reached (mob killed, node looted) are skipped for
+-- this long when picking the next target, so the arrow moves on instead of
+-- pointing at the spot the player is standing on.
+Waypoints.VISIT_MEMORY_SECONDS = 300
+
+local visited = {} -- { { mapID, x, y, time } }
+
 local manual -- manual target or nil
 local auto   -- target of the top Next Steps item, or nil
 
@@ -100,12 +107,41 @@ function Waypoints:ClearManual()
   end
 end
 
+function Waypoints:MarkVisited(point)
+  local now = Platform.GetTime()
+  for i = #visited, 1, -1 do
+    if now - visited[i].time > Waypoints.VISIT_MEMORY_SECONDS then
+      table.remove(visited, i)
+    end
+  end
+  visited[#visited + 1] = { mapID = point.mapID, x = point.x, y = point.y, time = now }
+end
+
+-- True if the player recently reached a spot within arrival range of point.
+function Waypoints:IsVisited(point)
+  local now = Platform.GetTime()
+  for _, spot in ipairs(visited) do
+    if now - spot.time <= Waypoints.VISIT_MEMORY_SECONDS then
+      local distance = Waypoints.Vector(spot.mapID, spot.x, spot.y, point.mapID, point.x, point.y)
+      if distance and distance <= Waypoints.ARRIVE_YARDS then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 -- Called by the UI when the player reaches the target.
 function Waypoints:OnArrived()
   local target, kind = self:GetTarget()
   if kind == "manual" then
     Pathwise:Printf(L.WAY_ARRIVED, target.label or "")
     self:ClearManual()
+  elseif target.spawn and not target.visited then
+    -- One of several spawns (QuestieDB): remember it and ask for the next.
+    target.visited = true
+    self:MarkVisited(target)
+    Pathwise:FireCallback("WAYPOINT_VISITED", target)
   end
 end
 

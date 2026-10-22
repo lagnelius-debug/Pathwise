@@ -235,6 +235,8 @@ end
 
 function QuestAdvisor:OnInitialize()
   self:RegisterCallback("CHARACTER_UPDATED", "OnCharacterUpdated")
+  -- Reached a spawn the arrow pointed at: pick the next one.
+  self:RegisterCallback("WAYPOINT_VISITED", "OnQuestEvent")
 end
 
 function QuestAdvisor:OnEnable()

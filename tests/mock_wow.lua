@@ -217,6 +217,8 @@ function WoW.HoverItem(itemID, tooltip)
   end
 end
 time = os.time
+WoW.now = 1000
+function GetTime() return WoW.now end
 WoW.errors = {}
 function geterrorhandler()
   return function(err) WoW.errors[#WoW.errors + 1] = err end

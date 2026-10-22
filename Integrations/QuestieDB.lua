@@ -83,14 +83,17 @@ local function AddSpawns(points, spawnList, label)
       for _, coordinate in ipairs(coordinates) do
         local x, y = coordinate[1], coordinate[2]
         if x and y and x >= 0 and y >= 0 then
-          points[#points + 1] = { mapID = uiMapId, x = x / 100, y = y / 100, label = label }
+          points[#points + 1] = { mapID = uiMapId, x = x / 100, y = y / 100, label = label, spawn = true }
         end
       end
     end
   end
 end
 
--- The point closest to the player (same continent), else the first one.
+-- The point closest to the player (same continent). Spots the player is
+-- standing on or recently reached are skipped, so after a kill or a loot the
+-- arrow moves on to the next spawn; if every spawn was skipped, the closest
+-- one is used anyway (it has probably respawned by the time you get there).
 local function Nearest(points)
   if #points == 0 then
     return nil
@@ -101,13 +104,20 @@ local function Nearest(points)
   end
   local Waypoints = Pathwise:GetModule("Waypoints")
   local best, bestDistance = nil, math.huge
+  local fallback, fallbackDistance = nil, math.huge
   for _, point in ipairs(points) do
     local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
-    if distance and distance < bestDistance then
-      best, bestDistance = point, distance
+    if distance then
+      if distance < fallbackDistance then
+        fallback, fallbackDistance = point, distance
+      end
+      local skip = distance <= Waypoints.ARRIVE_YARDS or Waypoints:IsVisited(point)
+      if not skip and distance < bestDistance then
+        best, bestDistance = point, distance
+      end
     end
   end
-  return best or points[1]
+  return best or fallback or points[1]
 end
 
 -- Arrow label for a spawn of `name` (an NPC or object).
@@ -163,7 +173,22 @@ local function TurnInTarget(quest)
   local labelFormat = string.format(L.ARROW_QUESTIE_TURN_IN, quest.title, "%s")
   NpcPoints(points, finishedBy[1], labelFormat)
   ObjectPoints(points, finishedBy[2], labelFormat)
-  return Nearest(points)
+  -- The turn-in NPC is the destination itself: never skip it as visited.
+  for _, point in ipairs(points) do
+    point.spawn = nil
+  end
+  local best, bestDistance = points[1], math.huge
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  if mapID then
+    local Waypoints = Pathwise:GetModule("Waypoints")
+    for _, point in ipairs(points) do
+      local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+      if distance and distance < bestDistance then
+        best, bestDistance = point, distance
+      end
+    end
+  end
+  return best
 end
 
 local function DoTarget(quest)
