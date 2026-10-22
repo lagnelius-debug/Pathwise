@@ -23,6 +23,10 @@ end
 section("M0: load and login")
 
 local Pathwise = WoW.LoadAddon("./Pathwise_Vanilla.toc", "Pathwise")
+
+-- A module that fails must not stop the login message or other modules.
+local broken = Pathwise:NewModule("BrokenTestModule")
+function broken:OnEnable() error("boom") end
 check("namespace has Platform", Pathwise.Platform ~= nil)
 check("slash command bound", SlashCmdList.PATHWISE ~= nil and SLASH_PATHWISE2 == "/pw")
 
@@ -35,6 +39,8 @@ check("db defaults applied", Pathwise.db.debug == false and type(Pathwise.db.mod
 WoW.FireEvent("PLAYER_LOGIN")
 WoW.FireEvent("PLAYER_ENTERING_WORLD", true, false)
 check("login message printed", WoW.ChatContains("v0.1.0-test loaded"))
+check("module error reported", #WoW.errors == 1 and WoW.ChatContains("Error in module BrokenTestModule (OnEnable)"))
+check("other modules still enabled", Pathwise:GetModule("Character").enabled == true)
 
 ---------------------------------------------------------------------------
 section("M0: commands")

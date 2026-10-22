@@ -12,6 +12,7 @@ Pathwise.L = L
 
 -- General
 L.LOADED = "v%s loaded. Type /pw help for commands."
+L.MODULE_ERROR = "|cffff4040Error in module %s (%s).|r Type /console scriptErrors 1 and /reload to see it."
 L.UNKNOWN_COMMAND = "Unknown command '%s'."
 L.HELP_HEADER = "Commands (/pathwise or /pw):"
 L.NEXT_STEPS_NOT_READY = "The Next Steps panel is not built yet (milestone M7)."

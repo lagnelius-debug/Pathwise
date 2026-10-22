@@ -73,6 +73,17 @@ function Platform.After(seconds, fn)
   timerFrame:Show()
 end
 
+-- Calls fn(...) and returns true on success. On error, the error goes to
+-- WoW's error handler (the scriptErrors popup, or BugSack if installed) and
+-- false is returned, so the caller can carry on. Lua 5.1's xpcall doesn't
+-- forward arguments, hence the closure.
+function Platform.SafeCall(fn, ...)
+  local n, args = select("#", ...), { ... }
+  return xpcall(function()
+    return fn(unpack(args, 1, n))
+  end, geterrorhandler())
+end
+
 function Platform.InCombat()
   if InCombatLockdown then
     return InCombatLockdown() and true or false

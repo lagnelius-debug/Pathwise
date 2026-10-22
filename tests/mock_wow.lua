@@ -168,6 +168,10 @@ DEFAULT_CHAT_FRAME = {
 BackdropTemplateMixin = {}
 GameTooltip = NewObject("GameTooltip", "GameTooltip", UIParent)
 time = os.time
+WoW.errors = {}
+function geterrorhandler()
+  return function(err) WoW.errors[#WoW.errors + 1] = err end
+end
 
 ---------------------------------------------------------------------------
 -- Timers

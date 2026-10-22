@@ -354,6 +354,17 @@ end, L.CMD_RESET)
 
 local lifecycle = {}
 
+-- Runs a module's lifecycle method so that an error in one module is
+-- reported (and shown by BugSack / scriptErrors) without stopping the others.
+local function CallModule(module, method)
+  if module[method] then
+    local ok = Platform.SafeCall(module[method], module)
+    if not ok then
+      Pathwise:Printf(L.MODULE_ERROR, module.name, method)
+    end
+  end
+end
+
 function lifecycle:ADDON_LOADED(_, loadedName)
   if loadedName ~= addonName then
     return
@@ -364,28 +375,24 @@ function lifecycle:ADDON_LOADED(_, loadedName)
   Pathwise.version = Platform.GetAddOnMetadata("Version") or Pathwise.version
 
   for _, module in ipairs(moduleOrder) do
-    if module.OnInitialize then
-      module:OnInitialize()
-    end
+    CallModule(module, "OnInitialize")
   end
   Pathwise:Debug("Initialized.")
 end
 
 function lifecycle:PLAYER_LOGIN()
   Pathwise:UnregisterEvent("PLAYER_LOGIN", lifecycle)
+  Pathwise:Printf(L.LOADED, Pathwise.version)
 
   for _, module in ipairs(moduleOrder) do
     if Pathwise:IsModuleEnabled(module.name) then
       module.enabled = true
-      if module.OnEnable then
-        module:OnEnable()
-      end
+      CallModule(module, "OnEnable")
     else
       Pathwise:Debugf("Module %s is disabled.", module.name)
     end
   end
 
-  Pathwise:Printf(L.LOADED, Pathwise.version)
   Pathwise:FireCallback("LOGIN")
 end
 
