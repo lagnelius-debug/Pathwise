@@ -27,6 +27,8 @@ local Pathwise = WoW.LoadAddon("./Pathwise_Vanilla.toc", "Pathwise")
 -- A module that fails must not stop the login message or other modules.
 local broken = Pathwise:NewModule("BrokenTestModule")
 function broken:OnEnable() error("boom") end
+local function ReadFile(path) local f = assert(io.open(path)); local s = f:read("*a"); f:close(); return s end
+check("Pathwise.toc matches Pathwise_Vanilla.toc", ReadFile("./Pathwise.toc") == ReadFile("./Pathwise_Vanilla.toc"))
 check("namespace has Platform", Pathwise.Platform ~= nil)
 check("slash command bound", SlashCmdList.PATHWISE ~= nil and SLASH_PATHWISE2 == "/pw")
 

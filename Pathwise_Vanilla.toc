@@ -9,6 +9,10 @@
 # Interface number: 11509 = Classic Era 1.15.9. Verified in game 2026-10-22 with
 #  /dump select(4, GetBuildInfo())  - re-check after each Classic Era patch.
 
+# Pathwise.toc is an identical copy used as a fallback by clients that
+# don't pick up the _Vanilla suffix. Keep both files the same
+# (tests/run.lua checks this).
+
 # Load order matters:
 #  1. Locales     - string table (Pathwise.L)
 #  2. Platform    - the only layer that calls flavor-specific WoW API
