@@ -8,9 +8,11 @@ local L = Pathwise.L
 
 local NextStepsFrame = Pathwise:NewModule("NextStepsFrame")
 
-local WIDTH = 330
+local WIDTH = 340
 local ROW_HEIGHT = 16
-local MAX_ROWS = 12
+local MAX_ROWS = 16
+local INDENT = 12 -- per sub-line level
+local TASK_COLOR = "|cff99e6ff"
 local TOP_PADDING = 34
 local BOTTOM_PADDING = 14
 
@@ -72,7 +74,6 @@ local function GetRow(index)
     row:SetScript("OnLeave", OnRowLeave)
     row:SetScript("OnMouseUp", OnRowClick)
     row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    row.text:SetAllPoints(row)
     row.text:SetJustifyH("LEFT")
     rows[index] = row
   end
@@ -85,38 +86,77 @@ local function UpdatePath()
   frame.path:SetWidth(frame.path.text:GetStringWidth() + 4)
 end
 
+-- The step that gets its details listed underneath: the one the arrow
+-- follows, else the first one that has details.
+local function ExpandedItem(items)
+  local followed = Pathwise:GetModule("Waypoints"):GetAutoItemId()
+  for _, item in ipairs(items) do
+    if item.id == followed and item.subLines and #item.subLines > 0 then
+      return item
+    end
+  end
+  for _, item in ipairs(items) do
+    if item.subLines and #item.subLines > 0 then
+      return item
+    end
+  end
+end
+
+-- Flattens the items into window lines: { text, indent, item }.
+local function BuildLines(items)
+  local lines = {}
+  local expanded = ExpandedItem(items)
+  for _, item in ipairs(items) do
+    local text = item == expanded and item.expandedText or item.text
+    if item.target then
+      text = text .. " " .. L.NS_HAS_LOCATION
+    end
+    lines[#lines + 1] = { text = text, indent = 0, item = item }
+    if item == expanded then
+      for _, sub in ipairs(item.subLines) do
+        local subText = sub.task and (TASK_COLOR .. sub.text .. "|r") or sub.text
+        lines[#lines + 1] = { text = subText, indent = sub.level * INDENT, item = item }
+      end
+    end
+  end
+  return lines
+end
+
 function NextStepsFrame:Render()
   if not frame or not frame:IsShown() then
     return
   end
   UpdatePath()
   local items = Pathwise:GetModule("NextSteps"):GetItems()
-  local shown = math.min(#items, MAX_ROWS)
-  local count = shown
+  local lines = BuildLines(items)
+  if #lines == 0 then
+    lines[1] = { text = L.NS_EMPTY, indent = 0 }
+  elseif #lines > MAX_ROWS then
+    local hidden = {}
+    for i = MAX_ROWS, #lines do
+      if lines[i].item and lines[i].indent == 0 then
+        hidden[#hidden + 1] = true
+      end
+    end
+    for i = #lines, MAX_ROWS, -1 do
+      lines[i] = nil
+    end
+    lines[MAX_ROWS] = { text = string.format(L.NS_MORE, #hidden), indent = 0 }
+  end
 
-  for i = 1, shown do
+  for i, line in ipairs(lines) do
     local row = GetRow(i)
-    row.item = items[i]
-    row.text:SetText(items[i].target and (items[i].text .. " " .. L.NS_HAS_LOCATION) or items[i].text)
+    row.item = line.item
+    row.text:ClearAllPoints()
+    row.text:SetPoint("LEFT", row, "LEFT", line.indent, 0)
+    row.text:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+    row.text:SetText(line.text)
     row:Show()
   end
-  if #items == 0 then
-    count = 1
-    local row = GetRow(1)
-    row.item = nil
-    row.text:SetText(L.NS_EMPTY)
-    row:Show()
-  elseif #items > MAX_ROWS then
-    count = shown + 1
-    local row = GetRow(count)
-    row.item = nil
-    row.text:SetText(string.format(L.NS_MORE, #items - MAX_ROWS))
-    row:Show()
-  end
-  for i = count + 1, #rows do
+  for i = #lines + 1, #rows do
     rows[i]:Hide()
   end
-  frame:SetHeight(TOP_PADDING + count * ROW_HEIGHT + BOTTOM_PADDING)
+  frame:SetHeight(TOP_PADDING + #lines * ROW_HEIGHT + BOTTOM_PADDING)
 end
 
 local function CreateWindow()

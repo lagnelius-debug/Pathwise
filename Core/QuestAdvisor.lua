@@ -127,6 +127,15 @@ local function IsHere(quest, location, target)
   return target ~= nil and location.mapID ~= nil and target.mapID == location.mapID
 end
 
+-- The target's tasks ("Kill Timberling", ...) as Next Steps sub-lines.
+local function TaskLines(target, level)
+  local lines = {}
+  for _, task in ipairs(target and target.tasks or {}) do
+    lines[#lines + 1] = { text = task, level = level, task = true }
+  end
+  return lines
+end
+
 -- Merges "do" steps whose targets are within TOGETHER_YARDS of each other
 -- into one step: "Do together: A + B", with all their mobs in the target
 -- macro and all their tasks under the arrow. Other items pass through.
@@ -177,7 +186,7 @@ function QuestAdvisor.CombineNearby(items)
         table.sort(group, function(a, b)
           return (a.distance or math.huge) < (b.distance or math.huge)
         end)
-        local names, titles, ids, detail, npcNames, tasks = {}, {}, {}, {}, {}, {}
+        local names, titles, ids, detail, npcNames, tasks, subLines = {}, {}, {}, {}, {}, {}, {}
         local seenNpc, seenTask = {}, {}
         local priority = 0
         for _, member in ipairs(group) do
@@ -188,6 +197,11 @@ function QuestAdvisor.CombineNearby(items)
           detail[#detail + 1] = member.questName
           for _, line in ipairs(member.detail or {}) do
             detail[#detail + 1] = "  " .. line
+          end
+          -- Each quest with its own tasks under it.
+          subLines[#subLines + 1] = { text = member.questName, level = 1 }
+          for _, line in ipairs(TaskLines(member.target, 2)) do
+            subLines[#subLines + 1] = line
           end
           for _, npc in ipairs(member.target.names or {}) do
             if not seenNpc[npc] then
@@ -208,15 +222,17 @@ function QuestAdvisor.CombineNearby(items)
           target[key] = value
         end
         target.names, target.tasks = npcNames, tasks
-        target.label = table.concat(titles, " + ")
-        local text = string.format(L.QA_TOGETHER, table.concat(names, " + "))
-        if nearest.distance then
-          text = text .. string.format(L.QA_DISTANCE, nearest.distance)
-        end
+        -- Short arrow label: where it points now, plus how many more quests.
+        local more = #group == 2 and L.ARROW_MORE_QUEST or string.format(L.ARROW_MORE_QUESTS, #group - 1)
+        target.label = (nearest.target.label or nearest.title) .. more
+        local distanceText = nearest.distance and string.format(L.QA_DISTANCE, nearest.distance) or ""
         result[#result + 1] = {
           id = table.concat(ids, "+"),
           priority = priority,
-          text = text,
+          text = string.format(L.QA_TOGETHER, table.concat(names, " + ")) .. distanceText,
+          -- When it's the current step, the quests are listed underneath.
+          expandedText = string.format(L.QA_TOGETHER_COUNT, #group) .. distanceText,
+          subLines = subLines,
           detail = detail,
           target = target,
           kind = "do",
@@ -295,6 +311,8 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
       title = quest.title,
       questName = name,
       distance = distance,
+      -- What to do, shown under the line when it's the current step.
+      subLines = TaskLines(target, 1),
       -- Within a priority: nearest first, then current zone, then most
       -- progress, then lowest level (easiest first).
       order = { distance or math.huge, here and 0 or 1, -(progress or 0), quest.level },

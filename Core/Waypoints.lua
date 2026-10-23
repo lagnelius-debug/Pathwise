@@ -87,6 +87,13 @@ end
 -- Target state
 ---------------------------------------------------------------------------
 
+-- Id of the Next Steps item the arrow follows (nil for a manual target).
+function Waypoints:GetAutoItemId()
+  if not manual and Pathwise.db.arrowAuto then
+    return autoItemId
+  end
+end
+
 function Waypoints:GetTarget()
   if manual then
     return manual, "manual"

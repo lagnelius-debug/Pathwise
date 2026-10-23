@@ -168,7 +168,7 @@ db.Quest[918] = { finishedBy = { { 1240 } }, objectives = { nil, nil, { { 5168, 
 db.Quest[919] = { finishedBy = { { 1240 } }, objectives = { nil, nil, { { 5169, nil, 1 } } } } -- Timberling Sprouts
 db.Item[5168] = { name = "Timberling Seed", npcDrops = { 2022 } }
 db.Item[5169] = { name = "Timberling Sprout", objectDrops = { 600 } }
-db.Object[600] = { name = "Timberling Sprout", spawns = { [141] = { { 59, 67 }, { 61, 69 } } } }
+db.Object[600] = { name = "Timberling Sprout", spawns = { [141] = { { 59.5, 67.5 }, { 61, 69 } } } }
 db.Quest[920] = { finishedBy = { { 1234 } }, objectives = {} }                       -- far turn-in
 db.Quest[921] = { finishedBy = { { 1234 } }, objectives = { { { 1986, nil, 1 } } } } -- far quest
 db.Npc[2022] = { name = "Timberling", spawns = { [141] = { { 57, 65 }, { 60, 68 } } } }
@@ -189,13 +189,25 @@ check("nearby quests done together", order[1] == "Do together: [5] Timberling Se
 check("far turn-in after nearby quests", order[2]:find("Turn in: [5] Far Turn-in", 1, true))
 check("far quest last", order[3]:find("Far Quest", 1, true))
 local together = Pathwise:GetModule("Waypoints"):GetTarget()
-check("arrow label names both quests", together.label == "Timberling Seeds + Timberling Sprouts")
-check("arrow says what to do", table.concat(together.tasks, "; ")
-  == "Kill Timberling for Timberling Seed; Collect Timberling Sprout")
+check("short arrow label: nearest target plus quest count", together.label == "Timberling Seed (Timberling) +1 quest")
 check("target macro gets the mobs", together.names[1] == "Timberling")
+
+-- The Next Steps window lists each quest with its tasks under the current step
+Pathwise:GetModule("NextStepsFrame"):SetShown(true)
+local lines = {}
+for _, f in ipairs(WoW.frames) do
+  if f.text and f._parent == _G.PathwiseNextSteps and f._shown then
+    lines[#lines + 1] = Strip(f.text:GetText())
+  end
+end
+local joined = table.concat(lines, "\n")
+check("current step expanded", joined:find("Do together (2 quests) - 42 yd *", 1, true) ~= nil)
+check("each quest with its tasks underneath", joined:find(
+  "[5] Timberling Seeds\nKill Timberling for Timberling Seed\n[6] Timberling Sprouts\nCollect Timberling Sprout", 1, true) ~= nil)
+check("other steps stay one line", joined:find("Turn in: [5] Far Turn-in - 488 yd *", 1, true) ~= nil
+  and not joined:find("Turn in at Gilshalan", 1, true))
 local arrow = _G.PathwiseArrow
-arrow._scripts.OnUpdate(arrow, 0.1)
-check("hint shown under the arrow", arrow.hint:GetText() == "Kill Timberling for Timberling Seed; Collect Timberling Sprout")
+check("no task text on the arrow", arrow.hint == nil)
 check("single quest keeps its own line", order[3]:find("Do: [5] Far Quest", 1, true))
 
 -- Walking to the far area re-sorts by itself
