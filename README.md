@@ -16,7 +16,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 
 ## Install
 
-1. Copy this folder to `World of Warcraft/_classic_era_/Interface/AddOns/Pathwise/`. The folder must be named `Pathwise` and contain `Pathwise_Vanilla.toc` directly.
+1. Download the newest `Pathwise-<version>.zip` from [Releases](https://github.com/lagnelius-debug/Pathwise/releases/latest) (the zip under "Assets", not "Source code"). Unzip it into `World of Warcraft/_classic_era_/Interface/AddOns/`. The folder must be named `Pathwise` and contain `Pathwise_Vanilla.toc` directly.
 2. The TOC uses interface `11509`, verified in game on 2026-10-22. After a Classic Era patch, run `/dump select(4, GetBuildInfo())` and update `## Interface:` in `Pathwise_Vanilla.toc` if the number changed.
 3. Turn on Lua errors with `/console scriptErrors 1`, or install BugGrabber and BugSack.
 
@@ -51,7 +51,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 Test with a fresh level 1 Night Elf Hunter.
 
 **M0**
-- [ ] The addon loads with no Lua errors, and chat shows `Pathwise: v0.1.0 loaded`.
+- [ ] The addon loads with no Lua errors, and chat shows `Pathwise: v0.2.0 loaded` (the version of the zip you installed).
 - [ ] `/pw debug` prints "Debug output enabled". Running it again disables it. With debug on, logging in or zoning prints `[debug]` lines.
 - [ ] `/pathwise help` and `/pw help` both list the commands.
 
