@@ -7,10 +7,13 @@ After every change:
 2. Bump `## Version:` in both `Pathwise_Vanilla.toc` and `Pathwise.toc`
    (they must stay identical): patch for fixes, minor for features.
 3. Commit and push to `origin main`.
-4. Run `tools/release.sh "short release notes"`: it builds
-   `../Pathwise-<version>.zip` locally and pushes the tag `v<version>`;
-   the GitHub Actions workflow (.github/workflows/release.yml) then
-   publishes the release with the zip attached. (This session type can't
-   create releases through the API, hence the workflow.) The user always
-   wants the new zip on GitHub - check the release appeared.
-5. Send the zip to the user as well.
+4. Add a section for the new version to CHANGELOG.md (it becomes the
+   release notes) before committing.
+5. Build the zip: `tools/build_zip.sh ../Pathwise-<version>.zip` and send
+   it to the user.
+6. The zip goes on GitHub as a release through
+   .github/workflows/release.yml. This session type can't create
+   releases or push tags (both refused with 403), so the user starts it:
+   Actions tab > Release > Run workflow. Remind them each time, with the
+   link https://github.com/lagnelius-debug/Pathwise/actions/workflows/release.yml
+   (tools/release.sh does the tag-push route for sessions that may push tags.)
