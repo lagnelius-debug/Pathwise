@@ -1,7 +1,7 @@
 local addonName, Pathwise = ...
 
 -- Settings panel (Esc > Options > AddOns > Pathwise, or /pw settings).
--- For now: General (minimap button) and Appearance (one button per window
+-- For now: General (minimap and target buttons) and Appearance (one button per window
 -- theme with a two-color swatch; the active theme has a gold outline). More
 -- settings (module toggles, ammo thresholds, chat messages) come with M7.
 --
@@ -99,9 +99,19 @@ local function CreatePanel()
   end)
   panel.minimapCheck = minimap
 
+  local targetButton = CreateFrame("CheckButton", "PathwiseSettingsTargetButton", panel, "UICheckButtonTemplate")
+  targetButton:SetPoint("TOPLEFT", minimap, "BOTTOMLEFT", 0, 2)
+  targetButton.label = targetButton:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  targetButton.label:SetPoint("LEFT", targetButton, "RIGHT", 2, 1)
+  targetButton.label:SetText(L.SETTINGS_TARGET_BUTTON)
+  targetButton:SetScript("OnClick", function(self)
+    Pathwise:GetModule("TargetButton"):SetShown(self:GetChecked() and true or false)
+  end)
+  panel.targetButtonCheck = targetButton
+
   -- Appearance
   local header = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  header:SetPoint("TOPLEFT", minimap, "BOTTOMLEFT", 4, -16)
+  header:SetPoint("TOPLEFT", targetButton, "BOTTOMLEFT", 4, -16)
   header:SetText(L.SETTINGS_APPEARANCE)
   panel.themeHeader = header
 
@@ -115,6 +125,7 @@ local function CreatePanel()
   panel:SetScript("OnShow", function()
     UpdateOutlines()
     panel.minimapCheck:SetChecked(not Pathwise.db.minimap.hide)
+    panel.targetButtonCheck:SetChecked(Pathwise.db.targetButton.shown)
   end)
 
   if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
@@ -145,10 +156,15 @@ function SettingsPanel:OnMinimapButtonChanged(_, shown)
   panel.minimapCheck:SetChecked(shown)
 end
 
+function SettingsPanel:OnTargetButtonChanged(_, shown)
+  panel.targetButtonCheck:SetChecked(shown)
+end
+
 function SettingsPanel:OnInitialize()
   CreatePanel()
   self:RegisterCallback("THEME_CHANGED", "OnThemeChanged")
   self:RegisterCallback("MINIMAP_BUTTON_CHANGED", "OnMinimapButtonChanged")
+  self:RegisterCallback("TARGET_BUTTON_CHANGED", "OnTargetButtonChanged")
   UpdateOutlines()
 end
 

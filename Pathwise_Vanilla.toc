@@ -62,6 +62,7 @@ UI\QuestRewardUI.lua
 UI\TrainerPanel.lua
 UI\NextStepsFrame.lua
 UI\Arrow.lua
+UI\TargetButton.lua
 UI\Settings.lua
 UI\MinimapButton.lua
 UI\SlashCommands.lua

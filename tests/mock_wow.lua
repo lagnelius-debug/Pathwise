@@ -103,11 +103,19 @@ function FrameMethods:HookScript(name, fn)
   self._scripts[name] = function(...) if old then old(...) end fn(...) end
 end
 function FrameMethods:Show()
+  if not self._shown and self._template then
+    local template = self._template
+    if template:find("Secure") and WoW.state.inCombat then error("ADDON_ACTION_BLOCKED: Show in combat") end
+  end
   local was = self._shown
   self._shown = true
   if not was and self._scripts.OnShow then self._scripts.OnShow(self) end
 end
 function FrameMethods:Hide()
+  if self._shown and self._template then
+    local template = self._template
+    if template:find("Secure") and WoW.state.inCombat then error("ADDON_ACTION_BLOCKED: Hide in combat") end
+  end
   local was = self._shown
   self._shown = false
   if was and self._scripts.OnHide then self._scripts.OnHide(self) end
@@ -129,6 +137,7 @@ function FrameMethods:GetStringWidth() return #(self._text or "") * 6 end
 function FrameMethods:SetRotation(radians) self._rotation = radians end
 function FrameMethods:SetPoint(...) self._points = self._points or {}; self._points[#self._points + 1] = { ... } end
 function FrameMethods:ClearAllPoints() self._points = {} end
+function FrameMethods:GetPoint(i) local p = self._points and self._points[i or 1]; if p then return unpack(p) end end
 function FrameMethods:SetAllPoints(other) self._points = { { "ALL", other } } end
 function FrameMethods:SetTexture(path) self._texture = path end
 function FrameMethods:SetTexCoord(...) self._texcoord = { ... } end
@@ -146,6 +155,18 @@ function FrameMethods:SetID(id) self._id = id end
 function FrameMethods:GetFrameLevel() return self._level or 1 end
 function FrameMethods:SetFrameLevel(level) self._level = level end
 function FrameMethods:SetParent(parent) self._parent = parent end
+-- Secure templates: changing them in combat is blocked like in game.
+local function CheckProtected(frame, what)
+  if frame._template and frame._template:find("Secure") and WoW.state.inCombat then
+    error("ADDON_ACTION_BLOCKED: " .. what .. " on a protected frame in combat")
+  end
+end
+function FrameMethods:SetAttribute(key, value)
+  CheckProtected(self, "SetAttribute")
+  self._attributes = self._attributes or {}
+  self._attributes[key] = value
+end
+function FrameMethods:GetAttribute(key) return self._attributes and self._attributes[key] end
 
 local function NewObject(kind, name, parent)
   local object = setmetatable({

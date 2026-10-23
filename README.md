@@ -41,8 +41,9 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw talents` | Show your next talent points from the build for your path. `/pw talents check` compares the build data with the game's talent tree |
 | `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
 | `/pw theme` | List the window themes (numbered, active one marked). `/pw theme 7` or `/pw theme wildwood` sets one, `/pw theme next` cycles |
-| `/pw settings` | Open the Pathwise settings (minimap button, window theme) |
+| `/pw settings` | Open the Pathwise settings (minimap button, target button, window theme) |
 | `/pw minimap` | Show or hide the minimap button |
+| `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
 
 ## In-game test checklist (M0 and M1)
@@ -211,3 +212,11 @@ Test with a fresh level 1 Night Elf Hunter.
 - Quest locations can come from [QuestieDB](https://github.com/Questie/QuestieDB) (GPL-3.0). It's an optional dependency read at runtime through its public `LibQuestieDB` API; Pathwise ships none of its data.
 - Hunter trainer data (`Data/Classic/ClassSpells.lua`) is based on [WhatsTraining](https://github.com/fusionpit/WhatsTraining) by fusionpit, MIT License.
 - The `tests/` and `docs/` folders aren't listed in the TOC, so WoW ignores them.
+
+## In-game test checklist (target button, spawn spots)
+
+- [ ] With a kill or loot quest (e.g. Webwood Venom), a target button with a crosshair icon and `Target: Webwood Spider` shows up. Clicking it targets the nearest Webwood Spider and marks it with a skull. Needs QuestieDB.
+- [ ] The button hides for turn-ins and when no quest needs a mob. Changes during combat happen right after the fight.
+- [ ] Drag the button to move it (not in combat). Its position survives `/reload`.
+- [ ] `/pw targetbutton` and the "Show target button for quest mobs" checkbox in the settings turn it off and on.
+- [ ] When the arrow points at a mob's spawn spot it shows no yard count, and `Look around here` once you get there. Turn-ins and your own waypoints still show the distance.

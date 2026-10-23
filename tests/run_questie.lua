@@ -99,7 +99,7 @@ arrow._scripts.OnUpdate(arrow, 0.1)
 WoW.FireEvent("QUEST_LOG_UPDATE") -- e.g. an unrelated update while standing there
 WoW.RunTimers()
 check("arriving alone doesn't move the arrow", Same(Waypoints:GetTarget(), first)
-  and arrow.distance:GetText() == "You are here")
+  and arrow.distance:GetText() == "Look around here")
 
 -- Looting there (progress) moves it on
 local objective = WoW.questLog[3].objectives[2] -- Moonpetal Lily, the nearest target

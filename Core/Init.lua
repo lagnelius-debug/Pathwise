@@ -30,6 +30,7 @@ local DB_DEFAULTS = {
   arrowAuto = true,             -- arrow follows the top Next Steps item
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
   targetMacro = true,           -- keep the "Pathwise" target macro up to date
+  targetButton = { shown = true }, -- floating target button: on/off and position
   sellPrice = true,             -- show vendor sell prices in item tooltips
   ammoWarn = 200,               -- hunter: warn below this much ammo
   ammoCritical = 50,            -- hunter: urgent warning below this
