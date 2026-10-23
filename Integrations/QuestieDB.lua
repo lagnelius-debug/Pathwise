@@ -195,6 +195,30 @@ local function WithNames(best, points)
   return best
 end
 
+-- "What to do here" lines for the arrow, e.g. "Kill Timberling".
+local MAX_DROPPER_NAMES = 2
+
+local function AddTask(tasks, text)
+  for _, existing in ipairs(tasks) do
+    if existing == text then
+      return
+    end
+  end
+  tasks[#tasks + 1] = text
+end
+
+-- Up to MAX_DROPPER_NAMES NPC names, e.g. "Timberling" or "A, B".
+local function NpcNames(npcIds)
+  local names = {}
+  for _, npcId in ipairs(npcIds or {}) do
+    local name = lib.Npc.Get(npcId, "name")
+    if name and #names < MAX_DROPPER_NAMES then
+      AddTask(names, name)
+    end
+  end
+  return table.concat(names, ", ")
+end
+
 local function TurnInTarget(quest)
   local finishedBy = lib.Quest.Get(quest.questID, "finishedBy") or {}
   local points = {}
@@ -216,18 +240,23 @@ local function TurnInTarget(quest)
       end
     end
   end
-  return WithNames(best, points)
+  best = WithNames(best, points)
+  if best and best.npcName then
+    best.tasks = { string.format(L.TASK_TURN_IN, best.npcName) }
+  end
+  return best
 end
 
 local function DoTarget(quest)
   local objectives = lib.Quest.Get(quest.questID, "objectives") or {}
-  local points = {}
+  local points, tasks = {}, {}
 
   -- [1] creatures to kill: { npcId, text?, index }
   for _, objective in ipairs(objectives[1] or {}) do
     local name = objective[2] or lib.Npc.Get(objective[1], "name")
     if not IsFinished(quest, name) then
       NpcPoints(points, { objective[1] })
+      AddTask(tasks, string.format(L.TASK_KILL, lib.Npc.Get(objective[1], "name") or name or "?"))
     end
   end
   -- [2] objects to use: { objectId, text?, index }
@@ -235,14 +264,23 @@ local function DoTarget(quest)
     local name = objective[2] or lib.Object.Get(objective[1], "name")
     if not IsFinished(quest, name) then
       ObjectPoints(points, { objective[1] })
+      AddTask(tasks, string.format(L.TASK_USE, lib.Object.Get(objective[1], "name") or name or "?"))
     end
   end
   -- [3] items to collect: { itemId, text?, index }, from NPCs or objects
   for _, objective in ipairs(objectives[3] or {}) do
     local itemName = lib.Item.Get(objective[1], "name")
     if not IsFinished(quest, objective[2] or itemName) then
-      NpcPoints(points, lib.Item.Get(objective[1], "npcDrops"), nil, itemName)
-      ObjectPoints(points, lib.Item.Get(objective[1], "objectDrops"), nil, itemName)
+      local npcDrops = lib.Item.Get(objective[1], "npcDrops")
+      local objectDrops = lib.Item.Get(objective[1], "objectDrops")
+      NpcPoints(points, npcDrops, nil, itemName)
+      ObjectPoints(points, objectDrops, nil, itemName)
+      if npcDrops and #npcDrops > 0 then
+        AddTask(tasks, string.format(L.TASK_LOOT, NpcNames(npcDrops), itemName or "?"))
+      end
+      if objectDrops and #objectDrops > 0 then
+        AddTask(tasks, string.format(L.TASK_COLLECT, itemName or "?"))
+      end
     end
   end
   -- [5] kill credit: { { npcIds }, rootNpcId, text?, index }
@@ -250,9 +288,14 @@ local function DoTarget(quest)
     local name = objective[3] or lib.Npc.Get(objective[2], "name")
     if not IsFinished(quest, name) then
       NpcPoints(points, objective[1])
+      AddTask(tasks, string.format(L.TASK_KILL, lib.Npc.Get(objective[2], "name") or name or "?"))
     end
   end
-  return WithNames(Nearest(points), points)
+  local best = WithNames(Nearest(points), points)
+  if best then
+    best.tasks = tasks
+  end
+  return best
 end
 
 -- Returns a target at the nearest NPC that gives quest questID (e.g. a

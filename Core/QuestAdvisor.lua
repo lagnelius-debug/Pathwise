@@ -28,6 +28,10 @@ local MOVE_CHECK_SECONDS = 5
 
 local lastPlanPosition -- { mapID, x, y } where the last plan was made
 
+-- Quests whose nearest objectives are this close to each other are done
+-- together as one step (e.g. Timberling Seeds and Timberling Sprouts).
+QuestAdvisor.TOGETHER_YARDS = 120
+
 local DIFFICULTY_COLORS = {
   RED = "ff2020",
   ORANGE = "ff8040",
@@ -123,6 +127,108 @@ local function IsHere(quest, location, target)
   return target ~= nil and location.mapID ~= nil and target.mapID == location.mapID
 end
 
+-- Merges "do" steps whose targets are within TOGETHER_YARDS of each other
+-- into one step: "Do together: A + B", with all their mobs in the target
+-- macro and all their tasks under the arrow. Other items pass through.
+function QuestAdvisor.CombineNearby(items)
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  local function Close(a, b)
+    local distance = Waypoints.Vector(a.target.mapID, a.target.x, a.target.y, b.target.mapID, b.target.x, b.target.y)
+    return distance ~= nil and distance <= QuestAdvisor.TOGETHER_YARDS
+  end
+
+  local candidates, result = {}, {}
+  for _, item in ipairs(items) do
+    if item.kind == "do" and item.target and item.priority >= P.QUEST_ELSEWHERE then
+      candidates[#candidates + 1] = item
+    else
+      result[#result + 1] = item
+    end
+  end
+
+  local grouped = {}
+  for _, seed in ipairs(candidates) do
+    if not grouped[seed] then
+      local group = { seed }
+      grouped[seed] = true
+      -- Grow the group with anything close to any member.
+      local added = true
+      while added do
+        added = false
+        for _, other in ipairs(candidates) do
+          if not grouped[other] then
+            for _, member in ipairs(group) do
+              if Close(member, other) then
+                group[#group + 1] = other
+                grouped[other] = true
+                added = true
+                break
+              end
+            end
+          end
+        end
+      end
+
+      if #group == 1 then
+        result[#result + 1] = seed
+      else
+        -- Nearest member first; it provides the arrow position.
+        table.sort(group, function(a, b)
+          return (a.distance or math.huge) < (b.distance or math.huge)
+        end)
+        local names, titles, ids, detail, npcNames, tasks = {}, {}, {}, {}, {}, {}
+        local seenNpc, seenTask = {}, {}
+        local priority = 0
+        for _, member in ipairs(group) do
+          names[#names + 1] = member.questName
+          titles[#titles + 1] = member.title
+          ids[#ids + 1] = member.id
+          priority = math.max(priority, member.priority)
+          detail[#detail + 1] = member.questName
+          for _, line in ipairs(member.detail or {}) do
+            detail[#detail + 1] = "  " .. line
+          end
+          for _, npc in ipairs(member.target.names or {}) do
+            if not seenNpc[npc] then
+              seenNpc[npc] = true
+              npcNames[#npcNames + 1] = npc
+            end
+          end
+          for _, task in ipairs(member.target.tasks or {}) do
+            if not seenTask[task] then
+              seenTask[task] = true
+              tasks[#tasks + 1] = task
+            end
+          end
+        end
+        local nearest = group[1]
+        local target = {}
+        for key, value in pairs(nearest.target) do
+          target[key] = value
+        end
+        target.names, target.tasks = npcNames, tasks
+        target.label = table.concat(titles, " + ")
+        local text = string.format(L.QA_TOGETHER, table.concat(names, " + "))
+        if nearest.distance then
+          text = text .. string.format(L.QA_DISTANCE, nearest.distance)
+        end
+        result[#result + 1] = {
+          id = table.concat(ids, "+"),
+          priority = priority,
+          text = text,
+          detail = detail,
+          target = target,
+          kind = "do",
+          distance = nearest.distance,
+          order = nearest.order,
+        }
+      end
+    end
+  end
+  return result
+end
+
 -- Pure function (apart from map geometry): quests -> Next Steps items, in
 -- recommended order. Steps with a known location are ordered by distance:
 -- nearby ones (NEAR_YARDS) first, far ones after the steps without a
@@ -185,11 +291,17 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
       text = text,
       detail = Detail(quest),
       target = target,
+      kind = targetKind,
+      title = quest.title,
+      questName = name,
+      distance = distance,
       -- Within a priority: nearest first, then current zone, then most
       -- progress, then lowest level (easiest first).
       order = { distance or math.huge, here and 0 or 1, -(progress or 0), quest.level },
     }
   end
+
+  items = QuestAdvisor.CombineNearby(items)
 
   table.sort(items, function(a, b)
     if a.priority ~= b.priority then

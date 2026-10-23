@@ -152,6 +152,7 @@ UpdateLog(WoW.questLog)
 venom = Item(916)
 check("turn-in at the finishing NPC", venom.target and Near(venom.target.x, 0.55) and Near(venom.target.y, 0.50)
   and venom.target.label == "Turn in: Webwood Venom (Gilshalan Windwalker)")
+check("turn-in hint", venom.target.tasks[1] == "Turn in at Gilshalan Windwalker")
 
 -- Talk-to quest (no objectives): arrow goes to the NPC that finishes it
 db.Quest[3116] = { finishedBy = { { 1235 } }, objectives = {} }
@@ -162,8 +163,12 @@ check("talk-to quest: arrow to the finishing NPC", Item(3116).target and Near(It
 
 -- Distance decides: south of Dolanaar, the Timberling quests just picked
 -- up come before a far turn-in and a far quest.
-db.Quest[918] = { finishedBy = { { 1240 } }, objectives = { { { 2022, nil, 1 } } } } -- Timberling Seeds
-db.Quest[919] = { finishedBy = { { 1240 } }, objectives = { { { 2022, nil, 1 } } } } -- Timberling Sprouts
+-- Seeds drop from Timberlings; Sprouts are picked up from the ground.
+db.Quest[918] = { finishedBy = { { 1240 } }, objectives = { nil, nil, { { 5168, nil, 1 } } } } -- Timberling Seeds
+db.Quest[919] = { finishedBy = { { 1240 } }, objectives = { nil, nil, { { 5169, nil, 1 } } } } -- Timberling Sprouts
+db.Item[5168] = { name = "Timberling Seed", npcDrops = { 2022 } }
+db.Item[5169] = { name = "Timberling Sprout", objectDrops = { 600 } }
+db.Object[600] = { name = "Timberling Sprout", spawns = { [141] = { { 59, 67 }, { 61, 69 } } } }
 db.Quest[920] = { finishedBy = { { 1234 } }, objectives = {} }                       -- far turn-in
 db.Quest[921] = { finishedBy = { { 1234 } }, objectives = { { { 1986, nil, 1 } } } } -- far quest
 db.Npc[2022] = { name = "Timberling", spawns = { [141] = { { 57, 65 }, { 60, 68 } } } }
@@ -180,11 +185,18 @@ local order = {}
 for _, item in ipairs(NextSteps:GetItems()) do
   if item.id:find("^quest:") then order[#order + 1] = Strip(item.text) end
 end
-check("nearby quests first", order[1]:find("Timberling Seeds", 1, true) and order[2]:find("Timberling Sprouts", 1, true))
-check("nearby quest shows its distance (30 yd west, 30 north)", order[1] == "Do: [5] Timberling Seeds - 42 yd")
-check("far turn-in after nearby quests", order[3]:find("Turn in: [5] Far Turn-in", 1, true))
-check("far quest last", order[4]:find("Far Quest", 1, true))
-check("arrow follows the nearest step", Pathwise:GetModule("Waypoints"):GetTarget().label == "Timberling")
+check("nearby quests done together", order[1] == "Do together: [5] Timberling Seeds + [6] Timberling Sprouts - 42 yd")
+check("far turn-in after nearby quests", order[2]:find("Turn in: [5] Far Turn-in", 1, true))
+check("far quest last", order[3]:find("Far Quest", 1, true))
+local together = Pathwise:GetModule("Waypoints"):GetTarget()
+check("arrow label names both quests", together.label == "Timberling Seeds + Timberling Sprouts")
+check("arrow says what to do", table.concat(together.tasks, "; ")
+  == "Kill Timberling for Timberling Seed; Collect Timberling Sprout")
+check("target macro gets the mobs", together.names[1] == "Timberling")
+local arrow = _G.PathwiseArrow
+arrow._scripts.OnUpdate(arrow, 0.1)
+check("hint shown under the arrow", arrow.hint:GetText() == "Kill Timberling for Timberling Seed; Collect Timberling Sprout")
+check("single quest keeps its own line", order[3]:find("Do: [5] Far Quest", 1, true))
 
 -- Walking to the far area re-sorts by itself
 S.mapX, S.mapY = 0.56, 0.36

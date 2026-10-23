@@ -43,6 +43,7 @@ function Arrow:Update()
     return
   end
   frame.label:SetText(target.label or "")
+  frame.hint:SetText(target.tasks and table.concat(target.tasks, "; ") or "")
 
   local distance, relative = Waypoints:GetDirection()
   if not distance then
@@ -90,7 +91,7 @@ end
 
 local function CreateArrow()
   frame = CreateFrame("Frame", "PathwiseArrow", UIParent)
-  frame:SetSize(120, 116)
+  frame:SetSize(120, 140)
   frame:SetFrameStrata("MEDIUM")
   frame:SetClampedToScreen(true)
   frame:EnableMouse(true)
@@ -125,11 +126,18 @@ local function CreateArrow()
   frame.distance = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   frame.distance:SetPoint("TOP", frame.label, "BOTTOM", 0, -2)
 
+  -- What to do at the target, e.g. "Kill Timberling for Timberling Seed;
+  -- Collect Timberling Sprout".
+  frame.hint = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  frame.hint:SetPoint("TOP", frame.distance, "BOTTOM", 0, -2)
+  frame.hint:SetWidth(220)
+  frame.hint:SetTextColor(0.6, 0.9, 1)
+
   -- "Next": the mob/node isn't there, or the player wants another step.
   -- Same as right-clicking the arrow, /pw next or the key binding.
   frame.next = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
   frame.next:SetSize(64, 20)
-  frame.next:SetPoint("TOP", frame.distance, "BOTTOM", 0, -4)
+  frame.next:SetPoint("TOP", frame.hint, "BOTTOM", 0, -4)
   frame.next:SetText(L.ARROW_NEXT_BUTTON)
   frame.next:SetScript("OnClick", function()
     GetWaypoints():Next()
