@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.4.0
+
+- Dragonflight and Skyhawk get clean gold emblem heads (dragon, eagle) with
+  new gems, replacing the sculpted heads from 0.3.0.
+- Five new emblem themes: Ironhorn (bull), Frostfang (wolf), Lionheart
+  (lion), Moonwatch (owl) and Phoenix Crest (phoenix). 13 themes in all.
+- The settings show the theme buttons in a 3-column grid.
+- **Fully restart WoW** (not just `/reload`) after updating: the new
+  textures are only found on a client start.
+
 ## 0.3.0
 
 - Painted, full-color corner art for Dragonflight (dragon heads, rubies),

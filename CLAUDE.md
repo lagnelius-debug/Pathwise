@@ -1,6 +1,6 @@
 # Pathwise - working notes
 
-WoW Classic Era addon. Design: docs/PATHWISE_DESIGN.md, themes: docs/PATHWISE_THEMES.md + docs/PATHWISE_THEMES_V2.md (v2 replaces the corner art of 4 themes).
+WoW Classic Era addon. Design: docs/PATHWISE_DESIGN.md, themes: docs/PATHWISE_THEMES.md + docs/PATHWISE_THEMES_V2.md (painted corner art) + docs/PATHWISE_THEMES_V3.md (emblem themes, 13 in all).
 
 After every change:
 1. Run the offline tests: `lua5.1 tests/run.lua` (all must pass).

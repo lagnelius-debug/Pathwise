@@ -12,7 +12,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 - M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
-- Window themes (docs/PATHWISE_THEMES.md): 8 themes on the To-do window, an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
+- Window themes (docs/PATHWISE_THEMES.md): 13 themes on the To-do window (v2 painted corner art and v3 emblem themes included), an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
 
 ## Install
 
@@ -169,7 +169,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] The To-do window has the **Dragonflight** look by default: dark red background, 3 px red border, gold trim line, a header band with a small "PATHWISE" label and a centered "To-do" title, and painted gold dragon heads on the two top corners (see the v2 checklist below for the corner art).
 - [ ] The step the arrow follows is highlighted, with a tinted row background, or a vertical bar in Corner Brackets.
 - [ ] The footer shows `N steps · <zone>` on the left and the **Path** button on the right.
-- [ ] `/pw theme` lists all 8 themes with numbers and marks the active one. `/pw theme 6` switches to Skyhawk immediately, with no `/reload`. `/pw theme next` cycles. No ornaments from the previous theme are left behind.
+- [ ] `/pw theme` lists all 13 themes with numbers and marks the active one. `/pw theme 6` switches to Skyhawk immediately, with no `/reload`. `/pw theme next` cycles. No ornaments from the previous theme are left behind.
 - [ ] Check each theme once: 1 Gilded Hairline (thin gold line, small diamonds, a diamond on the divider), 2 Classic Tooltip (Blizzard tooltip look, "Pathwise · To-do" on one line), 3 Moonlit (crescent next to the title), 4 Corner Brackets (no border, gold L-shapes in the corners), 5 Dragonflight, 6 Skyhawk (eagles), 7 Wildwood (branches with leaves on all four corners), 8 Phoenix Ember (feathers fanning out from all four corners).
 - [ ] Quest names keep their difficulty colors in every theme.
 - [ ] Esc > Options > AddOns > **Pathwise** (or `/pw settings`) shows **Appearance** with 8 buttons, each with a two-color swatch. The active one has a gold outline. Clicking one switches the theme right away.
@@ -181,14 +181,23 @@ Test with a fresh level 1 Night Elf Hunter.
 From docs/PATHWISE_THEMES_V2.md. **Fully restart WoW** first (not just `/reload`): the corner art uses new texture files.
 
 - [ ] No green squares in any theme: all 9 new textures load.
-- [ ] Dragonflight (`/pw theme 5`): full-color dragon heads on both top corners, facing outward on both sides, eyes near the window corner. A ruby centered on each bottom corner.
-- [ ] Skyhawk (`/pw theme 6`): eagle heads on the top corners the same way, sapphires on the bottom corners.
-- [ ] Phoenix Ember (`/pw theme 8`): feathers fan outward from all four corners.
-- [ ] Wildwood (`/pw theme 7`): dark wood border with a moss line inside. Branches lie along the top and side edges at all four corners; the bottom ones point down and outward. Green leaves by default.
+- [ ] Phoenix Ember (`/pw theme 13`): feathers fan outward from all four corners.
+- [ ] Wildwood (`/pw theme 12`): dark wood border with a moss line inside. Branches lie along the top and side edges at all four corners; the bottom ones point down and outward. Green leaves by default.
 - [ ] `/pw season autumn` swaps to autumn leaves right away and chat says `Wildwood season: Autumn`. `/pw season auto` uses autumn in September to November, summer otherwise. `/pw season summer` brings the green back.
 - [ ] In the settings (`/pw settings`), a "Wildwood season" choice (Summer / Autumn / Auto) appears under the theme buttons only while Wildwood is active. Clicking one changes the leaves right away.
 - [ ] The close button (X) is never covered by the art and still closes the window, in every theme.
 - [ ] Cycle `/pw theme next` many times: no Lua errors and no art left over from the previous theme.
+
+## In-game test checklist (emblem themes)
+
+From docs/PATHWISE_THEMES_V3.md. **Fully restart WoW** first (not just `/reload`): there are 14 new texture files.
+
+- [ ] No green squares in any of the 13 themes.
+- [ ] The 7 emblem themes have a gold head on both top corners, facing outward on both sides and overlapping the corner (not floating away from it), and a gem centered on each bottom corner: 5 Dragonflight (dragon, ruby), 6 Skyhawk (eagle, sapphire), 7 Ironhorn (bull, topaz), 8 Frostfang (wolf, ice), 9 Lionheart (lion, amethyst), 10 Moonwatch (owl, moonstone), 11 Phoenix Crest (phoenix, ember gem).
+- [ ] The close button (X) is visible and works in all 13 themes.
+- [ ] `/pw theme` lists all 13 with numbers. `/pw theme 9`, `/pw theme frostfang` and `/pw theme next` work.
+- [ ] `/pw settings` shows the 13 theme buttons in a grid of 3 columns (5 rows), with the Wildwood season choice under it when Wildwood is active. Nothing runs off the panel, and long names fit or end in "...".
+- [ ] Cycle `/pw theme next` through all 13 a couple of times: no Lua errors and no art left over.
 
 ## In-game test checklist (window size, minimap button)
 

@@ -40,7 +40,8 @@ end
 ---------------------------------------------------------------------------
 section("Themes: data and registry")
 
-check("8 themes in order", #Pathwise.ThemeOrder == 8 and Pathwise.ThemeOrder[5] == "dragonflight")
+check("13 themes in order", #Pathwise.ThemeOrder == 13 and Pathwise.ThemeOrder[5] == "dragonflight"
+  and Pathwise.ThemeOrder[11] == "phoenixcrest" and Pathwise.ThemeOrder[13] == "ember")
 for _, id in ipairs(Pathwise.ThemeOrder) do
   check("theme has a name and colors: " .. id, Pathwise.Themes[id].name and Pathwise.Themes[id].bg and Pathwise.Themes[id].text)
 end
@@ -51,7 +52,7 @@ Pathwise.db.theme = "nope"
 check("unknown saved id falls back to the default", Theme.GetActiveId() == "dragonflight"
   and Theme.Get("nope") == Pathwise.Themes.dragonflight)
 Pathwise.db.theme = "dragonflight"
-check("Get by number", Theme.Get(7) == Pathwise.Themes.wildwood)
+check("Get by number", Theme.Get(12) == Pathwise.Themes.wildwood)
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 section("Themes: Dragonflight on the To-do window")
@@ -67,19 +68,19 @@ Theme.SetActive("dragonflight")
 check("window skinned", window.themeId == "dragonflight")
 check("label and title", window.label:GetText() == "PATHWISE" and window.title:GetText() == "To-do"
   and window.label:IsShown())
-check("header 52 px with a band", window.headerHeight == 52 and window.header:IsShown())
+check("emblem theme: header 48 px with a band", window.headerHeight == 48 and window.header:IsShown())
 check("outer border 3 px, frame color", window._backdrop.edgeSize == 3
   and Near(window._borderColor[1], 0x9b / 255))
 check("trim line 5 px inside", window.trim:IsShown() and Point(window.trim)[4] == 5)
-check("dragon head top-left: 110x110, anchor (35, 33), untinted",
-  Art(Corner("TOPLEFT").art, "dragon_head", 110, "TOPLEFT", -35, 33, "0,1,0,1"))
-check("dragon head top-right: mirrored, facing outward",
-  Art(Corner("TOPRIGHT").art, "dragon_head", 110, "TOPRIGHT", 35, 33, "1,0,0,1"))
-check("ruby bottom-left: centered on the corner, flipped V",
-  Art(Corner("BOTTOMLEFT").art, "gem_ruby", 36, "BOTTOMLEFT", -18, -18, "0,1,1,0"))
-check("ruby bottom-right: flipped both",
-  Art(Corner("BOTTOMRIGHT").art, "gem_ruby", 36, "BOTTOMRIGHT", 18, -18, "1,0,1,0"))
-check("close button 46 px from the right edge", Point(window.close)[1] == "RIGHT" and Point(window.close)[4] == -46)
+check("dragon emblem top-left: 60x60, anchor (20.4, 24), untinted",
+  Art(Corner("TOPLEFT").art, "dragon_emblem", 60, "TOPLEFT", -20.4, 24, "0,1,0,1"))
+check("dragon emblem top-right: mirrored, facing outward",
+  Art(Corner("TOPRIGHT").art, "dragon_emblem", 60, "TOPRIGHT", 20.4, 24, "1,0,0,1"))
+check("ruby bottom-left: 24x24 centered on the corner",
+  Art(Corner("BOTTOMLEFT").art, "gem_emblem_ruby", 24, "BOTTOMLEFT", -12, -12, "0,1,1,0"))
+check("ruby bottom-right",
+  Art(Corner("BOTTOMRIGHT").art, "gem_emblem_ruby", 24, "BOTTOMRIGHT", 12, -12, "1,0,1,0"))
+check("close button 36 px from the right edge", Point(window.close)[1] == "RIGHT" and Point(window.close)[4] == -36)
 check("close button above the corner art", window.close:GetFrameLevel() > window.ornaments:GetFrameLevel())
 check("ornaments above the border", window.ornaments:GetFrameLevel() == window:GetFrameLevel() + 5)
 
@@ -89,17 +90,35 @@ section("Themes: /pw theme")
 WoW.ClearChat()
 WoW.Slash("theme")
 check("list with numbers and the active one", WoW.ChatContains("Pathwise themes: 1 Gilded Hairline, 2 Classic Tooltip, "
-  .. "3 Moonlit, 4 Corner Brackets, 5 Dragonflight (active), 6 Skyhawk, 7 Wildwood, 8 Phoenix Ember"))
+  .. "3 Moonlit, 4 Corner Brackets, 5 Dragonflight (active), 6 Skyhawk, 7 Ironhorn, 8 Frostfang, 9 Lionheart, "
+  .. "10 Moonwatch, 11 Phoenix Crest, 12 Wildwood, 13 Phoenix Ember"))
 
-WoW.Slash("theme skyhawk")
-check("skyhawk: eagle heads, sapphires, close at 50",
-  Art(Corner("TOPRIGHT").art, "eagle_head", 110, "TOPRIGHT", 40, 35, "1,0,0,1")
-  and Art(Corner("BOTTOMLEFT").art, "gem_sapphire", 36, "BOTTOMLEFT", -18, -18, "0,1,1,0")
-  and Point(window.close)[4] == -50)
+-- Every emblem theme: its head on top, its gem at the bottom, same anchors.
+local emblems = {
+  skyhawk = { "eagle_emblem", "gem_emblem_sapphire" },
+  ironhorn = { "bull_emblem", "gem_emblem_topaz" },
+  frostfang = { "wolf_emblem", "gem_emblem_ice" },
+  lionheart = { "lion_emblem", "gem_emblem_amethyst" },
+  moonwatch = { "owl_emblem", "gem_emblem_moonstone" },
+  phoenixcrest = { "phoenix_emblem", "gem_emblem_ember" },
+}
+for id, files in pairs(emblems) do
+  WoW.Slash("theme " .. id)
+  check(id .. ": emblem heads facing outward, gems, 48 px header, close at 36", window.themeId == id
+    and Art(Corner("TOPLEFT").art, files[1], 60, "TOPLEFT", -20.4, 24, "0,1,0,1")
+    and Art(Corner("TOPRIGHT").art, files[1], 60, "TOPRIGHT", 20.4, 24, "1,0,0,1")
+    and Art(Corner("BOTTOMLEFT").art, files[2], 24, "BOTTOMLEFT", -12, -12, "0,1,1,0")
+    and Art(Corner("BOTTOMRIGHT").art, files[2], 24, "BOTTOMRIGHT", 12, -12, "1,0,1,0")
+    and window.headerHeight == 48 and Point(window.close)[4] == -36)
+end
+WoW.ClearChat()
+WoW.Slash("theme 11")
+check("/pw theme 11 -> Phoenix Crest", WoW.ChatContains("Theme: Phoenix Crest") and Pathwise.db.theme == "phoenixcrest")
 
 WoW.ClearChat()
-WoW.Slash("theme 7")
-check("/pw theme 7", WoW.ChatContains("Theme: Wildwood") and Pathwise.db.theme == "wildwood" and window.themeId == "wildwood")
+WoW.Slash("theme 12")
+check("/pw theme 12", WoW.ChatContains("Theme: Wildwood") and Pathwise.db.theme == "wildwood" and window.themeId == "wildwood")
+check("wildwood keeps the 52 px header", window.headerHeight == 52)
 check("wildwood: summer branches by default",
   Art(Corner("TOPLEFT").art, "wildwood_top_summer", 110, "TOPLEFT", -27.5, 27.5, "0,1,0,1")
   and Art(Corner("BOTTOMRIGHT").art, "wildwood_bottom_summer", 110, "BOTTOMRIGHT", 27.5, -27.5, "1,0,1,0"))
@@ -193,11 +212,11 @@ NextStepsFrame:SetShown(true)
 section("Themes: switching creates no textures")
 
 local before = WoW.textureCount
-for _ = 1, 24 do
+for _ = 1, 26 do
   WoW.Slash("theme next")
 end
-check("cycling 24 times creates no new textures", WoW.textureCount == before)
-check("back on the same theme after 3 full cycles", Pathwise.db.theme == "dragonflight")
+check("cycling 26 times creates no new textures", WoW.textureCount == before)
+check("back on the same theme after 2 full cycles", Pathwise.db.theme == "dragonflight")
 
 ---------------------------------------------------------------------------
 section("Themes: quest colors")
@@ -217,7 +236,14 @@ local buttons = {}
 for _, f in ipairs(WoW.frames) do
   if f.themeId and f._parent == panel then buttons[#buttons + 1] = f end
 end
-check("Appearance: 8 theme buttons", #buttons == 8 and buttons[1].themeId == "gilded" and buttons[8].themeId == "ember")
+check("Appearance: 13 theme buttons", #buttons == 13 and buttons[1].themeId == "gilded" and buttons[13].themeId == "ember")
+local function Offset(button) return button._points[1][4], button._points[1][5] end
+local x1, y1 = Offset(buttons[1])
+local x3, y3 = Offset(buttons[3])
+local x4, y4 = Offset(buttons[4])
+local x13, y13 = Offset(buttons[13])
+check("grid: 3 per row, 5 rows", y3 == y1 and x3 > x1 and x4 == x1 and y4 < y1 and x13 == x1
+  and y13 == y1 - 4 * (y1 - y4))
 check("button shows number and name", buttons[3].name:GetText() == "3  Moonlit")
 buttons[3]:Click()
 check("clicking a button applies the theme", Pathwise.db.theme == "moonlit" and window.themeId == "moonlit")

@@ -1,7 +1,8 @@
 local _, Pathwise = ...
 
 -- Window themes (docs/PATHWISE_THEMES.md §3, updated by
--- docs/PATHWISE_THEMES_V2.md). Plain data, flavor-independent.
+-- docs/PATHWISE_THEMES_V2.md and docs/PATHWISE_THEMES_V3.md). Plain data,
+-- flavor-independent.
 -- Colors are hex strings; UI/Theme.lua turns them into r, g, b with
 -- Pathwise.HexToRGB.
 
@@ -14,12 +15,25 @@ function Pathwise.HexToRGB(hex, alpha)
   return r, g, b, alpha or 1
 end
 
-Pathwise.ThemeOrder = { "gilded", "tooltip", "moonlit", "brackets", "dragonflight", "skyhawk", "wildwood", "ember" }
+Pathwise.ThemeOrder = {
+  "gilded", "tooltip", "moonlit", "brackets",
+  "dragonflight", "skyhawk", "ironhorn", "frostfang", "lionheart", "moonwatch", "phoenixcrest",
+  "wildwood", "ember",
+}
 Pathwise.DefaultTheme = "dragonflight"
 
 -- Wildwood seasons: the saved setting ("auto" follows the month).
 Pathwise.WildwoodSeasons = { "summer", "autumn", "auto" }
 Pathwise.AutumnMonths = { [9] = true, [10] = true, [11] = true }
+
+-- v3 emblem art: every emblem head and gem shares the same placement.
+-- (Adjust these numbers if they sit off in game, never the textures.)
+local EMBLEM = { w = 60, h = 60, ax = 20.4, ay = 24 } -- head: frame corner sits at (20.4, 24) inside the texture
+local GEM    = { w = 24, h = 24, ax = 12,   ay = 12 } -- gem: centered on the corner
+
+-- (emblem = true: UI/Theme.lua gives emblem themes a 48 px header.)
+local function Emblem(file) return { file = file, w = EMBLEM.w, h = EMBLEM.h, ax = EMBLEM.ax, ay = EMBLEM.ay, emblem = true } end
+local function Gem(file)    return { file = file, w = GEM.w,    h = GEM.h,    ax = GEM.ax,    ay = GEM.ay    } end
 
 Pathwise.Themes = {
   gilded = {
@@ -69,42 +83,74 @@ Pathwise.Themes = {
     ornament = "#c9a24a", corners = "brackets",
     highlight = "bar",
   },
-  -- v2 (docs/PATHWISE_THEMES_V2.md): painted, full-color corner art.
-  -- cornerArt.top goes on the top corners, .bottom on the bottom ones;
-  -- ax, ay = the spot in the art (UI units from its top-left edge) that sits
-  -- on the window's outer corner. Adjust placement here, never the textures.
+  -- v2/v3: painted, full-color corner art. cornerArt.top goes on the top
+  -- corners, .bottom on the bottom ones; ax, ay = the spot in the art (UI
+  -- units from its top-left edge) that sits on the window's outer corner.
+  -- v3 emblem themes (docs/PATHWISE_THEMES_V3.md):
   dragonflight = {
     name = "Dragonflight",
-    bg = "#1a0d0d", bgAlpha = 0.95,
-    frame = "#9b2020", frameWidth = 3,
-    trim = "#e0b04a", trimAlpha = 1, trimInset = 5,
-    band = "#2a1010",
-    divider = "#e0b04a", dividerAlpha = 1,
-    title = "#ecc56a", muted = "#b59a7a", text = "#d6c6ba",
-    ornament = "#e0b04a",
+    bg = "#1a0d0d", bgAlpha = 0.95, frame = "#9b2020", frameWidth = 3,
+    trim = "#e0b04a", trimAlpha = 1, trimInset = 5, band = "#2a1010", divider = "#e0b04a", dividerAlpha = 1,
+    title = "#ecc56a", muted = "#b59a7a", text = "#d6c6ba", ornament = "#e0b04a",
     highlight = "fill", highlightColor = "#e0b04a", highlightAlpha = 0.12,
-    closeInset = 46,   -- close button this far from the right edge so the head doesn't cover it
-    cornerArt = {
-      top    = { file = "dragon_head", w = 110, h = 110, ax = 35, ay = 33 },
-      bottom = { file = "gem_ruby",    w = 36,  h = 36,  ax = 18, ay = 18 },
-    },
+    closeInset = 36,
+    cornerArt = { top = Emblem("dragon_emblem"), bottom = Gem("gem_emblem_ruby") },
   },
   skyhawk = {
     name = "Skyhawk",
-    bg = "#0d1426", bgAlpha = 0.95,
-    frame = "#2f5fb3", frameWidth = 3,
-    trim = "#d9b45a", trimAlpha = 1, trimInset = 5,
-    band = "#15224a",
-    divider = "#d9b45a", dividerAlpha = 1,
-    title = "#f0d58a", muted = "#a9b4d6", text = "#c3cbe0",
-    ornament = "#e3c06a",
+    bg = "#0d1426", bgAlpha = 0.95, frame = "#2f5fb3", frameWidth = 3,
+    trim = "#d9b45a", trimAlpha = 1, trimInset = 5, band = "#15224a", divider = "#d9b45a", dividerAlpha = 1,
+    title = "#f0d58a", muted = "#a9b4d6", text = "#c3cbe0", ornament = "#e3c06a",
     highlight = "fill", highlightColor = "#2f5fb3", highlightAlpha = 0.25,
-    closeInset = 50,
-    cornerArt = {
-      top    = { file = "eagle_head",   w = 110, h = 110, ax = 40, ay = 35 },
-      bottom = { file = "gem_sapphire", w = 36,  h = 36,  ax = 18, ay = 18 },
-    },
+    closeInset = 36,
+    cornerArt = { top = Emblem("eagle_emblem"), bottom = Gem("gem_emblem_sapphire") },
   },
+  ironhorn = {
+    name = "Ironhorn",
+    bg = "#1a120c", bgAlpha = 0.95, frame = "#7a4420", frameWidth = 3,
+    trim = "#e0b04a", trimAlpha = 1, trimInset = 5, band = "#2a1a10", divider = "#e0b04a", dividerAlpha = 1,
+    title = "#f0c878", muted = "#b89a7c", text = "#dccab6", ornament = "#e0b04a",
+    highlight = "fill", highlightColor = "#e08c3c", highlightAlpha = 0.14,
+    closeInset = 36,
+    cornerArt = { top = Emblem("bull_emblem"), bottom = Gem("gem_emblem_topaz") },
+  },
+  frostfang = {
+    name = "Frostfang",
+    bg = "#0e141a", bgAlpha = 0.95, frame = "#4a5e72", frameWidth = 3,
+    trim = "#b8c6d4", trimAlpha = 1, trimInset = 5, band = "#18222c", divider = "#b8c6d4", dividerAlpha = 1,
+    title = "#e2ecf4", muted = "#9aaabb", text = "#c4d0dc", ornament = "#c8d0da",
+    highlight = "fill", highlightColor = "#8cc8f0", highlightAlpha = 0.14,
+    closeInset = 36,
+    cornerArt = { top = Emblem("wolf_emblem"), bottom = Gem("gem_emblem_ice") },
+  },
+  lionheart = {
+    name = "Lionheart",
+    bg = "#160e1e", bgAlpha = 0.95, frame = "#5a2e7a", frameWidth = 3,
+    trim = "#e0b04a", trimAlpha = 1, trimInset = 5, band = "#24162e", divider = "#e0b04a", dividerAlpha = 1,
+    title = "#f0d58a", muted = "#b4a2c4", text = "#d2c8dc", ornament = "#e0b04a",
+    highlight = "fill", highlightColor = "#a064dc", highlightAlpha = 0.18,
+    closeInset = 36,
+    cornerArt = { top = Emblem("lion_emblem"), bottom = Gem("gem_emblem_amethyst") },
+  },
+  moonwatch = {
+    name = "Moonwatch",
+    bg = "#0c1618", bgAlpha = 0.95, frame = "#2c6266", frameWidth = 3,
+    trim = "#b8c6d4", trimAlpha = 1, trimInset = 5, band = "#142426", divider = "#b8c6d4", dividerAlpha = 1,
+    title = "#dff2f0", muted = "#96b4b2", text = "#c2d6d4", ornament = "#c8d0da",
+    highlight = "fill", highlightColor = "#50aaaa", highlightAlpha = 0.18,
+    closeInset = 36,
+    cornerArt = { top = Emblem("owl_emblem"), bottom = Gem("gem_emblem_moonstone") },
+  },
+  phoenixcrest = {
+    name = "Phoenix Crest",
+    bg = "#1c0f08", bgAlpha = 0.95, frame = "#d9622b", frameWidth = 3,
+    trim = "#ffcf6b", trimAlpha = 1, trimInset = 5, band = "#2c160a", divider = "#ffcf6b", dividerAlpha = 1,
+    title = "#ffcf6b", muted = "#c9a585", text = "#e0cbb8", ornament = "#f8a23e",
+    highlight = "fill", highlightColor = "#d9622b", highlightAlpha = 0.18,
+    closeInset = 36,
+    cornerArt = { top = Emblem("phoenix_emblem"), bottom = Gem("gem_emblem_ember") },
+  },
+  -- v2 themes, unchanged in v3:
   wildwood = {
     name = "Wildwood",
     bg = "#0d1a14", bgAlpha = 0.95,

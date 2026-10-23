@@ -27,6 +27,7 @@ local TOOLTIP_EDGE = "Interface\\Tooltips\\UI-Tooltip-Border"
 local WIDTH = 340
 Theme.DEFAULT_WIDTH = WIDTH
 local HEADER_CREATURE = 52 -- title centered, corner art on the top corners
+local HEADER_EMBLEM = 48   -- v3 emblem themes: same layout, smaller art
 local HEADER_PLAIN = 44    -- title left-aligned
 local SIDE_PADDING = 14
 local CREATURE_PADDING = 40 -- keeps the centered title clear of the corner art
@@ -166,7 +167,7 @@ end
 -- drawn for the top-left corner; the others mirror it. art.ax, art.ay is the
 -- spot in the art that sits on the window's outer corner. Full color: never
 -- tinted. file: the texture name (seasonal suffix already added).
--- art = { file = "dragon_head", w = 110, h = 110, ax = 35, ay = 33 }
+-- art = { file = "dragon_emblem", w = 60, h = 60, ax = 20.4, ay = 24 }
 local function PlaceCornerArt(texture, window, corner, art, file)
   texture:SetTexture(MEDIA .. file)
   texture:SetSize(art.w, art.h)
@@ -518,7 +519,8 @@ end
 
 local function ApplyHeader(window, theme)
   local creature = theme.cornerArt ~= nil
-  local headerHeight = creature and HEADER_CREATURE or HEADER_PLAIN
+  local emblem = creature and theme.cornerArt.top and theme.cornerArt.top.emblem
+  local headerHeight = emblem and HEADER_EMBLEM or creature and HEADER_CREATURE or HEADER_PLAIN
   local inset = theme.useTooltipArt and 4 or (theme.frame and theme.frameWidth or 0)
   window.headerHeight = headerHeight
 

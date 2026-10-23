@@ -13,10 +13,13 @@ local L = Pathwise.L
 
 local SettingsPanel = Pathwise:NewModule("SettingsPanel")
 
-local BUTTON_WIDTH = 220
-local BUTTON_HEIGHT = 30
-local COLUMN_GAP = 16
-local ROW_GAP = 8
+-- Theme buttons in a grid, filled row by row: 13 themes = 5 rows of 3, so
+-- the panel fits without scrolling (width 3 x 180 + 2 x 12 = 564 px).
+local COLUMNS = 3
+local BUTTON_WIDTH = 180
+local BUTTON_HEIGHT = 26
+local COLUMN_GAP = 12
+local ROW_GAP = 6
 local ACTIVE_OUTLINE = "#ffd100"
 local INACTIVE_OUTLINE = "#3a3a3a"
 
@@ -74,7 +77,7 @@ end
 local function CreateThemeButton(index, themeId)
   local theme = Pathwise.Themes[themeId]
   local button = CreateChoiceButton(BUTTON_WIDTH, BUTTON_HEIGHT)
-  local column, row = (index - 1) % 2, math.floor((index - 1) / 2)
+  local column, row = (index - 1) % COLUMNS, math.floor((index - 1) / COLUMNS)
   button:SetPoint("TOPLEFT", panel.themeHeader, "BOTTOMLEFT",
     column * (BUTTON_WIDTH + COLUMN_GAP), -28 - row * (BUTTON_HEIGHT + ROW_GAP))
   button.themeId = themeId
@@ -91,6 +94,12 @@ local function CreateThemeButton(index, themeId)
 
   button.name = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
   button.name:SetPoint("LEFT", swatchB, "RIGHT", 8, 0)
+  -- (A long name ends in "..." instead of running out of the button.)
+  button.name:SetPoint("RIGHT", button, "RIGHT", -6, 0)
+  button.name:SetJustifyH("LEFT")
+  if button.name.SetWordWrap then
+    button.name:SetWordWrap(false)
+  end
   button.name:SetText(string.format("%d  %s", index, theme.name))
 
   button:SetScript("OnClick", function(self)
@@ -148,7 +157,7 @@ local function CreatePanel()
 
   -- Wildwood season: Summer / Autumn / Auto, under the theme buttons.
   local seasonHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  local rows = math.ceil(#Pathwise.ThemeOrder / 2)
+  local rows = math.ceil(#Pathwise.ThemeOrder / COLUMNS)
   seasonHeader:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -28 - rows * (BUTTON_HEIGHT + ROW_GAP) - 8)
   seasonHeader:SetText(L.SETTINGS_SEASON)
   panel.seasonHeader = seasonHeader
