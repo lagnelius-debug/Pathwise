@@ -53,8 +53,15 @@ check("unknown saved id falls back to the default", Theme.GetActiveId() == "drag
 Pathwise.db.theme = "dragonflight"
 check("Get by number", Theme.Get(7) == Pathwise.Themes.wildwood)
 
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------
 section("Themes: Dragonflight on the To-do window")
+
+local function Art(texture, file, w, point, x, y, coords)
+  local p = Point(texture)
+  return texture:IsShown() and Tex(texture) == file and texture._width == w and texture._height == w
+    and p[1] == point and p[2] == window and p[3] == point and p[4] == x and p[5] == y
+    and Coords(texture) == coords and Color(texture, "#ffffff")
+end
 
 Theme.SetActive("dragonflight")
 check("window skinned", window.themeId == "dragonflight")
@@ -64,15 +71,16 @@ check("header 52 px with a band", window.headerHeight == 52 and window.header:Is
 check("outer border 3 px, frame color", window._backdrop.edgeSize == 3
   and Near(window._borderColor[1], 0x9b / 255))
 check("trim line 5 px inside", window.trim:IsShown() and Point(window.trim)[4] == 5)
-local tl, tr = Corner("TOPLEFT").art, Corner("TOPRIGHT").art
-check("dragon top-left: 50x50 at (-20, 20)", Tex(tl) == "corner_dragon" and tl._width == 50
-  and Point(tl)[1] == "TOPLEFT" and Point(tl)[4] == -20 and Point(tl)[5] == 20 and Coords(tl) == "0,1,0,1")
-check("dragon top-right: mirrored, at (20, 20)", Tex(tr) == "corner_dragon" and Point(tr)[1] == "TOPRIGHT"
-  and Point(tr)[4] == 20 and Point(tr)[5] == 20 and Coords(tr) == "1,0,0,1")
-check("dragon tinted ornament color", Color(tl, "#e0b04a"))
-local bl = Corner("BOTTOMLEFT")
-check("bottom gems: 15 px frame color under 11 px ornament color", Tex(bl.art) == "diamond" and bl.art._width == 15
-  and Color(bl.art, "#9b2020") and Tex(bl.gem) == "diamond" and bl.gem._width == 11 and Color(bl.gem, "#e0b04a"))
+check("dragon head top-left: 110x110, anchor (35, 33), untinted",
+  Art(Corner("TOPLEFT").art, "dragon_head", 110, "TOPLEFT", -35, 33, "0,1,0,1"))
+check("dragon head top-right: mirrored, facing outward",
+  Art(Corner("TOPRIGHT").art, "dragon_head", 110, "TOPRIGHT", 35, 33, "1,0,0,1"))
+check("ruby bottom-left: centered on the corner, flipped V",
+  Art(Corner("BOTTOMLEFT").art, "gem_ruby", 36, "BOTTOMLEFT", -18, -18, "0,1,1,0"))
+check("ruby bottom-right: flipped both",
+  Art(Corner("BOTTOMRIGHT").art, "gem_ruby", 36, "BOTTOMRIGHT", 18, -18, "1,0,1,0"))
+check("close button 46 px from the right edge", Point(window.close)[1] == "RIGHT" and Point(window.close)[4] == -46)
+check("close button above the corner art", window.close:GetFrameLevel() > window.ornaments:GetFrameLevel())
 check("ornaments above the border", window.ornaments:GetFrameLevel() == window:GetFrameLevel() + 5)
 
 ---------------------------------------------------------------------------
@@ -83,26 +91,29 @@ WoW.Slash("theme")
 check("list with numbers and the active one", WoW.ChatContains("Pathwise themes: 1 Gilded Hairline, 2 Classic Tooltip, "
   .. "3 Moonlit, 4 Corner Brackets, 5 Dragonflight (active), 6 Skyhawk, 7 Wildwood, 8 Phoenix Ember"))
 
+WoW.Slash("theme skyhawk")
+check("skyhawk: eagle heads, sapphires, close at 50",
+  Art(Corner("TOPRIGHT").art, "eagle_head", 110, "TOPRIGHT", 40, 35, "1,0,0,1")
+  and Art(Corner("BOTTOMLEFT").art, "gem_sapphire", 36, "BOTTOMLEFT", -18, -18, "0,1,1,0")
+  and Point(window.close)[4] == -50)
+
 WoW.ClearChat()
 WoW.Slash("theme 7")
 check("/pw theme 7", WoW.ChatContains("Theme: Wildwood") and Pathwise.db.theme == "wildwood" and window.themeId == "wildwood")
-check("antlers top, mirrored right", Tex(Corner("TOPLEFT").art) == "corner_antlers"
-  and Coords(Corner("TOPRIGHT").art) == "1,0,0,1")
-local leaf = Corner("BOTTOMLEFT").art
-check("leaves at the bottom corners (1, 1)", Tex(leaf) == "leaf" and leaf._width == 22
-  and Point(leaf)[4] == 1 and Point(leaf)[5] == 1 and Point(Corner("BOTTOMRIGHT").art)[4] == -1)
-check("no leftover gems from Dragonflight", not Corner("BOTTOMLEFT").gem:IsShown()
-  and not Corner("BOTTOMRIGHT").gem:IsShown())
+check("wildwood: summer branches by default",
+  Art(Corner("TOPLEFT").art, "wildwood_top_summer", 110, "TOPLEFT", -27.5, 27.5, "0,1,0,1")
+  and Art(Corner("BOTTOMRIGHT").art, "wildwood_bottom_summer", 110, "BOTTOMRIGHT", 27.5, -27.5, "1,0,1,0"))
+check("wildwood: 5 px wood border, moss trim 7 px in", window._backdrop.edgeSize == 5 and Point(window.trim)[4] == 7)
+check("close button 30 px in (default with corner art)", Point(window.close)[4] == -30)
 
 WoW.Slash("theme next")
 check("/pw theme next -> Phoenix Ember", Pathwise.db.theme == "ember")
 local corners = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
 local expected = { "0,1,0,1", "1,0,0,1", "0,1,1,0", "1,0,1,0" }
+local signs = { { -1, 1 }, { 1, 1 }, { -1, -1 }, { 1, -1 } }
 for i, name in ipairs(corners) do
-  local slots = Corner(name)
-  check("feathers " .. name .. ": two layers, mirrored", Tex(slots.art) == "corner_feather_main"
-    and Tex(slots.gem) == "corner_feather_side" and Coords(slots.art) == expected[i] and Coords(slots.gem) == expected[i]
-    and Color(slots.art, "#d9622b") and Color(slots.gem, "#ffcf6b") and Point(slots.art)[1] == "CENTER")
+  check("feathers fan out from " .. name, Art(Corner(name).art, "phoenix_feathers", 90, name,
+    signs[i][1] * 45, signs[i][2] * 45, expected[i]))
 end
 
 WoW.Slash("theme next")
@@ -110,6 +121,8 @@ check("cycles around to Gilded Hairline", Pathwise.db.theme == "gilded")
 check("gilded: diamonds, divider diamond, no band", Tex(Corner("BOTTOMRIGHT").art) == "diamond"
   and Corner("BOTTOMRIGHT").art._width == 10 and window.dividerGem:IsShown() and not window.header:IsShown()
   and window.headerHeight == 44)
+check("gilded: diamonds tinted again after the painted art", Color(Corner("TOPLEFT").art, "#c9a24a"))
+check("plain themes: close button near the edge as before", Point(window.close)[4] == -6)
 
 WoW.Slash("theme tooltip")
 check("tooltip theme: Blizzard tooltip art", window._backdrop.edgeFile == "Interface\\Tooltips\\UI-Tooltip-Border"
@@ -124,11 +137,41 @@ check("moonlit: crescent left of the title", window.headerIcon:IsShown() and Tex
 WoW.Slash("theme 4")
 check("brackets: L-lines in the corners, no border", Corner("TOPLEFT").lineH:IsShown() and Corner("TOPLEFT").lineV:IsShown()
   and Corner("TOPLEFT").lineH._width == 16 and Corner("TOPLEFT").lineV._height == 16
-  and window._backdrop.edgeFile == nil and not window.divider:IsShown())
+  and window._backdrop.edgeFile == nil and not window.divider:IsShown() and not Corner("TOPLEFT").art:IsShown())
 
 WoW.ClearChat()
 WoW.Slash("theme banana")
 check("unknown theme", WoW.ChatContains("Unknown theme 'banana'.") and Pathwise.db.theme == "brackets")
+
+---------------------------------------------------------------------------
+section("Themes: Wildwood seasons")
+
+WoW.Slash("theme wildwood")
+WoW.ClearChat()
+WoW.Slash("season autumn")
+check("/pw season autumn: saved, re-skinned, printed", Pathwise.db.wildwoodSeason == "autumn"
+  and Tex(Corner("TOPLEFT").art) == "wildwood_top_autumn" and Tex(Corner("BOTTOMLEFT").art) == "wildwood_bottom_autumn"
+  and WoW.ChatContains("Wildwood season: Autumn"))
+local realDate = date
+date = function() return { month = 10 } end
+WoW.ClearChat()
+WoW.Slash("season auto")
+check("auto in October: autumn", Pathwise.db.wildwoodSeason == "auto" and Theme.GetSeason() == "autumn"
+  and Tex(Corner("TOPRIGHT").art) == "wildwood_top_autumn" and WoW.ChatContains("Wildwood season: Auto (now Autumn)"))
+date = function() return { month = 6 } end
+Theme.Apply(window)
+check("auto in June: summer (checked when applied)", Tex(Corner("TOPRIGHT").art) == "wildwood_top_summer")
+date = function() return { month = 12 } end
+check("auto in December: summer", Theme.GetSeason() == "summer")
+date = realDate
+Pathwise.db.wildwoodSeason = "winter"
+check("unknown saved season -> summer", Theme.GetSeasonSetting() == "summer" and Theme.GetSeason() == "summer")
+WoW.ClearChat()
+WoW.Slash("season spring")
+check("unknown season: usage", WoW.ChatContains("Usage: /pw season") and Pathwise.db.wildwoodSeason == "winter")
+WoW.Slash("season summer")
+check("/pw season summer", Pathwise.db.wildwoodSeason == "summer" and Tex(Corner("TOPLEFT").art) == "wildwood_top_summer")
+WoW.Slash("theme 4") -- the highlight tests below use Corner Brackets
 
 ---------------------------------------------------------------------------
 section("Themes: current step highlight")
@@ -183,6 +226,21 @@ check("active theme outlined in gold", Near(buttons[3]._borderColor[1], gold[1])
   and not Near(buttons[5]._borderColor[1], gold[1]))
 WoW.Slash("theme 5")
 check("outline follows /pw theme", Near(buttons[5]._borderColor[1], gold[1]) and not Near(buttons[3]._borderColor[1], gold[1]))
+
+local seasonButtons = {}
+for _, f in ipairs(WoW.frames) do
+  if f.season and f._parent == panel then seasonButtons[#seasonButtons + 1] = f end
+end
+check("season choice: Summer / Autumn / Auto", #seasonButtons == 3 and seasonButtons[1].name:GetText() == "Summer"
+  and seasonButtons[3].name:GetText() == "Auto")
+check("season choice hidden for other themes", not seasonButtons[1]:IsShown() and not panel.seasonHeader:IsShown())
+WoW.Slash("theme wildwood")
+check("season choice shown while Wildwood is active", seasonButtons[1]:IsShown() and panel.seasonHeader:IsShown())
+seasonButtons[2]:Click()
+check("clicking Autumn applies it", Pathwise.db.wildwoodSeason == "autumn" and Tex(Corner("TOPLEFT").art) == "wildwood_top_autumn"
+  and Near(seasonButtons[2]._borderColor[1], gold[1]) and not Near(seasonButtons[1]._borderColor[1], gold[1]))
+WoW.Slash("season summer")
+check("outline follows /pw season", Near(seasonButtons[1]._borderColor[1], gold[1]))
 
 -- /pw reset brings back the default theme
 WoW.Slash("theme 2")

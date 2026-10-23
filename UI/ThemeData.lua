@@ -1,6 +1,7 @@
 local _, Pathwise = ...
 
--- Window themes (docs/PATHWISE_THEMES.md §3). Plain data, flavor-independent.
+-- Window themes (docs/PATHWISE_THEMES.md §3, updated by
+-- docs/PATHWISE_THEMES_V2.md). Plain data, flavor-independent.
 -- Colors are hex strings; UI/Theme.lua turns them into r, g, b with
 -- Pathwise.HexToRGB.
 
@@ -15,6 +16,10 @@ end
 
 Pathwise.ThemeOrder = { "gilded", "tooltip", "moonlit", "brackets", "dragonflight", "skyhawk", "wildwood", "ember" }
 Pathwise.DefaultTheme = "dragonflight"
+
+-- Wildwood seasons: the saved setting ("auto" follows the month).
+Pathwise.WildwoodSeasons = { "summer", "autumn", "auto" }
+Pathwise.AutumnMonths = { [9] = true, [10] = true, [11] = true }
 
 Pathwise.Themes = {
   gilded = {
@@ -64,6 +69,10 @@ Pathwise.Themes = {
     ornament = "#c9a24a", corners = "brackets",
     highlight = "bar",
   },
+  -- v2 (docs/PATHWISE_THEMES_V2.md): painted, full-color corner art.
+  -- cornerArt.top goes on the top corners, .bottom on the bottom ones;
+  -- ax, ay = the spot in the art (UI units from its top-left edge) that sits
+  -- on the window's outer corner. Adjust placement here, never the textures.
   dragonflight = {
     name = "Dragonflight",
     bg = "#1a0d0d", bgAlpha = 0.95,
@@ -72,8 +81,13 @@ Pathwise.Themes = {
     band = "#2a1010",
     divider = "#e0b04a", dividerAlpha = 1,
     title = "#ecc56a", muted = "#b59a7a", text = "#d6c6ba",
-    ornament = "#e0b04a", corners = "dragon",
+    ornament = "#e0b04a",
     highlight = "fill", highlightColor = "#e0b04a", highlightAlpha = 0.12,
+    closeInset = 46,   -- close button this far from the right edge so the head doesn't cover it
+    cornerArt = {
+      top    = { file = "dragon_head", w = 110, h = 110, ax = 35, ay = 33 },
+      bottom = { file = "gem_ruby",    w = 36,  h = 36,  ax = 18, ay = 18 },
+    },
   },
   skyhawk = {
     name = "Skyhawk",
@@ -83,19 +97,29 @@ Pathwise.Themes = {
     band = "#15224a",
     divider = "#d9b45a", dividerAlpha = 1,
     title = "#f0d58a", muted = "#a9b4d6", text = "#c3cbe0",
-    ornament = "#e3c06a", corners = "eagle",
+    ornament = "#e3c06a",
     highlight = "fill", highlightColor = "#2f5fb3", highlightAlpha = 0.25,
+    closeInset = 50,
+    cornerArt = {
+      top    = { file = "eagle_head",   w = 110, h = 110, ax = 40, ay = 35 },
+      bottom = { file = "gem_sapphire", w = 36,  h = 36,  ax = 18, ay = 18 },
+    },
   },
   wildwood = {
     name = "Wildwood",
     bg = "#0d1a14", bgAlpha = 0.95,
-    frame = "#2f8a5f", frameWidth = 3,
-    trim = "#a8d8b9", trimAlpha = 1, trimInset = 5,
+    frame = "#4a3220", frameWidth = 5,              -- dark wood
+    trim = "#6f8f3a", trimAlpha = 0.6, trimInset = 7, -- moss line
     band = "#13281e",
-    divider = "#a8d8b9", dividerAlpha = 1,
-    title = "#c9f0d6", muted = "#9cc2aa", text = "#bcd6c6",
-    ornament = "#b8e6c8", corners = "antlers",
-    highlight = "fill", highlightColor = "#2f8a5f", highlightAlpha = 0.22,
+    divider = "#6f8f3a", dividerAlpha = 1,
+    title = "#eadfc4", muted = "#a9bf9c", text = "#c6d3bd",
+    ornament = "#6f8f3a",
+    highlight = "fill", highlightColor = "#6f8f3a", highlightAlpha = 0.18,
+    seasonal = true,   -- art file names get "_summer" / "_autumn" appended
+    cornerArt = {
+      top    = { file = "wildwood_top",    w = 110, h = 110, ax = 27.5, ay = 27.5 },
+      bottom = { file = "wildwood_bottom", w = 110, h = 110, ax = 27.5, ay = 27.5 },
+    },
   },
   ember = {
     name = "Phoenix Ember",
@@ -105,7 +129,11 @@ Pathwise.Themes = {
     band = "#2c160a",
     divider = "#ffcf6b", dividerAlpha = 1,
     title = "#ffcf6b", muted = "#c9a585", text = "#e0cbb8",
-    ornament = "#ffcf6b", corners = "feathers",
+    ornament = "#ffcf6b",
     highlight = "fill", highlightColor = "#d9622b", highlightAlpha = 0.18,
+    cornerArt = {
+      top    = { file = "phoenix_feathers", w = 90, h = 90, ax = 45, ay = 45 },
+      bottom = { file = "phoenix_feathers", w = 90, h = 90, ax = 45, ay = 45 },
+    },
   },
 }

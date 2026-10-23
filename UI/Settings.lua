@@ -2,7 +2,8 @@ local addonName, Pathwise = ...
 
 -- Settings panel (Esc > Options > AddOns > Pathwise, or /pw settings).
 -- For now: General (minimap and target buttons) and Appearance (one button per window
--- theme with a two-color swatch; the active theme has a gold outline). More
+-- theme with a two-color swatch; the active theme has a gold outline, and
+-- the Wildwood season choice while Wildwood is active). More
 -- settings (module toggles, ammo thresholds, chat messages) come with M7.
 --
 -- Registration: the modern Settings API when the client has it, otherwise
@@ -19,31 +20,44 @@ local ROW_GAP = 8
 local ACTIVE_OUTLINE = "#ffd100"
 local INACTIVE_OUTLINE = "#3a3a3a"
 
+local SEASON_BUTTON_WIDTH = 90
+local SEASON_BUTTON_HEIGHT = 24
+
 local panel
 local themeButtons = {}
+local seasonButtons = {}
 
 local function RGB(hex, alpha)
   return Pathwise.HexToRGB(hex, alpha)
 end
 
+local function Outline(button, active)
+  if button.SetBackdropBorderColor then
+    button:SetBackdropBorderColor(RGB(active and ACTIVE_OUTLINE or INACTIVE_OUTLINE))
+  end
+  button.name:SetTextColor(RGB(active and ACTIVE_OUTLINE or "#ffffff"))
+end
+
 local function UpdateOutlines()
   local active = Pathwise.Theme.GetActiveId()
   for _, button in ipairs(themeButtons) do
-    if button.SetBackdropBorderColor then
-      button:SetBackdropBorderColor(RGB(button.themeId == active and ACTIVE_OUTLINE or INACTIVE_OUTLINE))
-    end
-    button.name:SetTextColor(RGB(button.themeId == active and ACTIVE_OUTLINE or "#ffffff"))
+    Outline(button, button.themeId == active)
+  end
+  -- The season choice only matters (and is only shown) for Wildwood.
+  local season = Pathwise.Theme.GetSeasonSetting()
+  local seasonal = Pathwise.Themes[active].seasonal
+  panel.seasonHeader:SetShown(seasonal and true or false)
+  for _, button in ipairs(seasonButtons) do
+    Outline(button, button.season == season)
+    button:SetShown(seasonal and true or false)
   end
 end
 
-local function CreateThemeButton(index, themeId)
-  local theme = Pathwise.Themes[themeId]
+-- A dark button with a 2 px outline (theme and season choices).
+local function CreateChoiceButton(width, height)
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local button = CreateFrame("Button", nil, panel, template)
-  button:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-  local column, row = (index - 1) % 2, math.floor((index - 1) / 2)
-  button:SetPoint("TOPLEFT", panel.themeHeader, "BOTTOMLEFT",
-    column * (BUTTON_WIDTH + COLUMN_GAP), -28 - row * (BUTTON_HEIGHT + ROW_GAP))
+  button:SetSize(width, height)
   if button.SetBackdrop then
     button:SetBackdrop({
       bgFile = "Interface\\Buttons\\WHITE8X8",
@@ -53,6 +67,16 @@ local function CreateThemeButton(index, themeId)
     })
     button:SetBackdropColor(0.08, 0.08, 0.08, 0.9)
   end
+  button:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+  return button
+end
+
+local function CreateThemeButton(index, themeId)
+  local theme = Pathwise.Themes[themeId]
+  local button = CreateChoiceButton(BUTTON_WIDTH, BUTTON_HEIGHT)
+  local column, row = (index - 1) % 2, math.floor((index - 1) / 2)
+  button:SetPoint("TOPLEFT", panel.themeHeader, "BOTTOMLEFT",
+    column * (BUTTON_WIDTH + COLUMN_GAP), -28 - row * (BUTTON_HEIGHT + ROW_GAP))
   button.themeId = themeId
 
   -- Two-color swatch: frame (or background when there is no frame) + ornament.
@@ -69,7 +93,6 @@ local function CreateThemeButton(index, themeId)
   button.name:SetPoint("LEFT", swatchB, "RIGHT", 8, 0)
   button.name:SetText(string.format("%d  %s", index, theme.name))
 
-  button:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
   button:SetScript("OnClick", function(self)
     Pathwise.Theme.SetActive(self.themeId)
   end)
@@ -122,6 +145,25 @@ local function CreatePanel()
   for index, themeId in ipairs(Pathwise.ThemeOrder) do
     CreateThemeButton(index, themeId)
   end
+
+  -- Wildwood season: Summer / Autumn / Auto, under the theme buttons.
+  local seasonHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  local rows = math.ceil(#Pathwise.ThemeOrder / 2)
+  seasonHeader:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -28 - rows * (BUTTON_HEIGHT + ROW_GAP) - 8)
+  seasonHeader:SetText(L.SETTINGS_SEASON)
+  panel.seasonHeader = seasonHeader
+  for index, season in ipairs(Pathwise.WildwoodSeasons) do
+    local button = CreateChoiceButton(SEASON_BUTTON_WIDTH, SEASON_BUTTON_HEIGHT)
+    button:SetPoint("TOPLEFT", seasonHeader, "BOTTOMLEFT", (index - 1) * (SEASON_BUTTON_WIDTH + ROW_GAP), -6)
+    button.season = season
+    button.name = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    button.name:SetPoint("CENTER", button, "CENTER", 0, 0)
+    button.name:SetText(L["SEASON_" .. season:upper()])
+    button:SetScript("OnClick", function(self)
+      Pathwise.Theme.SetSeason(self.season)
+    end)
+    seasonButtons[index] = button
+  end
   panel:SetScript("OnShow", function()
     UpdateOutlines()
     panel.minimapCheck:SetChecked(not Pathwise.db.minimap.hide)
@@ -163,6 +205,7 @@ end
 function SettingsPanel:OnInitialize()
   CreatePanel()
   self:RegisterCallback("THEME_CHANGED", "OnThemeChanged")
+  self:RegisterCallback("THEME_SEASON_CHANGED", "OnThemeChanged")
   self:RegisterCallback("MINIMAP_BUTTON_CHANGED", "OnMinimapButtonChanged")
   self:RegisterCallback("TARGET_BUTTON_CHANGED", "OnTargetButtonChanged")
   UpdateOutlines()

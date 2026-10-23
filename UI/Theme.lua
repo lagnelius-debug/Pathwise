@@ -8,6 +8,8 @@ local addonName, Pathwise = ...
 -- header band with a small "PATHWISE" label and the title, a divider, the
 -- content area, a footer, and corner ornaments on a higher frame level so
 -- they draw over the border (and partly outside the window).
+-- Ornaments are either simple tinted shapes (diamonds, brackets) or, since
+-- docs/PATHWISE_THEMES_V2.md, painted full-color corner art (cornerArt).
 --
 -- All ornament textures are created once per window in CreateWindow; Apply
 -- only shows/hides, tints and re-anchors them.
@@ -24,26 +26,24 @@ local TOOLTIP_EDGE = "Interface\\Tooltips\\UI-Tooltip-Border"
 
 local WIDTH = 340
 Theme.DEFAULT_WIDTH = WIDTH
-local HEADER_CREATURE = 52 -- title centered, ornaments in the top corners
+local HEADER_CREATURE = 52 -- title centered, corner art on the top corners
 local HEADER_PLAIN = 44    -- title left-aligned
 local SIDE_PADDING = 14
-local CREATURE_PADDING = 40 -- keeps the centered title clear of the ornaments
+local CREATURE_PADDING = 40 -- keeps the centered title clear of the corner art
 local CONTENT_GAP = 8
 local FOOTER_HEIGHT = 18
 local BOTTOM_PADDING = 10
 
--- Corner styles with big ornaments in the top corners.
-local CREATURE_ART = { dragon = "corner_dragon", eagle = "corner_eagle", antlers = "corner_antlers" }
+-- Close button distance from the right edge (its right side): themes with
+-- corner art set closeInset to clear it (default 30); the other themes keep
+-- the button near the edge.
+local CLOSE_INSET_ART = 30
+local CLOSE_INSET_PLAIN = 6
 
-local CORNERS = {
-  TOPLEFT = { flipH = false, flipV = false, x = -1, y = 1 },
-  TOPRIGHT = { flipH = true, flipV = false, x = 1, y = 1 },
-  BOTTOMLEFT = { flipH = false, flipV = true, x = -1, y = -1 },
-  BOTTOMRIGHT = { flipH = true, flipV = true, x = 1, y = -1 },
-}
 local CORNER_ORDER = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
 
 local windows = {}
+local ReapplyAll -- defined below
 
 ---------------------------------------------------------------------------
 -- Registry
@@ -77,15 +77,57 @@ function Theme.SetActive(id)
     return nil
   end
   Pathwise.db.theme = id
-  for _, window in ipairs(windows) do
-    Theme.Apply(window, id)
-  end
+  ReapplyAll()
   Pathwise:FireCallback("THEME_CHANGED", id)
   return id
 end
 
 function Theme.Register(window)
   windows[#windows + 1] = window
+end
+
+-- Re-skins every registered window with the active theme.
+function ReapplyAll()
+  for _, window in ipairs(windows) do
+    Theme.Apply(window)
+  end
+end
+
+---------------------------------------------------------------------------
+-- Wildwood seasons
+---------------------------------------------------------------------------
+
+-- The saved season setting: "summer", "autumn" or "auto" (unknown -> summer).
+function Theme.GetSeasonSetting()
+  local saved = Pathwise.db and Pathwise.db.wildwoodSeason
+  for _, season in ipairs(Pathwise.WildwoodSeasons) do
+    if saved == season then
+      return season
+    end
+  end
+  return "summer"
+end
+
+-- The season to draw: "auto" is autumn in September-November, else summer.
+function Theme.GetSeason()
+  local setting = Theme.GetSeasonSetting()
+  if setting ~= "auto" then
+    return setting
+  end
+  local now = date and date("*t")
+  return now and Pathwise.AutumnMonths[now.month] and "autumn" or "summer"
+end
+
+-- Saves the season setting and re-skins. Returns it, or nil if unknown.
+function Theme.SetSeason(season)
+  for _, known in ipairs(Pathwise.WildwoodSeasons) do
+    if season == known then
+      Pathwise.db.wildwoodSeason = season
+      ReapplyAll()
+      Pathwise:FireCallback("THEME_SEASON_CHANGED", season)
+      return season
+    end
+  end
 end
 
 ---------------------------------------------------------------------------
@@ -118,6 +160,32 @@ end
 
 local function SetFlip(texture, flipH, flipV)
   texture:SetTexCoord(flipH and 1 or 0, flipH and 0 or 1, flipV and 1 or 0, flipV and 0 or 1)
+end
+
+-- Places painted corner art (docs/PATHWISE_THEMES_V2.md §2). Every file is
+-- drawn for the top-left corner; the others mirror it. art.ax, art.ay is the
+-- spot in the art that sits on the window's outer corner. Full color: never
+-- tinted. file: the texture name (seasonal suffix already added).
+-- art = { file = "dragon_head", w = 110, h = 110, ax = 35, ay = 33 }
+local function PlaceCornerArt(texture, window, corner, art, file)
+  texture:SetTexture(MEDIA .. file)
+  texture:SetSize(art.w, art.h)
+  texture:SetVertexColor(1, 1, 1)
+  texture:ClearAllPoints()
+  if corner == "TOPLEFT" then
+    texture:SetPoint("TOPLEFT", window, "TOPLEFT", -art.ax, art.ay)
+    texture:SetTexCoord(0, 1, 0, 1)
+  elseif corner == "TOPRIGHT" then
+    texture:SetPoint("TOPRIGHT", window, "TOPRIGHT", art.ax, art.ay)
+    texture:SetTexCoord(1, 0, 0, 1) -- flip horizontal
+  elseif corner == "BOTTOMLEFT" then
+    texture:SetPoint("BOTTOMLEFT", window, "BOTTOMLEFT", -art.ax, -art.ay)
+    texture:SetTexCoord(0, 1, 1, 0) -- flip vertical
+  else -- BOTTOMRIGHT
+    texture:SetPoint("BOTTOMRIGHT", window, "BOTTOMRIGHT", art.ax, -art.ay)
+    texture:SetTexCoord(1, 0, 1, 0) -- flip both
+  end
+  texture:Show()
 end
 
 -- Places an ornament texture: art file (nil = solid WHITE8X8), size, color.
@@ -331,6 +399,7 @@ function Theme.CreateWindow(name, parent, titleText)
   window.headerIcon = window:CreateTexture(nil, "OVERLAY")
   window.close = CreateFrame("Button", nil, window, "UIPanelCloseButton")
   window.close:SetSize(24, 24)
+  -- (Raised above the ornaments once they exist, below.)
 
   window.content = CreateFrame("Frame", nil, window)
   window.content:SetPoint("RIGHT", window, "RIGHT", -SIDE_PADDING, 0)
@@ -348,11 +417,14 @@ function Theme.CreateWindow(name, parent, titleText)
   window.ornaments = CreateFrame("Frame", nil, window)
   window.ornaments:SetAllPoints(window)
   window.ornaments:SetFrameLevel(window:GetFrameLevel() + 5)
+  window.ornaments:EnableMouse(false)
+  -- Never covered by corner art.
+  window.close:SetFrameLevel(window.ornaments:GetFrameLevel() + 1)
+  -- Per corner: art (corner art or a diamond) and the two bracket lines.
   window.corners = {}
   for _, corner in ipairs(CORNER_ORDER) do
     window.corners[corner] = {
-      art = window.ornaments:CreateTexture(nil, "OVERLAY", nil, 0),
-      gem = window.ornaments:CreateTexture(nil, "OVERLAY", nil, 1), -- drawn on top of art
+      art = window.ornaments:CreateTexture(nil, "OVERLAY"),
       lineH = window.ornaments:CreateTexture(nil, "OVERLAY"),
       lineV = window.ornaments:CreateTexture(nil, "OVERLAY"),
     }
@@ -379,10 +451,17 @@ local function ApplyCorners(window, theme)
   HideCorners(window)
   local style = theme.corners
   for _, name in ipairs(CORNER_ORDER) do
-    local corner, slots = CORNERS[name], window.corners[name]
-    local top = name:find("^TOP") ~= nil
+    local slots = window.corners[name]
+    local art = theme.cornerArt and theme.cornerArt[name:find("^TOP") and "top" or "bottom"]
 
-    if style == "diamonds" then
+    if art then
+      local file = art.file
+      if theme.seasonal then
+        file = file .. "_" .. Theme.GetSeason()
+      end
+      PlaceCornerArt(slots.art, window, name, art, file)
+
+    elseif style == "diamonds" then
       Ornament(slots.art, "diamond", 10, 10, theme.ornament)
       slots.art:SetPoint("CENTER", window, name, 0, 0)
       SetFlip(slots.art, false, false)
@@ -393,35 +472,6 @@ local function ApplyCorners(window, theme)
       slots.lineH:SetPoint(name, window, name, 0, 0)
       Ornament(slots.lineV, nil, 2, 16, theme.ornament)
       slots.lineV:SetPoint(name, window, name, 0, 0)
-
-    elseif CREATURE_ART[style] and top then
-      -- Drawn for the top-left corner; top-right is flipped horizontally.
-      Ornament(slots.art, CREATURE_ART[style], 50, 50, theme.ornament)
-      slots.art:SetPoint(name, window, name, corner.x * 20, corner.y * 20)
-      SetFlip(slots.art, corner.flipH, false)
-
-    elseif (style == "dragon" or style == "eagle") and not top then
-      -- Two gems: a frame-colored diamond with an ornament-colored one on top.
-      Ornament(slots.art, "diamond", 15, 15, theme.frame)
-      slots.art:SetPoint("CENTER", window, name, 0, 0)
-      SetFlip(slots.art, false, false)
-      Ornament(slots.gem, "diamond", 11, 11, theme.ornament)
-      slots.gem:SetPoint("CENTER", window, name, 0, 0)
-      SetFlip(slots.gem, false, false)
-
-    elseif style == "antlers" and not top then
-      Ornament(slots.art, "leaf", 22, 22, theme.ornament)
-      slots.art:SetPoint("CENTER", window, name, -corner.x, 1)
-      SetFlip(slots.art, corner.flipH, false)
-
-    elseif style == "feathers" then
-      -- The texture's center is the window corner; the art fans up-left.
-      Ornament(slots.art, "corner_feather_main", 48, 48, theme.frame)
-      slots.art:SetPoint("CENTER", window, name, 0, 0)
-      SetFlip(slots.art, corner.flipH, corner.flipV)
-      Ornament(slots.gem, "corner_feather_side", 48, 48, theme.ornament)
-      slots.gem:SetPoint("CENTER", window, name, 0, 0)
-      SetFlip(slots.gem, corner.flipH, corner.flipV)
     end
   end
 end
@@ -467,7 +517,7 @@ local function ApplyBackdrop(window, theme)
 end
 
 local function ApplyHeader(window, theme)
-  local creature = CREATURE_ART[theme.corners] ~= nil or theme.corners == "feathers"
+  local creature = theme.cornerArt ~= nil
   local headerHeight = creature and HEADER_CREATURE or HEADER_PLAIN
   local inset = theme.useTooltipArt and 4 or (theme.frame and theme.frameWidth or 0)
   window.headerHeight = headerHeight
@@ -548,10 +598,11 @@ local function ApplyHeader(window, theme)
     title:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -2)
   end
 
-  -- Close button: right side of the header, left of a creature ornament.
+  -- Close button: right side of the header, clear of the corner art.
   local close = window.close
+  local closeInset = theme.closeInset or (creature and CLOSE_INSET_ART or CLOSE_INSET_PLAIN)
   close:ClearAllPoints()
-  close:SetPoint("RIGHT", window, "TOPRIGHT", creature and -32 or -6, -headerHeight / 2)
+  close:SetPoint("RIGHT", window, "TOPRIGHT", -closeInset, -headerHeight / 2)
 
   -- Content below the header
   window.content:ClearAllPoints()
@@ -624,3 +675,17 @@ Pathwise:RegisterCommand("theme", function(args)
     ListThemes()
   end
 end, L.CMD_THEME)
+
+-- /pw season summer|autumn|auto   Wildwood's leaves
+Pathwise:RegisterCommand("season", function(args)
+  local season = Theme.SetSeason(args:lower())
+  if not season then
+    Pathwise:Print(L.SEASON_USAGE)
+    return
+  end
+  if season == "auto" then
+    Pathwise:Printf(L.SEASON_SET_AUTO, L["SEASON_" .. Theme.GetSeason():upper()])
+  else
+    Pathwise:Printf(L.SEASON_SET, L["SEASON_" .. season:upper()])
+  end
+end, L.CMD_SEASON)
