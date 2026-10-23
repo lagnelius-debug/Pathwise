@@ -35,7 +35,7 @@ QuestAdvisor.TOGETHER_YARDS = 120
 local DIFFICULTY_COLORS = {
   RED = "ff2020",
   ORANGE = "ff8040",
-  YELLOW = "ffff00",
+  YELLOW = "ffd100",
   GREEN = "40c040",
   GREY = "808080",
 }

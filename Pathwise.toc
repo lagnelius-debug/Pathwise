@@ -53,6 +53,8 @@ Classes\Hunter.lua
 
 Integrations\QuestieDB.lua
 
+UI\ThemeData.lua
+UI\Theme.lua
 UI\GoalPrompt.lua
 UI\SellPrice.lua
 UI\Tooltip.lua
@@ -60,5 +62,6 @@ UI\QuestRewardUI.lua
 UI\TrainerPanel.lua
 UI\NextStepsFrame.lua
 UI\Arrow.lua
+UI\Settings.lua
 UI\SlashCommands.lua
 UI\Bindings.lua

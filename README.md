@@ -12,6 +12,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 - M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
+- Window themes (docs/PATHWISE_THEMES.md): 8 themes on the To-do window, an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
 
 ## Install
 
@@ -39,6 +40,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw arrow` | Turn the arrow following your next step on or off |
 | `/pw talents` | Show your next talent points from the build for your path. `/pw talents check` compares the build data with the game's talent tree |
 | `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
+| `/pw theme` | List the window themes (numbered, active one marked). `/pw theme 7` or `/pw theme wildwood` sets one, `/pw theme next` cycles |
+| `/pw settings` | Open the Pathwise settings (Appearance: window theme) |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
 
 ## In-game test checklist (M0 and M1)
@@ -156,6 +159,21 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] When your pet is content or unhappy, Next Steps shows `Feed <pet> (content)`. Hovering shows what it eats. Chat says it once when the mood drops. The line goes away once the pet is happy.
 - [ ] At level 10, without Tame Beast, Next Steps shows the Taming the Beast step and chat reminds you once. With QuestieDB, the arrow points to your hunter trainer (Dazalar in Dolanaar for Night Elves). The step disappears once you've learned Tame Beast.
 
+## In-game test checklist (window themes)
+
+**Fully restart WoW** (exit the game, not just `/reload`) the first time. WoW only picks up new texture files on a client start. A green square instead of an ornament means a texture didn't load.
+
+- [ ] The To-do window has the **Dragonflight** look by default: dark red background, 3 px red border, gold trim line, a header band with a small "PATHWISE" label and a centered "To-do" title, and gold dragon heads on the two top corners. The right one is mirrored and faces outward. There are small gold-on-red gems on the bottom corners.
+- [ ] The dragon and eagle eyes are see-through holes.
+- [ ] The step the arrow follows is highlighted, with a tinted row background, or a vertical bar in Corner Brackets.
+- [ ] The footer shows `N steps · <zone>` on the left and the **Path** button on the right.
+- [ ] `/pw theme` lists all 8 themes with numbers and marks the active one. `/pw theme 6` switches to Skyhawk immediately, with no `/reload`. `/pw theme next` cycles. No ornaments from the previous theme are left behind.
+- [ ] Check each theme once: 1 Gilded Hairline (thin gold line, small diamonds, a diamond on the divider), 2 Classic Tooltip (Blizzard tooltip look, "Pathwise · To-do" on one line), 3 Moonlit (crescent next to the title), 4 Corner Brackets (no border, gold L-shapes in the corners), 5 Dragonflight, 6 Skyhawk (eagles), 7 Wildwood (antlers on top, leaves at the bottom), 8 Phoenix Ember (feathers fanning out from all four corners).
+- [ ] Quest names keep their difficulty colors in every theme.
+- [ ] Esc > Options > AddOns > **Pathwise** (or `/pw settings`) shows **Appearance** with 8 buttons, each with a two-color swatch. The active one has a gold outline. Clicking one switches the theme right away.
+- [ ] The chosen theme survives `/reload` and relog, and other characters use it too.
+- [ ] Cycle `/pw theme next` 20-30 times: no errors, and no slowdown.
+
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
@@ -174,6 +192,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - That bag item buttons keep their stack size in `.count` (sell price for stacks).
 - Talent positions in `Data/Classic/TalentBuilds.lua` (`/pw talents check`).
 - `GetInventoryItemCount("player", 0)` counts all your ammo of that type. `GetPetHappiness`, `GetPetFoodTypes`, `HasPetUI` and the `UNIT_HAPPINESS` event in Classic Era.
+- Theme details that need a look in game: ornament positions and sizes, the close button next to the top-right creature, and whether 1 px lines look sharp. The settings panel registration, through the Settings API or legacy Interface Options.
 - Whether `PLAYER_TALENT_UPDATE` exists in Classic Era. If it doesn't, `/pw debug` reports it once and Pathwise continues normally.
 
 ## Development

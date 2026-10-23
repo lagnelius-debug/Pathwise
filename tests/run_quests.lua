@@ -135,7 +135,7 @@ UpdateLog({
 })
 local turnInRow
 for _, f in ipairs(WoW.frames) do
-  if f.text and f._parent == frame and f._shown and f.item and Strip(f.text:GetText()):find("Turn in", 1, true) then
+  if f.text and f._parent == frame.content and f._shown and f.item and Strip(f.text:GetText()):find("Turn in", 1, true) then
     turnInRow = f
   end
 end

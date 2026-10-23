@@ -177,7 +177,7 @@ L.PANEL_TAB_TOOLTIP = "%d recommended and %d optional spells to learn at your tr
 
 -- Next Steps window
 L.CMD_TOGGLE = "show or hide the Next Steps window"
-L.NS_TITLE = "Pathwise: Next steps"
+L.NS_TITLE = "To-do"
 L.NS_EMPTY = "Nothing to recommend right now."
 L.NS_MORE = "... and %d more"
 L.NS_TRAINER = "Visit your trainer: %d recommended spells (%s)"
@@ -291,3 +291,17 @@ L.TALENT_RESPEC = "Talents don't fit %s: unlearn them at your class trainer"
 L.TALENT_RESPEC_DETAIL = "%d points are outside the %s build. Unlearning talents costs 1g the first time, then more each time (up to 50g). Until then, the advisor suggests the build talents you can still take."
 L.NS_PATH = "Path: %s"
 L.NS_PATH_TOOLTIP = "Click to choose your path. It sets the gear weights, trainer advice and talent build."
+
+-- Themes and settings
+L.WINDOW_LABEL = "PATHWISE"
+L.WINDOW_SINGLE_TITLE = "Pathwise · %s"
+L.NS_FOOTER = "%d steps · %s"
+L.CMD_THEME = "list window themes; '/pw theme 5' or '/pw theme wildwood' sets one, '/pw theme next' cycles"
+L.THEME_LIST = "|cff33ff99Pathwise|r themes: %s"
+L.THEME_ACTIVE = "(active)"
+L.THEME_SET = "Theme: %s"
+L.THEME_UNKNOWN = "Unknown theme '%s'."
+L.CMD_SETTINGS = "open the Pathwise settings"
+L.SETTINGS_TITLE = "Pathwise"
+L.SETTINGS_APPEARANCE = "Appearance"
+L.SETTINGS_APPEARANCE_HELP = "Window theme. Click one to apply it to all Pathwise windows right away."

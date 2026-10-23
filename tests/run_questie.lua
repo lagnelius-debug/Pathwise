@@ -196,7 +196,7 @@ check("target macro gets the mobs", together.names[1] == "Timberling")
 Pathwise:GetModule("NextStepsFrame"):SetShown(true)
 local lines = {}
 for _, f in ipairs(WoW.frames) do
-  if f.text and f._parent == _G.PathwiseNextSteps and f._shown then
+  if f.text and f._parent == _G.PathwiseNextSteps.content and f._shown then
     lines[#lines + 1] = Strip(f.text:GetText())
   end
 end

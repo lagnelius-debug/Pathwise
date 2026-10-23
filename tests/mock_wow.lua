@@ -126,8 +126,17 @@ function FrameMethods:SetWidth(w) self._width = w end
 function FrameMethods:SetHeight(h) self._height = h end
 function FrameMethods:SetSize(w, h) self._width, self._height = w, h end
 function FrameMethods:GetStringWidth() return #(self._text or "") * 6 end
-function FrameMethods:SetBackdrop() end
 function FrameMethods:SetRotation(radians) self._rotation = radians end
+function FrameMethods:SetPoint(...) self._points = self._points or {}; self._points[#self._points + 1] = { ... } end
+function FrameMethods:ClearAllPoints() self._points = {} end
+function FrameMethods:SetAllPoints(other) self._points = { { "ALL", other } } end
+function FrameMethods:SetTexture(path) self._texture = path end
+function FrameMethods:SetTexCoord(...) self._texcoord = { ... } end
+function FrameMethods:SetColorTexture(r, g, b, a) self._colorTexture = { r, g, b, a } end
+function FrameMethods:SetBackdrop(backdrop) self._backdrop = backdrop end
+function FrameMethods:SetBackdropColor(r, g, b, a) self._backdropColor = { r, g, b, a } end
+function FrameMethods:SetBackdropBorderColor(r, g, b, a) self._borderColor = { r, g, b, a } end
+function FrameMethods:SetTextColor(r, g, b) self._textColor = { r, g, b } end
 function FrameMethods:SetVertexColor(r, g, b) self._color = { r, g, b } end
 function FrameMethods:GetID() return self._id or 0 end
 function FrameMethods:SetID(id) self._id = id end
@@ -146,7 +155,9 @@ end
 function FrameMethods:CreateFontString(name)
   return NewObject("FontString", name, self)
 end
+WoW.textureCount = 0
 function FrameMethods:CreateTexture(name)
+  WoW.textureCount = WoW.textureCount + 1
   return NewObject("Texture", name, self)
 end
 

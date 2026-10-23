@@ -1,20 +1,19 @@
 local addonName, Pathwise = ...
 
--- Next Steps window: a small movable window listing what to do now, from
--- all modules (quests, trainer, ...). Toggle with /pw. Hover a line for
--- details (e.g. a quest's objectives). Position and visibility are saved.
+-- To-do window (Next Steps): a small movable window listing what to do now,
+-- from all modules (quests, trainer, ...). Toggle with /pw. Hover a line for
+-- details (e.g. a quest's objectives); click a line with a location to point
+-- the arrow there. Position and visibility are saved; the look comes from
+-- the active theme (UI/Theme.lua).
 
 local L = Pathwise.L
 
 local NextStepsFrame = Pathwise:NewModule("NextStepsFrame")
 
-local WIDTH = 340
 local ROW_HEIGHT = 16
 local MAX_ROWS = 16
 local INDENT = 12 -- per sub-line level
 local TASK_COLOR = "|cff99e6ff"
-local TOP_PADDING = 34
-local BOTTOM_PADDING = 14
 
 local frame
 local rows = {}
@@ -66,9 +65,11 @@ end
 local function GetRow(index)
   local row = rows[index]
   if not row then
-    row = CreateFrame("Frame", nil, frame)
-    row:SetSize(WIDTH - 28, ROW_HEIGHT)
-    row:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -(TOP_PADDING + (index - 1) * ROW_HEIGHT))
+    local content = frame.content
+    row = CreateFrame("Frame", nil, content)
+    row:SetHeight(ROW_HEIGHT)
+    row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
+    row:SetPoint("RIGHT", content, "RIGHT", 0, 0)
     row:EnableMouse(true)
     row:SetScript("OnEnter", OnRowEnter)
     row:SetScript("OnLeave", OnRowLeave)
@@ -80,10 +81,13 @@ local function GetRow(index)
   return row
 end
 
-local function UpdatePath()
+local function UpdateFooter(stepCount)
   local active = Pathwise:GetModule("Talents"):GetSpecInfo().active
-  frame.path.text:SetText(string.format(L.NS_PATH, L["SPEC_" .. active]))
-  frame.path:SetWidth(frame.path.text:GetStringWidth() + 4)
+  local path = frame.path
+  path.text:SetText(string.format(L.NS_PATH, L["SPEC_" .. active]))
+  path:SetWidth(path.text:GetStringWidth() + 4)
+  local zone = Pathwise:GetModule("Character"):GetSnapshot().zone
+  frame.footer.text:SetText(string.format(L.NS_FOOTER, stepCount, zone and zone.zone or ""))
 end
 
 -- The step that gets its details listed underneath: the one the arrow
@@ -102,20 +106,22 @@ local function ExpandedItem(items)
   end
 end
 
--- Flattens the items into window lines: { text, indent, item }.
+-- Flattens the items into window lines: { text, indent, item, current }.
 local function BuildLines(items)
   local lines = {}
   local expanded = ExpandedItem(items)
+  local Theme = Pathwise.Theme
   for _, item in ipairs(items) do
     local text = item == expanded and item.expandedText or item.text
     if item.target then
       text = text .. " " .. L.NS_HAS_LOCATION
     end
-    lines[#lines + 1] = { text = text, indent = 0, item = item }
-    if item == expanded then
+    local current = item == expanded
+    lines[#lines + 1] = { text = Theme.RecolorQuestNames(text), indent = 0, item = item, current = current }
+    if current then
       for _, sub in ipairs(item.subLines) do
-        local subText = sub.task and (TASK_COLOR .. sub.text .. "|r") or sub.text
-        lines[#lines + 1] = { text = subText, indent = sub.level * INDENT, item = item }
+        local subText = sub.task and (TASK_COLOR .. sub.text .. "|r") or Theme.RecolorQuestNames(sub.text)
+        lines[#lines + 1] = { text = subText, indent = sub.level * INDENT, item = item, current = true }
       end
     end
   end
@@ -126,43 +132,49 @@ function NextStepsFrame:Render()
   if not frame or not frame:IsShown() then
     return
   end
-  UpdatePath()
   local items = Pathwise:GetModule("NextSteps"):GetItems()
+  UpdateFooter(#items)
   local lines = BuildLines(items)
   if #lines == 0 then
     lines[1] = { text = L.NS_EMPTY, indent = 0 }
   elseif #lines > MAX_ROWS then
-    local hidden = {}
+    local hidden = 0
     for i = MAX_ROWS, #lines do
       if lines[i].item and lines[i].indent == 0 then
-        hidden[#hidden + 1] = true
+        hidden = hidden + 1
       end
     end
     for i = #lines, MAX_ROWS, -1 do
       lines[i] = nil
     end
-    lines[MAX_ROWS] = { text = string.format(L.NS_MORE, #hidden), indent = 0 }
+    lines[MAX_ROWS] = { text = string.format(L.NS_MORE, hidden), indent = 0 }
   end
 
+  local textColor = frame.textColor or { 1, 1, 1 }
+  local firstCurrent, lastCurrent
   for i, line in ipairs(lines) do
     local row = GetRow(i)
     row.item = line.item
     row.text:ClearAllPoints()
     row.text:SetPoint("LEFT", row, "LEFT", line.indent, 0)
     row.text:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+    row.text:SetTextColor(textColor[1], textColor[2], textColor[3])
     row.text:SetText(line.text)
     row:Show()
+    if line.current then
+      firstCurrent = firstCurrent or row
+      lastCurrent = row
+    end
   end
   for i = #lines + 1, #rows do
     rows[i]:Hide()
   end
-  frame:SetHeight(TOP_PADDING + #lines * ROW_HEIGHT + BOTTOM_PADDING)
+  frame:SetHighlightRow(firstCurrent, lastCurrent)
+  frame:SetContentHeight(#lines * ROW_HEIGHT)
 end
 
 local function CreateWindow()
-  local template = BackdropTemplateMixin and "BackdropTemplate" or nil
-  frame = CreateFrame("Frame", "PathwiseNextSteps", UIParent, template)
-  frame:SetWidth(WIDTH)
+  frame = Pathwise.Theme.CreateWindow("PathwiseNextSteps", UIParent, L.NS_TITLE)
   frame:SetFrameStrata("MEDIUM")
   frame:SetClampedToScreen(true)
   frame:EnableMouse(true)
@@ -173,32 +185,18 @@ local function CreateWindow()
     self:StopMovingOrSizing()
     SavePosition()
   end)
-  if frame.SetBackdrop then
-    frame:SetBackdrop({
-      bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-      edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-      tile = true,
-      tileSize = 16,
-      edgeSize = 16,
-      insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    frame:SetBackdropColor(0, 0, 0, 0.75)
-  end
-
-  local title = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  title:SetPoint("TOPLEFT", frame, "TOPLEFT", 12, -12)
-  title:SetText(L.NS_TITLE)
-
-  local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-  close:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 2, 2)
-  close:SetScript("OnClick", function()
+  frame.close:SetScript("OnClick", function()
     NextStepsFrame:SetShown(false)
   end)
+  -- Re-render with the new theme's text color.
+  frame.OnThemeApplied = function()
+    NextStepsFrame:Render()
+  end
 
-  -- "Path: Marksmanship" - click to change path (opens the path chooser).
-  local path = CreateFrame("Button", nil, frame)
+  -- "Path: Marksmanship" in the footer - click to change path.
+  local path = CreateFrame("Button", nil, frame.footer)
   path:SetHeight(16)
-  path:SetPoint("RIGHT", close, "LEFT", -2, 0)
+  path:SetPoint("RIGHT", frame.footer, "RIGHT", 0, 0)
   path.text = path:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   path.text:SetPoint("RIGHT", path, "RIGHT", 0, 0)
   path:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
@@ -242,11 +240,14 @@ function NextStepsFrame:OnInitialize()
 end
 
 function NextStepsFrame:OnEnable()
+  -- Saved variables are loaded now: apply the saved theme.
+  Pathwise.Theme.Apply(frame)
   frame:SetShown(Pathwise.db.nextSteps.shown)
   self:Render()
 end
 
 function NextStepsFrame:OnSettingsReset()
+  Pathwise.Theme.Apply(frame)
   RestorePosition()
   frame:SetShown(Pathwise.db.nextSteps.shown)
   self:Render()
