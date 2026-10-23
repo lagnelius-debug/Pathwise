@@ -8,7 +8,9 @@ After every change:
    (they must stay identical): patch for fixes, minor for features.
 3. Commit and push to `origin main`.
 4. Run `tools/release.sh "short release notes"`: it builds
-   `../Pathwise-<version>.zip` and publishes it as a GitHub release
-   (tag `v<version>`) with the zip attached. The user always wants the
-   new zip on GitHub.
+   `../Pathwise-<version>.zip` locally and pushes the tag `v<version>`;
+   the GitHub Actions workflow (.github/workflows/release.yml) then
+   publishes the release with the zip attached. (This session type can't
+   create releases through the API, hence the workflow.) The user always
+   wants the new zip on GitHub - check the release appeared.
 5. Send the zip to the user as well.

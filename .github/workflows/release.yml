@@ -1,0 +1,42 @@
+# Publishes a GitHub release with the installable zip whenever a version
+# tag (v0.2.0, ...) is pushed - see tools/release.sh.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the version
+        run: |
+          VERSION=$(sed -n 's/^## Version: *//p' Pathwise_Vanilla.toc | tr -d '\r')
+          [ "v$VERSION" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME, TOC version $VERSION"; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Run the offline tests
+        run: |
+          sudo apt-get install -y -qq lua5.1
+          lua5.1 tests/run.lua
+
+      - name: Build the zip
+        run: tools/build_zip.sh "Pathwise-$VERSION.zip"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          NOTES=$(git for-each-ref "refs/tags/$GITHUB_REF_NAME" --format='%(contents)')
+          printf '%s\n\nDownload **Pathwise-%s.zip** below (not "Source code"), unzip it into World of Warcraft/_classic_era_/Interface/AddOns, and check that the folder is named Pathwise.\n' \
+            "$NOTES" "$VERSION" > notes.md
+          gh release create "$GITHUB_REF_NAME" "Pathwise-$VERSION.zip" --title "Pathwise $VERSION" --notes-file notes.md
