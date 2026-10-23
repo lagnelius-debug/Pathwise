@@ -204,8 +204,14 @@ function Waypoints:RefreshAuto()
     end
   end
   local newAuto = chosen and chosen.target
+  local function Names(target)
+    return target and target.names and table.concat(target.names, ",") or ""
+  end
+  -- Names matter too: the target macro follows them (e.g. a combined step
+  -- loses a quest's mobs while the arrow stays on the same spot).
   local changed = (newAuto and newAuto.label) ~= (auto and auto.label)
     or (newAuto and auto and (newAuto.x ~= auto.x or newAuto.y ~= auto.y))
+    or Names(newAuto) ~= Names(auto)
   auto, autoItemId = newAuto, chosen and chosen.id
   if changed and not manual then
     Changed()

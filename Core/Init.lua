@@ -197,6 +197,8 @@ local function CreateRegistry(onFirst, onLast)
     end
   end
 
+  -- Each handler runs protected: an error in one module is reported (by
+  -- WoW's error handler / BugSack) without stopping the other handlers.
   function registry:Fire(name, ...)
     local list = self.lists[name]
     if not list then
@@ -208,7 +210,7 @@ local function CreateRegistry(onFirst, onLast)
         if type(handler) == "string" then
           handler = entry.owner[handler]
         end
-        handler(entry.owner, name, ...)
+        Platform.SafeCall(handler, entry.owner, name, ...)
       end
     end
   end

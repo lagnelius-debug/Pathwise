@@ -53,6 +53,22 @@ window.grip._scripts.OnMouseUp(window.grip, "RightButton")
 check("right-click: automatic height again", saved.height == nil and window.fixedHeight == nil
   and #VisibleRows() > 5)
 check("width kept", saved.width == 260)
+check("footer text stops at the path button", window.footer.text._wordWrap == false)
+
+-- Only the current step's detail lines cut off: "..." instead of "and 0 more"
+local GetItems = Pathwise:GetModule("NextSteps").GetItems
+Pathwise:GetModule("NextSteps").GetItems = function()
+  return { { id = "x", text = "Do: Only step", subLines = {
+    { text = "a", level = 1 }, { text = "b", level = 1 }, { text = "c", level = 1 },
+    { text = "d", level = 1 }, { text = "e", level = 1 }, { text = "f", level = 1 } } } }
+end
+window.fixedHeight = window:ChromeHeight() + 4 * 16
+NextStepsFrame:Render()
+local visible = VisibleRows()
+check("only details cut: last row is '...'", #visible == 4 and visible[4].text:GetText() == "...")
+Pathwise:GetModule("NextSteps").GetItems = GetItems
+window.fixedHeight = nil
+NextStepsFrame:Render()
 
 ---------------------------------------------------------------------------
 section("Window: minimap button")
@@ -85,6 +101,12 @@ check("settings checkbox follows", checkbox:GetChecked() == false)
 checkbox:SetChecked(true)
 checkbox._scripts.OnClick(checkbox)
 check("settings checkbox shows it", button:IsShown() and Pathwise.db.minimap.hide == false)
+
+WoW.Slash("minimap")
+check("hidden again", not button:IsShown())
+WoW.Slash("reset")
+check("/pw reset shows it and the checkbox follows", button:IsShown() and checkbox:GetChecked() == true)
+check("/pw reset: default window width", window:GetWidth() == Pathwise.Theme.DEFAULT_WIDTH)
 
 ---------------------------------------------------------------------------
 section("Window: key binding")

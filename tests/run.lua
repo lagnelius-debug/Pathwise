@@ -105,11 +105,28 @@ Pathwise:FireCallback("TEST_CB", 1)
 Pathwise:FireCallback("TEST_CB", 2)
 check("callbacks: in order, safe unregister during dispatch", table.concat(order, ",") == "a1,a2")
 
+local reached = false
+local bad, good = {}, {}
+Pathwise:RegisterCallback("TEST_CB2", bad, function() error("boom") end)
+Pathwise:RegisterCallback("TEST_CB2", good, function() reached = true end)
+local errorsBefore = #WoW.errors
+Pathwise:FireCallback("TEST_CB2")
+check("callbacks: a failing handler doesn't stop the others", reached and #WoW.errors == errorsBefore + 1)
+table.remove(WoW.errors)
+Pathwise:UnregisterCallback("TEST_CB2", bad)
+Pathwise:UnregisterCallback("TEST_CB2", good)
+
 ---------------------------------------------------------------------------
 -- Milestone-specific tests are appended below.
 for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua", "./tests/run_m3.lua", "./tests/run_m4.lua", "./tests/run_quests.lua", "./tests/run_arrow.lua", "./tests/run_questie.lua", "./tests/run_macro.lua", "./tests/run_m5_m6.lua", "./tests/run_theme.lua", "./tests/run_window.lua" }) do
   local chunk = assert(loadfile(file))
   chunk(WoW, Pathwise, check, section)
+end
+
+section("No unexpected errors")
+check("only the intentional BrokenTestModule error was reported", #WoW.errors == 1)
+for i = 2, #WoW.errors do
+  print("  error: " .. tostring(WoW.errors[i]))
 end
 
 print(string.format("%d passed, %d failed", passed, failed))

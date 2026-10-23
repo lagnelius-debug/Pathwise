@@ -23,6 +23,7 @@ local TOOLTIP_BG = "Interface\\Tooltips\\UI-Tooltip-Background"
 local TOOLTIP_EDGE = "Interface\\Tooltips\\UI-Tooltip-Border"
 
 local WIDTH = 340
+Theme.DEFAULT_WIDTH = WIDTH
 local HEADER_CREATURE = 52 -- title centered, ornaments in the top corners
 local HEADER_PLAIN = 44    -- title left-aligned
 local SIDE_PADDING = 14
@@ -216,24 +217,47 @@ end
 local MAX_WIDTH, MAX_HEIGHT = 700, 900
 local GRIP = "Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-"
 
--- Adds a size grip in the bottom-right corner. Dragging it resizes the
--- window; right-clicking it goes back to the automatic height. onResized
--- (width, height) is called during and after sizing; height is nil for
--- automatic.
-function WindowMixin:EnableResizing(minWidth, minHeight, onResized)
-  self:SetResizable(true)
+-- Resize bounds: the minimum height depends on the theme's header height,
+-- so it's recomputed whenever a theme is applied.
+function WindowMixin:UpdateResizeBounds()
+  if not self.resizeMinWidth then
+    return
+  end
+  local minHeight = self:ChromeHeight() + self.resizeMinContent
   -- SetResizeBounds replaced SetMinResize/SetMaxResize in newer clients;
   -- use whichever this client has.
   if self.SetResizeBounds then
-    self:SetResizeBounds(minWidth, minHeight, MAX_WIDTH, MAX_HEIGHT)
+    self:SetResizeBounds(self.resizeMinWidth, minHeight, MAX_WIDTH, MAX_HEIGHT)
   else
     if self.SetMinResize then
-      self:SetMinResize(minWidth, minHeight)
+      self:SetMinResize(self.resizeMinWidth, minHeight)
     end
     if self.SetMaxResize then
       self:SetMaxResize(MAX_WIDTH, MAX_HEIGHT)
     end
   end
+end
+
+-- Ends a resize drag (mouse released, or the window hidden mid-drag).
+local function FinishSizing(self)
+  if not self.sizing then
+    return
+  end
+  self:StopMovingOrSizing()
+  self.sizing = false
+  self.fixedHeight = self:GetHeight()
+  self.onResized(self:GetWidth(), self.fixedHeight, false)
+end
+
+-- Adds a size grip in the bottom-right corner. Dragging it resizes the
+-- window; right-clicking it goes back to the automatic height.
+-- onResized(width, height, live) is called while dragging (live = true) and
+-- once at the end; height is nil for automatic.
+-- minContentHeight: smallest content area the grip allows.
+function WindowMixin:EnableResizing(minWidth, minContentHeight, onResized)
+  self:SetResizable(true)
+  self.resizeMinWidth, self.resizeMinContent, self.onResized = minWidth, minContentHeight, onResized
+  self:UpdateResizeBounds()
 
   local grip = CreateFrame("Button", nil, self)
   grip:SetSize(16, 16)
@@ -251,13 +275,10 @@ function WindowMixin:EnableResizing(minWidth, minHeight, onResized)
   end)
   grip:SetScript("OnMouseUp", function(_, button)
     if self.sizing then
-      self:StopMovingOrSizing()
-      self.sizing = false
-      self.fixedHeight = self:GetHeight()
-      onResized(self:GetWidth(), self.fixedHeight)
+      FinishSizing(self)
     elseif button == "RightButton" then
       self.fixedHeight = nil
-      onResized(self:GetWidth(), nil)
+      onResized(self:GetWidth(), nil, false)
     end
   end)
   grip:SetScript("OnEnter", function(button)
@@ -270,11 +291,13 @@ function WindowMixin:EnableResizing(minWidth, minHeight, onResized)
   end)
   self:SetScript("OnSizeChanged", function()
     if self.sizing then
-      -- Live: fit the content to the new size while dragging.
       self.fixedHeight = self:GetHeight()
-      onResized(self:GetWidth(), self.fixedHeight)
+      onResized(self:GetWidth(), self.fixedHeight, true)
     end
   end)
+  -- Hidden mid-drag (close button, key binding): the grip never gets its
+  -- mouse-up, so finish the resize here.
+  self:HookScript("OnHide", FinishSizing)
   self.grip = grip
 end
 
@@ -549,6 +572,7 @@ function Theme.Apply(window, id)
   window.textColor = { RGB(theme.text) }
   window.mutedColor = { RGB(theme.muted) }
   window:UpdateHighlight()
+  window:UpdateResizeBounds()
   window:Layout()
   if window.OnThemeApplied then
     window:OnThemeApplied(theme)

@@ -180,6 +180,7 @@ L.CMD_TOGGLE = "show or hide the Next Steps window"
 L.NS_TITLE = "To-do"
 L.NS_EMPTY = "Nothing to recommend right now."
 L.NS_MORE = "... and %d more"
+L.NS_MORE_DETAILS = "..."
 L.NS_TRAINER = "Visit your trainer: %d recommended spells (%s)"
 
 -- Quest advisor

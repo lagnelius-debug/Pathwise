@@ -87,7 +87,14 @@ end
 function MinimapButton:Update()
   local saved = Pathwise.db.minimap
   Place(saved.angle)
-  button:SetShown(not saved.hide)
+  button:SetShown(not saved.hide and Pathwise:IsModuleEnabled("MinimapButton"))
+end
+
+-- /pw reset replaced the saved settings: re-place the button and let the
+-- settings checkbox follow.
+function MinimapButton:OnSettingsReset()
+  self:Update()
+  Pathwise:FireCallback("MINIMAP_BUTTON_CHANGED", not Pathwise.db.minimap.hide)
 end
 
 function MinimapButton:SetShown(shown)
@@ -101,13 +108,9 @@ function MinimapButton:OnInitialize()
     return
   end
   CreateButton()
-  self:RegisterCallback("SETTINGS_RESET", "Update")
-end
-
-function MinimapButton:OnEnable()
-  if button then
-    self:Update()
-  end
+  -- Saved variables are loaded: show it at its saved spot right away.
+  self:Update()
+  self:RegisterCallback("SETTINGS_RESET", "OnSettingsReset")
 end
 
 -- /pw minimap: show or hide the button.
