@@ -81,7 +81,7 @@ UpdateLog({
     { text = "Hyacinth Mushroom: 0/7" }, { text = "Moonpetal Lily: 0/4" }, { text = "Webwood Ichor: 0/1" } } },
 })
 local venom = Item(916)
-check("quest under a subzone header counts as here", Strip(venom.text) == "Do: [4] Webwood Venom")
+check("quest under a subzone header counts as here, with distance", Strip(venom.text) == "Do: [4] Webwood Venom - 120 yd")
 check("item objective: nearest dropping NPC", venom.target and Near(venom.target.x, 0.58) and Near(venom.target.y, 0.36)
   and venom.target.label == "Webwood Venom Sac (Webwood Spider)")
 local antidote = Item(917)
@@ -159,6 +159,44 @@ UpdateLog({ { header = true, title = "Shadowglen" },
   { title = "Tenaron's Summons", level = 5, questID = 3116, objectives = {} } })
 check("talk-to quest: arrow to the finishing NPC", Item(3116).target and Near(Item(3116).target.x, 0.51)
   and Item(3116).target.label == "Turn in: Tenaron's Summons (Iverron)")
+
+-- Distance decides: south of Dolanaar, the Timberling quests just picked
+-- up come before a far turn-in and a far quest.
+db.Quest[918] = { finishedBy = { { 1240 } }, objectives = { { { 2022, nil, 1 } } } } -- Timberling Seeds
+db.Quest[919] = { finishedBy = { { 1240 } }, objectives = { { { 2022, nil, 1 } } } } -- Timberling Sprouts
+db.Quest[920] = { finishedBy = { { 1234 } }, objectives = {} }                       -- far turn-in
+db.Quest[921] = { finishedBy = { { 1234 } }, objectives = { { { 1986, nil, 1 } } } } -- far quest
+db.Npc[2022] = { name = "Timberling", spawns = { [141] = { { 57, 65 }, { 60, 68 } } } }
+db.Npc[1240] = { name = "Denalan", spawns = { [141] = { { 60, 68 } } } }
+S.mapX, S.mapY = 0.58, 0.66 -- south of Dolanaar
+UpdateLog({
+  { header = true, title = "Teldrassil" },
+  { title = "Far Turn-in", level = 5, questID = 920, objectives = {} },
+  { title = "Far Quest", level = 5, questID = 921, objectives = { { text = "Webwood Spider slain: 0/5" } } },
+  { title = "Timberling Seeds", level = 5, questID = 918, objectives = { { text = "Timberling Seed: 0/8" } } },
+  { title = "Timberling Sprouts", level = 6, questID = 919, objectives = { { text = "Timberling Sprout: 0/12" } } },
+})
+local order = {}
+for _, item in ipairs(NextSteps:GetItems()) do
+  if item.id:find("^quest:") then order[#order + 1] = Strip(item.text) end
+end
+check("nearby quests first", order[1]:find("Timberling Seeds", 1, true) and order[2]:find("Timberling Sprouts", 1, true))
+check("nearby quest shows its distance (30 yd west, 30 north)", order[1] == "Do: [5] Timberling Seeds - 42 yd")
+check("far turn-in after nearby quests", order[3]:find("Turn in: [5] Far Turn-in", 1, true))
+check("far quest last", order[4]:find("Far Quest", 1, true))
+check("arrow follows the nearest step", Pathwise:GetModule("Waypoints"):GetTarget().label == "Timberling")
+
+-- Walking to the far area re-sorts by itself
+S.mapX, S.mapY = 0.56, 0.36
+WoW.RunTickers()
+order = {}
+for _, item in ipairs(NextSteps:GetItems()) do
+  if item.id:find("^quest:") then order[#order + 1] = Strip(item.text) end
+end
+check("after moving, the far quest is near", order[1]:find("Far Quest", 1, true) ~= nil)
+S.mapX, S.mapY = 0.56, 0.361
+WoW.RunTickers()
+check("small moves don't re-plan", #WoW.timers == 0)
 
 -- Kill quest; unknown area IDs are ignored
 UpdateLog({ { header = true, title = "Teldrassil" },

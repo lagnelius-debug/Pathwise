@@ -16,6 +16,18 @@ local UPDATE_DELAY = 0.3
 -- A quest with at least this share of its objectives done is "almost done".
 local ALMOST_DONE = 0.5
 
+-- Quest steps whose location is within this distance count as nearby and
+-- come first; farther ones wait (turn-ins included) until the nearby work
+-- is done.
+QuestAdvisor.NEAR_YARDS = 300
+
+-- While the player moves, re-sort by distance after moving this far,
+-- checking every MOVE_CHECK_SECONDS.
+local MOVE_REPLAN_YARDS = 40
+local MOVE_CHECK_SECONDS = 5
+
+local lastPlanPosition -- { mapID, x, y } where the last plan was made
+
 local DIFFICULTY_COLORS = {
   RED = "ff2020",
   ORANGE = "ff8040",
@@ -111,8 +123,11 @@ local function IsHere(quest, location, target)
   return target ~= nil and location.mapID ~= nil and target.mapID == location.mapID
 end
 
--- Pure function: quests -> Next Steps items, in recommended order.
--- location: { zone, subZone, mapID } of the player.
+-- Pure function (apart from map geometry): quests -> Next Steps items, in
+-- recommended order. Steps with a known location are ordered by distance:
+-- nearby ones (NEAR_YARDS) first, far ones after the steps without a
+-- location.
+-- location: { zone, subZone, mapID, x, y } of the player.
 -- locate(quest, kind) optionally returns an arrow target for a quest
 -- ("turnIn" for complete quests, "do" for quests to work on).
 function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
@@ -128,10 +143,19 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     local name = QuestText(quest, difficulty)
     local priority, text
 
+    local distance
+    if target and location and location.mapID and location.x then
+      distance = Pathwise:GetModule("Waypoints").Vector(location.mapID, location.x, location.y,
+        target.mapID, target.x, target.y)
+    end
+    local near = distance ~= nil and distance <= QuestAdvisor.NEAR_YARDS
+    local far = distance ~= nil and not near
+
     if quest.failed then
       priority, text = P.QUEST_FAILED, string.format(L.QA_FAILED, name)
     elseif QuestAdvisor.IsReady(quest) then
-      priority, text = P.QUEST_TURN_IN, string.format(L.QA_TURN_IN, name)
+      priority = far and P.QUEST_FAR_TURN_IN or P.QUEST_TURN_IN
+      text = string.format(L.QA_TURN_IN, name)
     elseif quest.suggestedGroup >= 2 then
       priority, text = P.QUEST_LATER, string.format(L.QA_GROUP, name, quest.suggestedGroup)
     elseif difficulty == "RED" then
@@ -139,14 +163,20 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     elseif difficulty == "GREY" then
       priority, text = P.QUEST_GREY, string.format(L.QA_GREY, name)
     elseif progress and progress >= ALMOST_DONE then
-      priority, text = P.QUEST_ALMOST_DONE, string.format(L.QA_ALMOST_DONE, name, progress * 100)
+      priority = near and P.QUEST_NEAR_ALMOST_DONE or far and P.QUEST_FAR_ALMOST_DONE or P.QUEST_ALMOST_DONE
+      text = string.format(L.QA_ALMOST_DONE, name, progress * 100)
+    elseif near then
+      priority, text = P.QUEST_NEAR, string.format(L.QA_HERE, name)
     elseif here then
-      priority, text = P.QUEST_HERE, string.format(L.QA_HERE, name)
+      priority, text = far and P.QUEST_FAR_HERE or P.QUEST_HERE, string.format(L.QA_HERE, name)
     else
       priority, text = P.QUEST_ELSEWHERE, string.format(L.QA_ELSEWHERE, name, quest.zone or "?")
     end
     if difficulty == "ORANGE" and priority >= P.QUEST_ELSEWHERE and not QuestAdvisor.IsReady(quest) then
       text = text .. " " .. L.QA_HARD
+    end
+    if distance and priority >= P.QUEST_ELSEWHERE then
+      text = text .. string.format(L.QA_DISTANCE, distance)
     end
 
     items[#items + 1] = {
@@ -155,9 +185,9 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
       text = text,
       detail = Detail(quest),
       target = target,
-      -- Within a priority: current zone first, then most progress, then
-      -- lowest level (easiest first).
-      order = { here and 0 or 1, -(progress or 0), quest.level },
+      -- Within a priority: nearest first, then current zone, then most
+      -- progress, then lowest level (easiest first).
+      order = { distance or math.huge, here and 0 or 1, -(progress or 0), quest.level },
     }
   end
 
@@ -165,7 +195,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     if a.priority ~= b.priority then
       return a.priority > b.priority
     end
-    for i = 1, 3 do
+    for i = 1, 4 do
       if a.order[i] ~= b.order[i] then
         return a.order[i] < b.order[i]
       end
@@ -184,7 +214,9 @@ function QuestAdvisor:Update()
   local level = snapshot.level or 1
   local quests, collapsed = Platform.GetQuestLog()
   local zone = snapshot.zone or {}
-  local location = { zone = zone.zone, subZone = zone.subZone, mapID = Platform.GetPlayerMapPosition() }
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  local location = { zone = zone.zone, subZone = zone.subZone, mapID = mapID, x = x, y = y }
+  lastPlanPosition = mapID and { mapID = mapID, x = x, y = y } or nil
   local QuestLocations = Pathwise:GetModule("QuestLocations")
   local QuestieData = Pathwise:GetModule("QuestieData")
   QuestLocations:OnQuestsScanned(quests)
@@ -246,7 +278,24 @@ function QuestAdvisor:OnInitialize()
   self:RegisterCallback("WAYPOINT_VISITED", "OnQuestEvent")
 end
 
+-- Re-plans when the player has moved far enough since the last plan, so
+-- the order (and the arrow) keeps following what's nearest.
+function QuestAdvisor:CheckMovement()
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  if not mapID or not lastPlanPosition then
+    return
+  end
+  local moved = Pathwise:GetModule("Waypoints").Vector(lastPlanPosition.mapID, lastPlanPosition.x,
+    lastPlanPosition.y, mapID, x, y)
+  if not moved or moved >= MOVE_REPLAN_YARDS then
+    self:ScheduleUpdate()
+  end
+end
+
 function QuestAdvisor:OnEnable()
+  Platform.Every(MOVE_CHECK_SECONDS, function()
+    QuestAdvisor:CheckMovement()
+  end)
   self:RegisterEvent("QUEST_LOG_UPDATE", "OnQuestEvent")
   self:RegisterEvent("QUEST_ACCEPTED", "OnQuestEvent")
   self:RegisterEvent("QUEST_REMOVED", "OnQuestEvent")

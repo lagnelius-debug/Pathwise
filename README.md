@@ -102,6 +102,7 @@ Test with a fresh level 1 Night Elf Hunter.
 
 - [ ] After login, a **Pathwise: Next steps** window appears on the right side of the screen. It can be dragged, and it remembers where you put it. `/pw` hides or shows it.
 - [ ] It lists your quests in this order: **Turn in**, **Failed**, **Almost done** (with %), **Do** (current zone first), **Do ... in <zone>**, **Later (level X)**, **Group quest**, **Low XP**.
+- [ ] When Pathwise knows where a quest happens (QuestieDB or learned), the line shows the distance, e.g. `- 80 yd`. Quests within about 300 yards come first, nearest first. Far turn-ins wait until the nearby work is done. Walking somewhere else re-sorts the list within a few seconds, and the arrow follows the top line.
 - [ ] Quest titles are colored like in the quest log (red, orange, yellow, green, grey). Orange quests say "(hard)".
 - [ ] Hovering a line shows the quest's zone and objectives.
 - [ ] The list updates on its own when you kill quest mobs, accept, turn in or abandon quests, change zone or level up.

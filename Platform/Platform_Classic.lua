@@ -84,6 +84,20 @@ function Platform.SafeCall(fn, ...)
   end, geterrorhandler())
 end
 
+-- Runs fn every `seconds` until the game ends. C_Timer.NewTicker exists in
+-- Classic Era; fall back to chained Platform.After just in case.
+function Platform.Every(seconds, fn)
+  if C_Timer and C_Timer.NewTicker then
+    C_Timer.NewTicker(seconds, fn)
+    return
+  end
+  local function Tick()
+    fn()
+    Platform.After(seconds, Tick)
+  end
+  Platform.After(seconds, Tick)
+end
+
 -- Seconds since an arbitrary start, with sub-second precision.
 function Platform.GetTime()
   return GetTime()

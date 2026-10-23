@@ -243,11 +243,21 @@ MerchantFrame._shown = false
 -- Timers
 ---------------------------------------------------------------------------
 
+WoW.tickers = {}
 C_Timer = {
   After = function(seconds, fn)
     WoW.timers[#WoW.timers + 1] = fn
   end,
+  -- Tickers don't run by themselves in tests; WoW.RunTickers runs each once.
+  NewTicker = function(seconds, fn)
+    WoW.tickers[#WoW.tickers + 1] = fn
+  end,
 }
+
+function WoW.RunTickers()
+  for _, fn in ipairs(WoW.tickers) do fn() end
+  WoW.RunTimers()
+end
 
 function WoW.RunTimers()
   while #WoW.timers > 0 do
