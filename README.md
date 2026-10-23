@@ -41,7 +41,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw talents` | Show your next talent points from the build for your path. `/pw talents check` compares the build data with the game's talent tree |
 | `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
 | `/pw theme` | List the window themes (numbered, active one marked). `/pw theme 7` or `/pw theme wildwood` sets one, `/pw theme next` cycles |
-| `/pw settings` | Open the Pathwise settings (Appearance: window theme) |
+| `/pw settings` | Open the Pathwise settings (minimap button, window theme) |
+| `/pw minimap` | Show or hide the minimap button |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
 
 ## In-game test checklist (M0 and M1)
@@ -173,6 +174,14 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] Esc > Options > AddOns > **Pathwise** (or `/pw settings`) shows **Appearance** with 8 buttons, each with a two-color swatch. The active one has a gold outline. Clicking one switches the theme right away.
 - [ ] The chosen theme survives `/reload` and relog, and other characters use it too.
 - [ ] Cycle `/pw theme next` 20-30 times: no errors, and no slowdown.
+
+## In-game test checklist (window size, minimap button)
+
+- [ ] Long lines in the To-do window stay on one line and end in "...". They no longer wrap into the next row.
+- [ ] Dragging the size grip in the bottom-right corner resizes the window. The rows adapt while you drag, and the steps that don't fit show as "... and N more". Right-clicking the grip goes back to automatic height. The size survives `/reload`.
+- [ ] A Pathwise map icon sits on the minimap's edge. Left-click shows or hides the To-do window, right-click opens the settings, and dragging moves it around the edge. Its position survives `/reload`.
+- [ ] `/pw minimap` and the "Show minimap button" checkbox in the settings hide and show it.
+- [ ] Key Bindings > Pathwise > "Show/hide the To-do window" works.
 
 ## Things to verify in game (marked `TODO verify` in code)
 

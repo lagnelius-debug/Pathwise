@@ -1,9 +1,9 @@
 local addonName, Pathwise = ...
 
 -- Settings panel (Esc > Options > AddOns > Pathwise, or /pw settings).
--- For now it holds the Appearance section: one button per window theme with
--- a two-color swatch; the active theme has a gold outline. More settings
--- (module toggles, ammo thresholds, chat messages) come with M7.
+-- For now: General (minimap button) and Appearance (one button per window
+-- theme with a two-color swatch; the active theme has a gold outline). More
+-- settings (module toggles, ammo thresholds, chat messages) come with M7.
 --
 -- Registration: the modern Settings API when the client has it, otherwise
 -- the legacy Interface Options (checked at runtime).
@@ -84,8 +84,24 @@ local function CreatePanel()
   title:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
   title:SetText(L.SETTINGS_TITLE)
 
+  -- General
+  local general = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  general:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -20)
+  general:SetText(L.SETTINGS_GENERAL)
+
+  local minimap = CreateFrame("CheckButton", "PathwiseSettingsMinimap", panel, "UICheckButtonTemplate")
+  minimap:SetPoint("TOPLEFT", general, "BOTTOMLEFT", -4, -4)
+  minimap.label = minimap:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  minimap.label:SetPoint("LEFT", minimap, "RIGHT", 2, 1)
+  minimap.label:SetText(L.SETTINGS_MINIMAP)
+  minimap:SetScript("OnClick", function(self)
+    Pathwise:GetModule("MinimapButton"):SetShown(self:GetChecked() and true or false)
+  end)
+  panel.minimapCheck = minimap
+
+  -- Appearance
   local header = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  header:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -20)
+  header:SetPoint("TOPLEFT", minimap, "BOTTOMLEFT", 4, -16)
   header:SetText(L.SETTINGS_APPEARANCE)
   panel.themeHeader = header
 
@@ -96,7 +112,10 @@ local function CreatePanel()
   for index, themeId in ipairs(Pathwise.ThemeOrder) do
     CreateThemeButton(index, themeId)
   end
-  panel:SetScript("OnShow", UpdateOutlines)
+  panel:SetScript("OnShow", function()
+    UpdateOutlines()
+    panel.minimapCheck:SetChecked(not Pathwise.db.minimap.hide)
+  end)
 
   if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
     local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
@@ -122,9 +141,14 @@ function SettingsPanel:OnThemeChanged()
   UpdateOutlines()
 end
 
+function SettingsPanel:OnMinimapButtonChanged(_, shown)
+  panel.minimapCheck:SetChecked(shown)
+end
+
 function SettingsPanel:OnInitialize()
   CreatePanel()
   self:RegisterCallback("THEME_CHANGED", "OnThemeChanged")
+  self:RegisterCallback("MINIMAP_BUTTON_CHANGED", "OnMinimapButtonChanged")
   UpdateOutlines()
 end
 

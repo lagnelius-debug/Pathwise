@@ -25,6 +25,7 @@ local DB_DEFAULTS = {
   trainerPanel = true, -- show the Training panel next to the spellbook
   nextSteps = { shown = true }, -- Next Steps window: visibility and position
   theme = "dragonflight",       -- window theme (UI/ThemeData.lua)
+  minimap = { hide = false, angle = 225 }, -- minimap button
   arrow = {},                   -- arrow position
   arrowAuto = true,             -- arrow follows the top Next Steps item
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)

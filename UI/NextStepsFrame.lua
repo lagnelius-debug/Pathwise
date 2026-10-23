@@ -11,7 +11,9 @@ local L = Pathwise.L
 local NextStepsFrame = Pathwise:NewModule("NextStepsFrame")
 
 local ROW_HEIGHT = 16
-local MAX_ROWS = 16
+local MAX_ROWS = 16 -- with automatic height
+local MIN_WIDTH = 220
+local MIN_ROWS = 3  -- smallest height the grip allows
 local INDENT = 12 -- per sub-line level
 local TASK_COLOR = "|cff99e6ff"
 
@@ -76,6 +78,12 @@ local function GetRow(index)
     row:SetScript("OnMouseUp", OnRowClick)
     row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.text:SetJustifyH("LEFT")
+    -- One line per row: text that doesn't fit ends in "..." instead of
+    -- wrapping into the next row.
+    row.text:SetHeight(ROW_HEIGHT)
+    if row.text.SetWordWrap then
+      row.text:SetWordWrap(false)
+    end
     rows[index] = row
   end
   return row
@@ -135,19 +143,22 @@ function NextStepsFrame:Render()
   local items = Pathwise:GetModule("NextSteps"):GetItems()
   UpdateFooter(#items)
   local lines = BuildLines(items)
+  -- With a player-chosen height, show as many rows as fit.
+  local capacity = frame:GetContentCapacity()
+  local maxRows = capacity and math.max(math.floor(capacity / ROW_HEIGHT), 1) or MAX_ROWS
   if #lines == 0 then
     lines[1] = { text = L.NS_EMPTY, indent = 0 }
-  elseif #lines > MAX_ROWS then
+  elseif #lines > maxRows then
     local hidden = 0
-    for i = MAX_ROWS, #lines do
+    for i = maxRows, #lines do
       if lines[i].item and lines[i].indent == 0 then
         hidden = hidden + 1
       end
     end
-    for i = #lines, MAX_ROWS, -1 do
+    for i = #lines, maxRows, -1 do
       lines[i] = nil
     end
-    lines[MAX_ROWS] = { text = string.format(L.NS_MORE, hidden), indent = 0 }
+    lines[maxRows] = { text = string.format(L.NS_MORE, math.max(hidden, 1)), indent = 0 }
   end
 
   local textColor = frame.textColor or { 1, 1, 1 }
@@ -173,6 +184,15 @@ function NextStepsFrame:Render()
   frame:SetContentHeight(#lines * ROW_HEIGHT)
 end
 
+local function ApplySavedSize()
+  local saved = Pathwise.db.nextSteps
+  if saved.width then
+    frame:SetWidth(saved.width)
+  end
+  frame.fixedHeight = saved.height
+  frame:Layout()
+end
+
 local function CreateWindow()
   frame = Pathwise.Theme.CreateWindow("PathwiseNextSteps", UIParent, L.NS_TITLE)
   frame:SetFrameStrata("MEDIUM")
@@ -188,6 +208,20 @@ local function CreateWindow()
   frame.close:SetScript("OnClick", function()
     NextStepsFrame:SetShown(false)
   end)
+
+  -- Size grip: the saved size (nil height = automatic) is applied here and
+  -- after every resize.
+  -- (Pathwise.db.nextSteps is looked up each time: /pw reset replaces it.)
+  frame:EnableResizing(MIN_WIDTH, frame:ChromeHeight() + MIN_ROWS * ROW_HEIGHT, function(width, height)
+    local saved = Pathwise.db.nextSteps
+    saved.width, saved.height = width, height
+    SavePosition() -- sizing from the corner can change the anchor
+    NextStepsFrame:Render()
+    if not height then
+      frame:Layout()
+    end
+  end)
+  ApplySavedSize()
   -- Re-render with the new theme's text color.
   frame.OnThemeApplied = function()
     NextStepsFrame:Render()
@@ -247,6 +281,8 @@ function NextStepsFrame:OnEnable()
 end
 
 function NextStepsFrame:OnSettingsReset()
+  frame:SetWidth(340)
+  ApplySavedSize()
   Pathwise.Theme.Apply(frame)
   RestorePosition()
   frame:SetShown(Pathwise.db.nextSteps.shown)

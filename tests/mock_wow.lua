@@ -137,6 +137,9 @@ function FrameMethods:SetBackdrop(backdrop) self._backdrop = backdrop end
 function FrameMethods:SetBackdropColor(r, g, b, a) self._backdropColor = { r, g, b, a } end
 function FrameMethods:SetBackdropBorderColor(r, g, b, a) self._borderColor = { r, g, b, a } end
 function FrameMethods:SetTextColor(r, g, b) self._textColor = { r, g, b } end
+function FrameMethods:SetWordWrap(wrap) self._wordWrap = wrap end
+function FrameMethods:SetChecked(checked) self._checked = checked end
+function FrameMethods:GetChecked() return self._checked end
 function FrameMethods:SetVertexColor(r, g, b) self._color = { r, g, b } end
 function FrameMethods:GetID() return self._id or 0 end
 function FrameMethods:SetID(id) self._id = id end
@@ -246,6 +249,14 @@ function WoW.TooltipLines(tooltip)
   end
   return lines
 end
+
+-- Minimap: 140 px wide, centered at (1000, 700) on screen, scale 1.
+Minimap = NewObject("Frame", "Minimap", UIParent)
+Minimap._width = 140
+function Minimap:GetCenter() return 1000, 700 end
+function Minimap:GetEffectiveScale() return 1 end
+WoW.mouse = { 1000, 700 }
+function GetCursorPosition() return WoW.mouse[1], WoW.mouse[2] end
 
 MerchantFrame = NewObject("Frame", "MerchantFrame", UIParent)
 MerchantFrame._shown = false

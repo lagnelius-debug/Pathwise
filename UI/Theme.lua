@@ -188,10 +188,94 @@ function WindowMixin:SetContentHeight(height)
   self:Layout()
 end
 
+-- Height of everything except the content (header, gaps, footer).
+function WindowMixin:ChromeHeight()
+  return (self.headerHeight or HEADER_PLAIN) + CONTENT_GAP + 4 + FOOTER_HEIGHT + BOTTOM_PADDING
+end
+
+-- With a player-chosen height (see EnableResizing) the window keeps that
+-- height and the content gets what's left; otherwise the window grows to fit
+-- the content.
 function WindowMixin:Layout()
-  local header = self.headerHeight or HEADER_PLAIN
-  self.content:SetHeight(math.max(self.contentHeight or 1, 1))
-  self:SetHeight(header + CONTENT_GAP + (self.contentHeight or 0) + 4 + FOOTER_HEIGHT + BOTTOM_PADDING)
+  if self.fixedHeight then
+    self.content:SetHeight(math.max(self.fixedHeight - self:ChromeHeight(), 1))
+    self:SetHeight(self.fixedHeight)
+  else
+    self.content:SetHeight(math.max(self.contentHeight or 1, 1))
+    self:SetHeight(self:ChromeHeight() + (self.contentHeight or 0))
+  end
+end
+
+-- Content height available with a player-chosen height, or nil (auto).
+function WindowMixin:GetContentCapacity()
+  if self.fixedHeight then
+    return math.max(self.fixedHeight - self:ChromeHeight(), 0)
+  end
+end
+
+local MAX_WIDTH, MAX_HEIGHT = 700, 900
+local GRIP = "Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-"
+
+-- Adds a size grip in the bottom-right corner. Dragging it resizes the
+-- window; right-clicking it goes back to the automatic height. onResized
+-- (width, height) is called during and after sizing; height is nil for
+-- automatic.
+function WindowMixin:EnableResizing(minWidth, minHeight, onResized)
+  self:SetResizable(true)
+  -- SetResizeBounds replaced SetMinResize/SetMaxResize in newer clients;
+  -- use whichever this client has.
+  if self.SetResizeBounds then
+    self:SetResizeBounds(minWidth, minHeight, MAX_WIDTH, MAX_HEIGHT)
+  else
+    if self.SetMinResize then
+      self:SetMinResize(minWidth, minHeight)
+    end
+    if self.SetMaxResize then
+      self:SetMaxResize(MAX_WIDTH, MAX_HEIGHT)
+    end
+  end
+
+  local grip = CreateFrame("Button", nil, self)
+  grip:SetSize(16, 16)
+  grip:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -5, 5)
+  grip:SetNormalTexture(GRIP .. "Up")
+  grip:SetHighlightTexture(GRIP .. "Highlight")
+  grip:SetPushedTexture(GRIP .. "Down")
+  -- Above the ornaments so corner art can't cover it.
+  grip:SetFrameLevel(self.ornaments:GetFrameLevel() + 1)
+  grip:SetScript("OnMouseDown", function(_, button)
+    if button == "LeftButton" then
+      self.sizing = true
+      self:StartSizing("BOTTOMRIGHT")
+    end
+  end)
+  grip:SetScript("OnMouseUp", function(_, button)
+    if self.sizing then
+      self:StopMovingOrSizing()
+      self.sizing = false
+      self.fixedHeight = self:GetHeight()
+      onResized(self:GetWidth(), self.fixedHeight)
+    elseif button == "RightButton" then
+      self.fixedHeight = nil
+      onResized(self:GetWidth(), nil)
+    end
+  end)
+  grip:SetScript("OnEnter", function(button)
+    GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+    GameTooltip:SetText(L.WINDOW_RESIZE_TOOLTIP, 1, 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  grip:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+  end)
+  self:SetScript("OnSizeChanged", function()
+    if self.sizing then
+      -- Live: fit the content to the new size while dragging.
+      self.fixedHeight = self:GetHeight()
+      onResized(self:GetWidth(), self.fixedHeight)
+    end
+  end)
+  self.grip = grip
 end
 
 function WindowMixin:SetTitleText(text)
@@ -421,8 +505,9 @@ local function ApplyHeader(window, theme)
     label:Show()
     title:SetText(window.titleText)
     label:SetPoint("TOP", window, "TOP", 0, -12)
-    title:SetPoint("TOP", label, "BOTTOM", 0, -2)
-    title:SetWidth(WIDTH - 2 * CREATURE_PADDING)
+    -- Between the ornaments; follows the window width when resized.
+    title:SetPoint("TOPLEFT", window, "TOPLEFT", CREATURE_PADDING, -24)
+    title:SetPoint("TOPRIGHT", window, "TOPRIGHT", -CREATURE_PADDING, -24)
     title:SetJustifyH("CENTER")
     label:SetJustifyH("CENTER")
   else

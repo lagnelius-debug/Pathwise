@@ -1,7 +1,10 @@
 <Bindings>
   <!-- Loaded by the client automatically (not listed in the TOC). Names and
-       header text: BINDING_NAME_PATHWISE_NEXT / BINDING_HEADER_PATHWISE in
+       header text: BINDING_NAME_PATHWISE_* / BINDING_HEADER_PATHWISE in
        Locales/enUS.lua. -->
+  <Binding name="PATHWISE_TOGGLE" header="PATHWISE" category="ADDONS">
+    PathwiseBinding_Toggle()
+  </Binding>
   <Binding name="PATHWISE_NEXT" header="PATHWISE" category="ADDONS">
     PathwiseBinding_Next()
   </Binding>
