@@ -38,7 +38,7 @@ WoW.Slash("way 50 40 Test spot")
 check("waypoint set", WoW.ChatContains("Arrow pointing to Test spot."))
 Tick()
 check("arrow shown with label and distance", arrow:IsShown() and arrow.label:GetText() == "Test spot"
-  and arrow.distance:GetText() == "300 yd")
+  and arrow.distance:GetText() == "274 m") -- 300 yd
 local function Frame() return table.concat(arrow.arrow._texcoord or {}, ",") end
 check("3D arrow texture, 64x64", arrow.arrow._texture:find("Media\\Arrow\\arrow3d$") ~= nil and arrow.arrow._width == 64)
 check("facing the target: straight-ahead frame, green", Frame() == "0,0.125,0,0.125"

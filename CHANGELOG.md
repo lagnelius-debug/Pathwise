@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.7.0
+
+- Distances are shown in meters (`/pw units yards` switches back to
+  yards), in the To-do window and on the arrow.
+- The arrow shows the distance to fixed places such as a moonwell, herb or
+  ore vein. Only mob spawn spots (the mob wanders) still have none.
+
 ## 0.6.1
 
 - Gear advisor: armor counted for much less against stats. 1 Stamina now

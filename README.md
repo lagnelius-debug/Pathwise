@@ -45,6 +45,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
 | `/pw minimap` | Show or hide the minimap button |
 | `/pw professions` | Profession advice for your class and your current skills. `/pw professions off` / `on` hides or shows the profession steps |
+| `/pw units meters\|yards` | Show distances in meters (default) or yards |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
 
@@ -110,7 +111,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] After login, a **Pathwise: Next steps** window appears on the right side of the screen. It can be dragged, and it remembers where you put it. `/pw` hides or shows it.
 - [ ] It lists your quests in this order: **Turn in**, **Failed**, **Almost done** (with %), **Do** (current zone first), **Do ... in <zone>**, **Later (level X)**, **Group quest**, **Low XP**.
 - [ ] Quests whose objectives are within about 120 yards of each other become one step, `Do together: [5] Timberling Seeds + [6] Timberling Sprouts`. In the Next Steps window, the step the arrow follows is expanded: each quest is listed with blue "what to do" lines under it, e.g. `Kill Timberling for Timberling Seed` and `Collect Timberling Sprout`. The arrow only shows a short label, like `Timberling Seed (Timberling) +1 quest`, and the distance. The target macro targets the mobs of all the combined quests. Single quests get their what-to-do lines too, e.g. `Kill Webwood Spider` or `Turn in at Gilshalan Windwalker`. This needs QuestieDB.
-- [ ] When Pathwise knows where a quest happens (QuestieDB or learned), the line shows the distance, e.g. `- 80 yd`. Quests within about 300 yards come first, nearest first. Far steps (turn-ins included) come after the nearby work, as a route: the closest far step first, then always the closest one from there, so the guide doesn't send you across the zone and back. Walking somewhere else re-sorts the list within a few seconds, and the arrow follows the top line.
+- [ ] When Pathwise knows where a quest happens (QuestieDB or learned), the line shows the distance, e.g. `- 73 m` (or yards, see `/pw units`). Quests within about 300 yards come first, nearest first. Far steps (turn-ins included) come after the nearby work, as a route: the closest far step first, then always the closest one from there, so the guide doesn't send you across the zone and back. Walking somewhere else re-sorts the list within a few seconds, and the arrow follows the top line.
 - [ ] Quest titles are colored like in the quest log (red, orange, yellow, green, grey). Orange quests say "(hard)".
 - [ ] Hovering a line shows the quest's zone and objectives.
 - [ ] The list updates on its own when you kill quest mobs, accept, turn in or abandon quests, change zone or level up.
@@ -120,7 +121,7 @@ Test with a fresh level 1 Night Elf Hunter.
 
 ## In-game test checklist (navigation arrow)
 
-- [ ] `/pw way 50 50 Test` shows an arrow near the top of the screen. It turns as you turn, is green when you face the target, yellow when it's to your side and red when it's behind you, and shows the distance in yards. Walking there prints `Arrived at Test.` and the arrow disappears.
+- [ ] `/pw way 50 50 Test` shows an arrow near the top of the screen. It turns as you turn, is green when you face the target, yellow when it's to your side and red when it's behind you, and shows the distance in meters (`/pw units yards` switches to yards). Walking there prints `Arrived at Test.` and the arrow disappears.
 - [ ] The arrow can be dragged. Right-click clears a `/pw way` waypoint.
 - [ ] With QuestieDB installed, the arrow points to the nearest quest mob or object for a quest as soon as you accept it, and to the turn-in NPC once it's complete. Quests under a subzone header, like "Shadowglen", no longer say "in Shadowglen" while you're there.
 - [ ] Without QuestieDB: accept a quest, then make progress on it, e.g. kill one quest mob. The Next Steps line for that quest gets a blue `*`, and the arrow points to where you made progress.
@@ -264,4 +265,4 @@ From docs/PATHWISE_THEMES_V3.md. **Fully restart WoW** first (not just `/reload`
 - [ ] The button hides for turn-ins and when no quest needs a mob. Changes during combat happen right after the fight.
 - [ ] Drag the button to move it (not in combat). Its position survives `/reload`.
 - [ ] `/pw targetbutton` and the "Show target button for quest mobs" checkbox in the settings turn it off and on.
-- [ ] When the arrow points at a mob's spawn spot it shows no yard count, and `Look around here` once you get there. Turn-ins and your own waypoints still show the distance.
+- [ ] When the arrow points at a mob's spawn spot it shows no distance, and `Look around here` once you get there. Objects that stay put (a moonwell, a herb, an ore vein), turn-ins and your own waypoints show the distance.

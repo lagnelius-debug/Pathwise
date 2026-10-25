@@ -3,8 +3,9 @@ local addonName, Pathwise = ...
 -- Navigation arrow: rotates towards the current waypoint (see
 -- Core/Waypoints.lua) and shows the label and distance. Drag to move,
 -- right-click to clear a manual waypoint (or turn off auto-follow).
--- Spawn spots of quest mobs/nodes get no distance: the mob is only
--- somewhere around there, so a yard count would be misleading.
+-- Spawn spots of quest mobs get no distance: the mob is only somewhere
+-- around there, so a number would be misleading. Objects (a moonwell, a
+-- herb) stay where they are, so they keep it.
 
 local L = Pathwise.L
 
@@ -88,14 +89,15 @@ function Arrow:Update()
     return
   end
 
+  local roaming = target.spawn and target.npcName ~= nil -- a mob's spawn spot
   if distance <= Waypoints.ARRIVE_YARDS then
     frame.arrow:Hide()
-    frame.distance:SetText(target.spawn and L.ARROW_SPAWN_HERE or L.ARROW_HERE)
+    frame.distance:SetText(roaming and L.ARROW_SPAWN_HERE or L.ARROW_HERE)
     Waypoints:OnArrived()
     return
   end
 
-  frame.distance:SetText(target.spawn and "" or string.format(L.ARROW_YARDS, distance))
+  frame.distance:SetText(roaming and "" or Pathwise.FormatDistance(distance))
   if relative then
     SetDirection(frame.arrow, relative)
     frame.arrow:SetVertexColor(Arrow.CourseColor(math.min(relative, 2 * math.pi - relative)))

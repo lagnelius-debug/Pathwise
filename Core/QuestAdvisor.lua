@@ -231,7 +231,7 @@ function QuestAdvisor.CombineNearby(items)
         -- Short arrow label: where it points now, plus how many more quests.
         local more = #group == 2 and L.ARROW_MORE_QUEST or string.format(L.ARROW_MORE_QUESTS, #group - 1)
         target.label = (nearest.target.label or nearest.title) .. more
-        local distanceText = nearest.distance and string.format(L.QA_DISTANCE, nearest.distance) or ""
+        local distanceText = nearest.distance and string.format(L.QA_DISTANCE, Pathwise.FormatDistance(nearest.distance)) or ""
         result[#result + 1] = {
           id = table.concat(ids, "+"),
           priority = priority,
@@ -306,7 +306,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
       text = text .. " " .. L.QA_HARD
     end
     if distance and priority >= P.QUEST_ELSEWHERE then
-      text = text .. string.format(L.QA_DISTANCE, distance)
+      text = text .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(distance))
     end
 
     items[#items + 1] = {
@@ -498,3 +498,17 @@ Pathwise:RegisterCommand("quests", function()
     Pathwise:Print(L.QA_NONE)
   end
 end, L.CMD_QUESTS)
+
+-- /pw units meters|yards: how distances are shown (the step texts carry
+-- them, so the plan is rebuilt; the arrow follows by itself).
+Pathwise:RegisterCommand("units", function(args)
+  args = args:lower()
+  if args == "meters" or args == "m" or args == "yards" or args == "yd" then
+    local yards = args == "yards" or args == "yd"
+    Pathwise.db.distanceUnit = yards and "yards" or "meters"
+    Pathwise:Print(yards and L.UNITS_SET_YARDS or L.UNITS_SET_METERS)
+    QuestAdvisor:Update()
+  else
+    Pathwise:Print(L.UNITS_USAGE)
+  end
+end, L.CMD_UNITS)

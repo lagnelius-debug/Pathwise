@@ -81,7 +81,7 @@ UpdateLog({
     { text = "Hyacinth Mushroom: 0/7" }, { text = "Moonpetal Lily: 0/4" }, { text = "Webwood Ichor: 0/1" } } },
 })
 local venom = Item(916)
-check("quest under a subzone header counts as here, with distance", Strip(venom.text) == "Do: [4] Webwood Venom - 120 yd")
+check("quest under a subzone header counts as here, with distance", Strip(venom.text) == "Do: [4] Webwood Venom - 110 m")
 check("item objective: nearest dropping NPC", venom.target and Near(venom.target.x, 0.58) and Near(venom.target.y, 0.36)
   and venom.target.label == "Webwood Venom Sac (Webwood Spider)")
 local antidote = Item(917)
@@ -185,7 +185,7 @@ local order = {}
 for _, item in ipairs(NextSteps:GetItems()) do
   if item.id:find("^quest:") then order[#order + 1] = Strip(item.text) end
 end
-check("nearby quests done together", order[1] == "Do together: [5] Timberling Seeds + [6] Timberling Sprouts - 42 yd")
+check("nearby quests done together", order[1] == "Do together: [5] Timberling Seeds + [6] Timberling Sprouts - 39 m")
 check("far turn-in after nearby quests", order[2]:find("Turn in: [5] Far Turn-in", 1, true))
 check("far quest last", order[3]:find("Far Quest", 1, true))
 local together = Pathwise:GetModule("Waypoints"):GetTarget()
@@ -201,10 +201,10 @@ for _, f in ipairs(WoW.frames) do
   end
 end
 local joined = table.concat(lines, "\n")
-check("current step expanded", joined:find("Do together (2 quests) - 42 yd *", 1, true) ~= nil)
+check("current step expanded", joined:find("Do together (2 quests) - 39 m *", 1, true) ~= nil)
 check("each quest with its tasks underneath", joined:find(
   "[5] Timberling Seeds\nKill Timberling for Timberling Seed\n[6] Timberling Sprouts\nCollect Timberling Sprout", 1, true) ~= nil)
-check("other steps stay one line", joined:find("Turn in: [5] Far Turn-in - 488 yd *", 1, true) ~= nil
+check("other steps stay one line", joined:find("Turn in: [5] Far Turn-in - 447 m *", 1, true) ~= nil
   and not joined:find("Turn in at Gilshalan", 1, true))
 local arrow = _G.PathwiseArrow
 check("no task text on the arrow", arrow.hint == nil)

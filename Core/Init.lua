@@ -30,6 +30,7 @@ local DB_DEFAULTS = {
   arrow = {},                   -- arrow position
   arrowAuto = true,             -- arrow follows the top Next Steps item
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
+  distanceUnit = "meters",      -- "meters" or "yards" (/pw units)
   targetMacro = true,           -- keep the "Pathwise" target macro up to date
   targetButton = { shown = true }, -- floating target button: on/off and position
   sellPrice = true,             -- show vendor sell prices in item tooltips
@@ -139,6 +140,17 @@ function Pathwise:Debugf(fmt, ...)
 end
 
 -- Formats copper as "1g 2s 3c" (plain text; the UI may use coin icons).
+-- Distances are yards inside Pathwise (WoW's unit); shown in meters by
+-- default, or yards (PathwiseDB.distanceUnit, /pw units).
+local METERS_PER_YARD = 0.9144
+
+function Pathwise.FormatDistance(yards)
+  if Pathwise.db and Pathwise.db.distanceUnit == "yards" then
+    return string.format(L.DISTANCE_YARDS, math.floor(yards + 0.5))
+  end
+  return string.format(L.DISTANCE_METERS, math.floor(yards * METERS_PER_YARD + 0.5))
+end
+
 function Pathwise.FormatMoney(copper)
   copper = copper or 0
   local gold = math.floor(copper / 10000)

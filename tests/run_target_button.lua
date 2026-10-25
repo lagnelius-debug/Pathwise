@@ -47,13 +47,31 @@ Arrow:Update()
 check("at a spawn spot: look around", arrow.distance:GetText() == "Look around here")
 S.mapX, S.mapY = 0.58, 0.40
 
+-- An object (a moonwell, a herb) stays put: it keeps its distance.
+local Waypoints = Pathwise:GetModule("Waypoints")
+Waypoints:SetManual({ mapID = 1438, x = 0.58, y = 0.30, label = "Filled Tourmaline Phial (Pools of Arlithrien Moonwell)",
+  spawn = true })
+Arrow:Update()
+check("object spot: distance shown, in meters", arrow.distance:GetText() == "274 m")
+WoW.ClearChat()
+WoW.Slash("units yards")
+Arrow:Update()
+check("/pw units yards", arrow.distance:GetText() == "300 yd" and WoW.ChatContains("shown in yards"))
+WoW.Slash("units meters")
+Arrow:Update()
+check("/pw units meters", arrow.distance:GetText() == "274 m")
+WoW.ClearChat()
+WoW.Slash("units feet")
+check("unknown unit: usage", WoW.ChatContains("Usage: /pw units meters|yards"))
+Waypoints:ClearManual()
+
 ---------------------------------------------------------------------------
 section("Target button: turn-in and combat")
 
 UpdateLog(Venom(true))
 check("turn-in step: no button", not button:IsShown())
 Arrow:Update()
-check("turn-in NPC keeps the distance", arrow.distance:GetText():find("yd", 1, true) ~= nil)
+check("turn-in NPC keeps the distance", arrow.distance:GetText():find("%d+ m$") ~= nil)
 
 S.inCombat = true
 UpdateLog(Venom(false))
