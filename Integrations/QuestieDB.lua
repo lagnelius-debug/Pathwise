@@ -161,17 +161,38 @@ end
 -- True if the client's objective list shows `name` as already finished.
 -- Objective texts look like "Webwood Venom Sac: 6/10" or "Webwood Spider
 -- slain: 3/10", so a finished objective starting with the name matches.
+-- Custom objective texts (e.g. "Tame a Webwood Lurker" for the hunter
+-- taming quests) mention the name somewhere else, but never say "slain".
+local function IsCustomText(text, name)
+  return text:sub(1, #name) ~= name and text:find(name, 1, true) ~= nil and not text:find(" slain", 1, true)
+end
+
 local function IsFinished(quest, name)
   if not name then
     return false
   end
   for _, objective in ipairs(quest.objectives) do
     local text = objective.text or ""
-    if objective.finished and text:sub(1, #name) == name then
+    if objective.finished and (text:sub(1, #name) == name or IsCustomText(text, name)) then
       return true
     end
   end
   return false
+end
+
+-- The client's own wording of a creature objective when it isn't the usual
+-- "<name> slain: 3/10" (taming quests: "Tame a Webwood Lurker"), without
+-- the count; nil otherwise.
+local function CustomObjectiveText(quest, name)
+  if not name then
+    return nil
+  end
+  for _, objective in ipairs(quest.objectives) do
+    local text = (objective.text or ""):gsub(":%s*%d+%s*/%s*%d+%s*$", "")
+    if IsCustomText(text, name) then
+      return text
+    end
+  end
 end
 
 -- NPC names for the target macro: the chosen point's NPC first, then the
@@ -256,7 +277,8 @@ local function DoTarget(quest)
     local name = objective[2] or lib.Npc.Get(objective[1], "name")
     if not IsFinished(quest, name) then
       NpcPoints(points, { objective[1] })
-      AddTask(tasks, string.format(L.TASK_KILL, lib.Npc.Get(objective[1], "name") or name or "?"))
+      local npcName = lib.Npc.Get(objective[1], "name") or name
+      AddTask(tasks, CustomObjectiveText(quest, npcName) or string.format(L.TASK_KILL, npcName or "?"))
     end
   end
   -- [2] objects to use: { objectId, text?, index }

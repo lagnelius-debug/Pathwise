@@ -118,9 +118,24 @@ end
 -- Taming quest
 ---------------------------------------------------------------------------
 
+-- True if a quest of the taming chain is in the quest log.
+local function TamingQuestInLog(firstQuestID)
+  for _, quest in ipairs(Platform.GetQuestLog()) do
+    if quest.questID == firstQuestID or Data.Hunter.TAMING_TITLES[quest.title] then
+      return true
+    end
+  end
+  return false
+end
+
 local function TamingItems()
   local snapshot = GetSnapshot()
   if (snapshot.level or 1) < Data.Hunter.TAMING_LEVEL or Platform.IsSpellKnown(Data.Hunter.TAME_BEAST_SPELL) then
+    return {}
+  end
+  -- Already on the quests: the quest step (and its arrow) takes over;
+  -- pointing back at the trainer would send the player the wrong way.
+  if TamingQuestInLog(Data.Hunter.TAMING_QUESTS[snapshot.race]) then
     return {}
   end
   local P = Pathwise:GetModule("NextSteps").PRIORITY
@@ -202,6 +217,7 @@ function Hunter:OnEnable()
   self:RegisterEvent("PET_UI_UPDATE", "OnUnitEvent")
   self:RegisterEvent("LEARNED_SPELL_IN_SKILL_LINE", "OnSpellLearned")
   self:RegisterEvent("LEARNED_SPELL_IN_TAB", "OnSpellLearned")
+  self:RegisterEvent("QUEST_LOG_UPDATE", "ScheduleUpdate") -- taming quests picked up / done
   self:ScheduleUpdate()
 end
 

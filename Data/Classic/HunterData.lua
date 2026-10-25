@@ -16,6 +16,9 @@ Pathwise.Data.Hunter = {
     Tauren = 6061,   -- Yaw Sharpmane, Bloodhoof Village
   },
   TAMING_LEVEL = 10,
+  -- Titles of the quests in the taming chain (English client). While one
+  -- is in the quest log, the quest itself is the step to follow.
+  TAMING_TITLES = { ["Taming the Beast"] = true, ["Training the Beast"] = true },
 
   -- Ranged weapon subclasses that use arrows or bullets (thrown weapons
   -- need no ammo).

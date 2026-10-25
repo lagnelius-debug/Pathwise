@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.7.3
+
+- Hunter taming: once a Taming the Beast quest is in your log, the "Get
+  your pet" step (and its arrow to the trainer) goes away; the quest
+  itself is the step to follow.
+- Quest tasks use the quest's own wording when it isn't a plain kill, e.g.
+  "Tame a Webwood Lurker" instead of "Kill Webwood Lurker".
+
 ## 0.7.2
 
 - Quest rewards: an upgrade that needs training (or a higher level) first

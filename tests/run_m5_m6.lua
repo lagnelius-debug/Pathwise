@@ -223,10 +223,13 @@ if questie:IsAvailable() then
   local q, n = LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get
   LibQuestieDB.Quest.Get = function(id, key)
     if id == 6063 and key == "startedBy" then return { { 3601 } } end
+    if id == 6063 and key == "finishedBy" then return { { 3601 } } end
+    if id == 6063 and key == "objectives" then return { { { 1998, nil, 1 } } } end
     return q(id, key)
   end
   LibQuestieDB.Npc.Get = function(id, key)
     if id == 3601 then return ({ name = "Dazalar", spawns = { [141] = { { 56.7, 59.5 } } } })[key] end
+    if id == 1998 then return ({ name = "Webwood Lurker", spawns = { [141] = { { 57, 62 } } } })[key] end
     return n(id, key)
   end
 end
@@ -242,6 +245,29 @@ WoW.ClearChat()
 WoW.FireEvent("PLAYER_ENTERING_WORLD", false, true)
 WoW.RunTimers()
 check("taming chat not repeated", not WoW.ChatContains("Taming the Beast"))
+
+-- Reported in game: with the quest already in the log, the step still
+-- pointed at Dazalar, and the quest's task said "Kill Webwood Lurker".
+WoW.questLog = { { header = true, title = "Hunter" },
+  { title = "Taming the Beast", level = 10, questID = 6063, objectives = { { text = "Tame a Webwood Lurker: 0/1" } } } }
+WoW.FireEvent("QUEST_LOG_UPDATE")
+WoW.RunTimers()
+check("taming quest in the log: the trainer step is gone", Item("taming") == nil)
+if questie:IsAvailable() then
+  local quest = Item("quest:6063")
+  local tasks = {}
+  for _, line in ipairs(quest and quest.subLines or {}) do tasks[#tasks + 1] = line.text end
+  check("taming quest task uses the quest's wording", table.concat(tasks, ",") == "Tame a Webwood Lurker")
+end
+-- A later quest of the chain (different ID, same title) counts too.
+WoW.questLog[2].questID = 6101
+WoW.FireEvent("QUEST_LOG_UPDATE")
+WoW.RunTimers()
+check("later taming quest in the log: still no trainer step", Item("taming") == nil)
+WoW.questLog = {}
+WoW.FireEvent("QUEST_LOG_UPDATE")
+WoW.RunTimers()
+check("quest abandoned: trainer step back", Item("taming") ~= nil)
 WoW.knownSpells[1515] = true
 WoW.FireEvent("LEARNED_SPELL_IN_SKILL_LINE", 1515, 1)
 WoW.RunTimers()
