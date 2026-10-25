@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.7.2
+
+- Quest rewards: an upgrade that needs training (or a higher level) first
+  only wins if it's a big upgrade (10% or more). A smaller one loses to the
+  reward that sells for the most, and chat says which upgrade was passed
+  over and why.
+
 ## 0.7.1
 
 - Gear you can only use more than 5 levels from now (like mail before 40)

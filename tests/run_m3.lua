@@ -39,6 +39,25 @@ pick = QuestRewards.Pick({
   { index = 2, compare = { kind = "upgrade", newScore = 2, oldScore = 1 } },
 })
 check("Pick: usable-now upgrade beats later upgrade", pick.index == 2)
+-- Reported in game: Defender Axe (small upgrade, needs Axes) was picked
+-- over Thornroot Club, which sells for 5s 12c.
+pick = QuestRewards.Pick({
+  { index = 1, sellPrice = 100, compare = { kind = "upgrade", reason = "TRAIN", percent = 4, newScore = 2, oldScore = 1 } },
+  { index = 2, sellPrice = 512, compare = { kind = "unusable", reason = "TYPE" } },
+})
+check("Pick: small upgrade that needs training loses to the best sell value", pick.index == 2
+  and pick.reason == "SELL" and pick.passedOver.index == 1)
+pick = QuestRewards.Pick({
+  { index = 1, sellPrice = 100, compare = { kind = "upgrade", reason = "TRAIN", percent = 25, newScore = 9, oldScore = 1 } },
+  { index = 2, sellPrice = 512 },
+})
+check("Pick: big upgrade that needs training still wins", pick.index == 1 and pick.reason == "UPGRADE_LATER")
+pick = QuestRewards.Pick({
+  { index = 1, sellPrice = 0, compare = { kind = "upgrade", reason = "LEVEL", level = 8, percent = 3, newScore = 2, oldScore = 1 } },
+  { index = 2, sellPrice = 0 },
+})
+check("Pick: nothing sells: the small later upgrade is still recommended", pick.index == 1
+  and pick.reason == "UPGRADE_LATER" and pick.passedOver == nil)
 pick = QuestRewards.Pick({
   { index = 1, sellPrice = 30, count = 5, compare = { kind = "downgrade", newScore = 1, oldScore = 2 } },
   { index = 2, sellPrice = 100 },
@@ -67,10 +86,11 @@ TurnIn(9014, 9015, 9013, 9016)
 check("usable dagger beats untrained staff", WoW.ChatContains("Best reward: [Thistlewood Dagger]")
   and highlight._parent == QuestInfoRewardsFrame.RewardButtons[2] and highlight.label:GetText() == "Best upgrade")
 WoW.FireEvent("QUEST_FINISHED")
--- Only untrained upgrades: recommended, but marked as needing training
+-- Only a small untrained upgrade: the reward that sells for more wins, and
+-- chat says why the upgrade was passed over.
 TurnIn(9014, 9013)
-check("untrained upgrade: needs training", WoW.ChatContains("Best reward: [Thistlewood Staff] (upgrade once you learn Staves")
-  and highlight.label:GetText() == "Needs training")
+check("small untrained upgrade: best to sell instead", WoW.ChatContains("Best reward: [Thistlewood Maul] sells for the most")
+  and WoW.ChatContains("[Thistlewood Staff] would only be a small upgrade") and highlight.label:GetText() == "Best to sell")
 WoW.FireEvent("QUEST_FINISHED")
 
 TurnIn(9004, 9005)

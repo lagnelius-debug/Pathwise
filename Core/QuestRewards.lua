@@ -16,14 +16,22 @@ local QuestRewards = Pathwise:NewModule("QuestRewards")
 -- Item data can arrive late; give up waiting after this many item events.
 local MAX_ITEM_INFO_WAITS = 20
 
+-- An upgrade that needs training or a higher level first only beats the
+-- best sell value if it's at least this big (percent of all equipped gear):
+-- a small upgrade isn't worth a trip to the trainer, a vendor's silver is.
+QuestRewards.BIG_LATER_PERCENT = 10
+
 local questOpen = false
 local waits = 0
 
 -- Pure function. candidates: { { index, compare, sellPrice, count } } where
 -- compare is a GearScore:Compare result or nil. Returns nil or
---   { index, reason = "UPGRADE" | "UPGRADE_LATER" | "SELL", compare, value }
--- Upgrades usable now beat upgrades that need a level or a weapon/armor
--- skill first, which beat the highest vendor value.
+--   { index, reason = "UPGRADE" | "UPGRADE_LATER" | "SELL", compare, value,
+--     passedOver }
+-- Upgrades usable now beat big upgrades that need a level or a weapon/armor
+-- skill first, which beat the highest vendor value, which beats small
+-- later upgrades. passedOver: the small later upgrade the sell pick won
+-- over (its candidate), if any.
 function QuestRewards.Pick(candidates)
   local best = {}
   for _, candidate in ipairs(candidates) do
@@ -31,6 +39,9 @@ function QuestRewards.Pick(candidates)
     local tier, value
     if compare and compare.kind == "upgrade" then
       tier = compare.reason and "UPGRADE_LATER" or "UPGRADE"
+      if tier == "UPGRADE_LATER" and compare.percent and compare.percent < QuestRewards.BIG_LATER_PERCENT then
+        tier = "SMALL_LATER"
+      end
       value = compare.newScore - (compare.oldScore or 0)
     elseif (candidate.sellPrice or 0) > 0 then
       tier = "SELL"
@@ -40,7 +51,13 @@ function QuestRewards.Pick(candidates)
       best[tier] = { index = candidate.index, reason = tier, compare = compare, value = value }
     end
   end
-  return best.UPGRADE or best.UPGRADE_LATER or best.SELL
+  if best.SMALL_LATER then
+    best.SMALL_LATER.reason = "UPGRADE_LATER"
+    if best.SELL then
+      best.SELL.passedOver = best.SMALL_LATER
+    end
+  end
+  return best.UPGRADE or best.UPGRADE_LATER or best.SELL or best.SMALL_LATER
 end
 
 QuestRewards.FormatMoney = Pathwise.FormatMoney
@@ -61,6 +78,9 @@ local function Announce(recommendation, link)
     Pathwise:Printf(L.QUEST_BEST_UPGRADE_TRAIN, link, skill)
   elseif recommendation.reason == "UPGRADE_LATER" then
     Pathwise:Printf(L.QUEST_BEST_UPGRADE_LATER, link, compare.level)
+  elseif recommendation.passedOver then
+    Pathwise:Printf(L.QUEST_BEST_SELL_OVER_SMALL, link, QuestRewards.FormatMoney(recommendation.value),
+      recommendation.passedOver.link or "?")
   else
     Pathwise:Printf(L.QUEST_BEST_SELL, link, QuestRewards.FormatMoney(recommendation.value))
   end
@@ -106,6 +126,9 @@ function QuestRewards:Evaluate()
   for _, candidate in ipairs(candidates) do
     if candidate.index == recommendation.index then
       recommendation.link = candidate.link
+    end
+    if recommendation.passedOver and candidate.index == recommendation.passedOver.index then
+      recommendation.passedOver.link = candidate.link
     end
   end
   self:Debugf("Recommend choice %d (%s)", recommendation.index, recommendation.reason)
