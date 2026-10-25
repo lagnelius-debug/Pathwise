@@ -44,6 +44,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw settings` | Open the Pathwise settings (minimap button, target button, window theme) |
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
 | `/pw minimap` | Show or hide the minimap button |
+| `/pw professions` | Profession advice for your class and your current skills. `/pw professions off` / `on` hides or shows the profession steps |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
 
@@ -187,6 +188,18 @@ From docs/PATHWISE_THEMES_V2.md. **Fully restart WoW** first (not just `/reload`
 - [ ] In the settings (`/pw settings`), a "Wildwood season" choice (Summer / Autumn / Auto) appears under the theme buttons only while Wildwood is active. Clicking one changes the leaves right away.
 - [ ] The close button (X) is never covered by the art and still closes the window, in every theme.
 - [ ] Cycle `/pw theme next` many times: no Lua errors and no art left over from the previous theme.
+
+## In-game test checklist (professions)
+
+A `/reload` is enough. The trainer arrow needs QuestieDB.
+
+- [ ] At level 5 or higher, chat says once: `Professions for a Hunter: Skinning + Leatherworking`. `/pw professions` explains why, gives the gold option (Skinning + Mining), Engineering at 60 and the secondary professions, and lists your current skills.
+- [ ] The To-do window shows `Learn professions: ...` with what you're missing. Hover it for the reasons. With QuestieDB, a few seconds after login the line gets a location: click it and the arrow points to the nearest trainer of your faction. Walking up to a trainer (about 300 yards) moves the step up and the arrow follows it.
+- [ ] Once you have two primary professions (any two), the learn step only suggests First Aid, or disappears.
+- [ ] With Skinning but no Skinning Knife in your bags: `Buy a Skinning Knife (needed for Skinning)`. It goes away when the knife is in your bags. Same for Mining (Mining Pick).
+- [ ] At skill 50 and level 10: `Train Journeyman Skinning (52/75)`. When the skill reaches the cap (75/75) the step moves up and says skill-ups are wasted. Expert (skill 125, level 20) and Artisan (200, level 35) work the same way.
+- [ ] With Skinning, hovering a beast shows `Pathwise: Skinning 50 needed (you have 52)`, green when you can skin it and red when you can't. Not on humanoids, and not without Skinning.
+- [ ] `/pw professions off` hides all profession steps and tooltip lines; `/pw professions on` brings them back.
 
 ## In-game test checklist (3D arrow)
 

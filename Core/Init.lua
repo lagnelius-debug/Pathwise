@@ -47,6 +47,8 @@ local CHAR_DEFAULTS = {
   trainerAnnouncedLevel = nil, -- level the trainer reminder was last shown for
   talentAnnouncedLevel = nil,  -- level the talent reminder was last shown for
   tamingReminded = false,      -- hunter: the taming quest reminder was shown
+  professionAdvice = false,    -- the profession recommendation was shown in chat
+  professionsOff = false,      -- /pw professions off: no profession steps
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 

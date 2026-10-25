@@ -2,7 +2,7 @@
 ## Title: Pathwise
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
-## Version: 0.5.0
+## Version: 0.6.0
 ## OptionalDeps: QuestieDB
 ## SavedVariables: PathwiseDB
 ## SavedVariablesPerCharacter: PathwiseCharDB
@@ -37,6 +37,7 @@ Data\Classic\ClassSpells.lua
 Data\Classic\SpellPriority.lua
 Data\Classic\TalentBuilds.lua
 Data\Classic\HunterData.lua
+Data\Classic\Professions.lua
 
 Core\Character.lua
 Core\Talents.lua
@@ -48,6 +49,7 @@ Core\QuestLocations.lua
 Core\QuestAdvisor.lua
 Core\Waypoints.lua
 Core\TargetMacro.lua
+Core\Professions.lua
 
 Classes\Hunter.lua
 
@@ -58,6 +60,7 @@ UI\Theme.lua
 UI\GoalPrompt.lua
 UI\SellPrice.lua
 UI\Tooltip.lua
+UI\ProfessionTooltip.lua
 UI\QuestRewardUI.lua
 UI\TrainerPanel.lua
 UI\NextStepsFrame.lua

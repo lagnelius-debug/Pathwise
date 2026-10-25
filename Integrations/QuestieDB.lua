@@ -340,3 +340,108 @@ function QuestieData:GetTarget(quest, kind)
   end
   return target
 end
+
+---------------------------------------------------------------------------
+-- Profession trainers
+---------------------------------------------------------------------------
+
+-- QuestieDB has no search by NPC title, so the NPC list is scanned once
+-- for trainer titles ("Skinning Trainer", "Artisan Leatherworker", ...),
+-- a chunk per frame so logging in doesn't stutter. Fires
+-- QUESTIE_TRAINERS_READY when done.
+local TRAINER_SCAN_CHUNK = 400
+local trainerIndex -- [title] = { npcIds }, once scanned
+local trainerScan  -- in progress: { ids, next }
+
+local function IsTrainerTitle(title)
+  return title:find(" Trainer$") ~= nil or title:find("^Journeyman ") ~= nil
+    or title:find("^Expert ") ~= nil or title:find("^Artisan ") ~= nil or title:find("^Master ") ~= nil
+end
+
+local function ScanTrainerChunk()
+  local scan = trainerScan
+  local ok = pcall(function()
+    local last = math.min(scan.next + TRAINER_SCAN_CHUNK - 1, #scan.ids)
+    for i = scan.next, last do
+      local id = scan.ids[i]
+      local title = lib.Npc.Get(id, "subName")
+      if type(title) == "string" and IsTrainerTitle(title) then
+        scan.index[title] = scan.index[title] or {}
+        table.insert(scan.index[title], id)
+      end
+    end
+    scan.next = last + 1
+  end)
+  if ok and scan.next <= #scan.ids then
+    Platform.After(0, ScanTrainerChunk)
+    return
+  end
+  trainerIndex = ok and scan.index or {}
+  trainerScan = nil
+  Pathwise:FireCallback("QUESTIE_TRAINERS_READY")
+end
+
+-- True once the trainer list is ready; starts the scan if needed.
+function QuestieData:TrainersReady()
+  if trainerIndex then
+    return true
+  end
+  if not trainerScan and Load() then
+    local ok, ids = pcall(lib.Npc.GetAllIds)
+    if ok and type(ids) == "table" then
+      trainerScan = { ids = ids, next = 1, index = {} }
+      Platform.After(0, ScanTrainerChunk)
+    else
+      trainerIndex = {} -- older QuestieDB without GetAllIds: no trainers
+    end
+  end
+  return false
+end
+
+-- Forgets the trainer list so the next lookup scans again.
+function QuestieData:ResetTrainers()
+  trainerIndex, trainerScan = nil, nil
+end
+
+-- Faction letter QuestieDB uses in friendlyToFaction ("A", "H" or "AH").
+local function FactionLetter()
+  local faction = Pathwise:GetModule("Character"):GetSnapshot().faction
+  return faction == "Alliance" and "A" or faction == "Horde" and "H" or nil
+end
+
+-- Returns a target at the nearest trainer (same continent, friendly) with
+-- one of the given titles, labelled "<label> (<name>)", or nil (no
+-- QuestieDB, list not scanned yet, or none on this continent).
+function QuestieData:GetTrainerTarget(titles, label)
+  if not self:TrainersReady() then
+    return nil
+  end
+  local ok, target = pcall(function()
+    local letter = FactionLetter()
+    local points = {}
+    for _, title in ipairs(titles) do
+      for _, npcId in ipairs(trainerIndex[title] or {}) do
+        local friendly = lib.Npc.Get(npcId, "friendlyToFaction")
+        if not letter or type(friendly) ~= "string" or friendly:find(letter, 1, true) then
+          NpcPoints(points, { npcId }, label .. " (%s)")
+        end
+      end
+    end
+    local mapID, x, y = Platform.GetPlayerMapPosition()
+    if not mapID then
+      return nil
+    end
+    local Waypoints = Pathwise:GetModule("Waypoints")
+    local best, bestDistance
+    for _, point in ipairs(points) do
+      point.spawn = nil -- a destination, never skipped as visited
+      local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+      if distance and (not bestDistance or distance < bestDistance) then
+        best, bestDistance = point, distance
+      end
+    end
+    -- (Only this trainer's name for the target macro.)
+    return best and WithNames(best, { best })
+  end)
+  return ok and target or nil
+end

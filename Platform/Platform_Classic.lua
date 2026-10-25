@@ -731,6 +731,30 @@ function Platform.PickupMacro(name)
 end
 
 ---------------------------------------------------------------------------
+-- Bag items and units (professions)
+---------------------------------------------------------------------------
+
+-- How many of an item the player has in the bags.
+function Platform.GetItemCount(itemID)
+  local count = (C_Item and C_Item.GetItemCount and C_Item.GetItemCount(itemID))
+    or (GetItemCount and GetItemCount(itemID))
+  return count or 0
+end
+
+-- { level, creatureType, isPlayer } for a unit, or nil. creatureType is the
+-- client's (localized) name, e.g. "Beast"; level -1 means "??".
+function Platform.GetUnitCreature(unit)
+  if not unit or not UnitExists(unit) then
+    return nil
+  end
+  return {
+    level = UnitLevel(unit),
+    creatureType = UnitCreatureType and UnitCreatureType(unit),
+    isPlayer = UnitIsPlayer and UnitIsPlayer(unit) and true or false,
+  }
+end
+
+---------------------------------------------------------------------------
 -- Hunter: ammo and pet
 ---------------------------------------------------------------------------
 

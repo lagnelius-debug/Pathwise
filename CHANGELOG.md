@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.6.0
+
+- Professions: a recommendation for your class (for hunters Skinning +
+  Leatherworking, or Skinning + Mining for gold, Engineering at 60), shown
+  once in chat and in `/pw professions`.
+- To-do steps: learn the recommended professions, train the next rank
+  (Journeyman, Expert, Artisan) when you can - higher up when your skill is
+  at the cap - and buy the tool gathering needs (Skinning Knife, Mining
+  Pick). With QuestieDB the arrow points to the nearest trainer.
+- Beast tooltips show the Skinning skill needed, green or red.
+- `/pw professions off` hides it all. Two primary professions of your own
+  choice end the suggestions.
+
 ## 0.5.0
 
 - The guide arrow is now 3D: a lit, faceted arrowhead tilted as if lying

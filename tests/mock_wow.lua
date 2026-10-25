@@ -322,6 +322,8 @@ C_AddOns = {
   end,
 }
 function InCombatLockdown() return S.inCombat end
+WoW.bagCounts = {} -- [itemID] = count, for GetItemCount
+function GetItemCount(itemID) return WoW.bagCounts[itemID] or 0 end
 function UnitAffectingCombat() return S.inCombat end
 
 function UnitName(unit)
