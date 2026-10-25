@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.4.1
+
+- Far quest steps are now planned as a route: the guide goes to the
+  closest one first, then always to the closest one from there. A far
+  turn-in in one direction no longer comes before a much closer quest in
+  the other direction. Turn-ins still get a small head start.
+
 ## 0.4.0
 
 - Dragonflight and Skyhawk get clean gold emblem heads (dragon, eagle) with

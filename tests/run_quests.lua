@@ -90,6 +90,48 @@ check("trainer step between turn-ins and quests",
   NextSteps:GetItems()[1].priority >= NextSteps:GetItems()[#NextSteps:GetItems()].priority)
 
 ---------------------------------------------------------------------------
+section("Quests: far steps as a route")
+
+-- Player in the middle of Teldrassil (0.1 map units = 300 yd here).
+local function Quest(id, title, done)
+  return { questID = id, title = title, level = 5, zone = "Teldrassil", suggestedGroup = 0,
+    complete = done and 1 or nil,
+    objectives = done and {} or { { text = "Thing: 0/5" } } }
+end
+local spots = {}
+local function Locate(quest) return spots[quest.questID] end
+local function Spot(x, y) return { mapID = 1438, x = x, y = y, label = "spot" } end
+local here = { zone = "Teldrassil", subZone = "Dolanaar", mapID = 1438, x = 0.5, y = 0.5 }
+local function Order(quests)
+  local ids = {}
+  for _, item in ipairs(QuestAdvisor.Plan(quests, 5, 4, here, Locate)) do
+    ids[#ids + 1] = item.title
+  end
+  return table.concat(ids, ",")
+end
+
+-- The screenshot case: turn-in 1770 yd west, quest 470 yd east.
+spots[1], spots[2] = Spot(0.5 - 1770 / 3000, 0.5), Spot(0.5 + 470 / 3000, 0.5)
+check("a much closer quest comes before a far turn-in the other way",
+  Order({ Quest(1, "West Turn-in", true), Quest(2, "East Quest") }) == "East Quest,West Turn-in")
+
+-- Turn-ins are pulled a bit closer: 550 yd turn-in vs 470 yd quest.
+spots[1] = Spot(0.5 - 550 / 3000, 0.5)
+check("a turn-in only slightly farther still comes first",
+  Order({ Quest(1, "West Turn-in", true), Quest(2, "East Quest") }) == "West Turn-in,East Quest")
+
+-- Route: east A (500 yd), then C right behind A (900 yd from the player but
+-- 400 from A), then west B (600 yd from the player) - no zig-zag.
+spots[1], spots[2], spots[3] = Spot(0.5 + 500 / 3000, 0.5), Spot(0.5 - 600 / 3000, 0.5), Spot(0.5 + 900 / 3000, 0.5)
+check("each next step is the closest to the previous one",
+  Order({ Quest(1, "A"), Quest(2, "B"), Quest(3, "C") }) == "A,C,B")
+
+-- Nearby steps (under NEAR_YARDS) still come before the far route.
+spots[4] = Spot(0.5, 0.5 + 200 / 3000)
+check("nearby first, then the far route",
+  Order({ Quest(1, "A"), Quest(2, "B"), Quest(3, "C"), Quest(4, "Near") }) == "Near,A,C,B")
+
+---------------------------------------------------------------------------
 section("Quests: live updates")
 
 WoW.ClearChat()

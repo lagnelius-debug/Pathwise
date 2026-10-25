@@ -18,7 +18,7 @@ local ALMOST_DONE = 0.5
 
 -- Quest steps whose location is within this distance count as nearby and
 -- come first; farther ones wait (turn-ins included) until the nearby work
--- is done.
+-- is done, then follow as a route (see RouteFar).
 QuestAdvisor.NEAR_YARDS = 300
 
 -- While the player moves, re-sort by distance after moving this far,
@@ -31,6 +31,12 @@ local lastPlanPosition -- { mapID, x, y } where the last plan was made
 -- Quests whose nearest objectives are this close to each other are done
 -- together as one step (e.g. Timberling Seeds and Timberling Sprouts).
 QuestAdvisor.TOGETHER_YARDS = 120
+
+-- Far steps are done as a route: each next one is the closest to where the
+-- previous one ends. Turn-ins count as this much closer than they are
+-- (they're quick and give rewards), but a far turn-in in the other
+-- direction doesn't come before a much closer quest any more.
+QuestAdvisor.TURN_IN_PULL = 0.75
 
 local DIFFICULTY_COLORS = {
   RED = "ff2020",
@@ -248,7 +254,7 @@ end
 -- Pure function (apart from map geometry): quests -> Next Steps items, in
 -- recommended order. Steps with a known location are ordered by distance:
 -- nearby ones (NEAR_YARDS) first, far ones after the steps without a
--- location.
+-- location, as a route (RouteFar).
 -- location: { zone, subZone, mapID, x, y } of the player.
 -- locate(quest, kind) optionally returns an arrow target for a quest
 -- ("turnIn" for complete quests, "do" for quests to work on).
@@ -276,7 +282,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     if quest.failed then
       priority, text = P.QUEST_FAILED, string.format(L.QA_FAILED, name)
     elseif QuestAdvisor.IsReady(quest) then
-      priority = far and P.QUEST_FAR_TURN_IN or P.QUEST_TURN_IN
+      priority = far and P.QUEST_FAR or P.QUEST_TURN_IN
       text = string.format(L.QA_TURN_IN, name)
     elseif quest.suggestedGroup >= 2 then
       priority, text = P.QUEST_LATER, string.format(L.QA_GROUP, name, quest.suggestedGroup)
@@ -285,14 +291,16 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     elseif difficulty == "GREY" then
       priority, text = P.QUEST_GREY, string.format(L.QA_GREY, name)
     elseif progress and progress >= ALMOST_DONE then
-      priority = near and P.QUEST_NEAR_ALMOST_DONE or far and P.QUEST_FAR_ALMOST_DONE or P.QUEST_ALMOST_DONE
+      priority = near and P.QUEST_NEAR_ALMOST_DONE or far and P.QUEST_FAR or P.QUEST_ALMOST_DONE
       text = string.format(L.QA_ALMOST_DONE, name, progress * 100)
     elseif near then
       priority, text = P.QUEST_NEAR, string.format(L.QA_HERE, name)
     elseif here then
-      priority, text = far and P.QUEST_FAR_HERE or P.QUEST_HERE, string.format(L.QA_HERE, name)
+      priority, text = far and P.QUEST_FAR or P.QUEST_HERE, string.format(L.QA_HERE, name)
     else
-      priority, text = P.QUEST_ELSEWHERE, string.format(L.QA_ELSEWHERE, name, quest.zone or "?")
+      -- (Another zone; with a known location it joins the far route.)
+      priority = far and P.QUEST_FAR or P.QUEST_ELSEWHERE
+      text = string.format(L.QA_ELSEWHERE, name, quest.zone or "?")
     end
     if difficulty == "ORANGE" and priority >= P.QUEST_ELSEWHERE and not QuestAdvisor.IsReady(quest) then
       text = text .. " " .. L.QA_HARD
@@ -332,7 +340,45 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     end
     return a.text < b.text
   end)
+  QuestAdvisor.RouteFar(items, location)
   return items
+end
+
+-- Reorders the far steps (all QUEST_FAR, so next to each other after the
+-- sort) into a route: starting at the player, always go to the closest
+-- remaining step from where the last one was, turn-ins pulled closer by
+-- TURN_IN_PULL. Without this, a far turn-in to the west came before a much
+-- closer quest to the east, and the player crossed the zone twice.
+function QuestAdvisor.RouteFar(items, location)
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  local first, last
+  for index, item in ipairs(items) do
+    if item.priority == P.QUEST_FAR then
+      first, last = first or index, index
+    end
+  end
+  if not first or not location or not location.mapID or not location.x then
+    return
+  end
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local pending = {}
+  for index = first, last do
+    pending[#pending + 1] = items[index]
+  end
+  local at = location
+  for index = first, last do
+    local bestIndex, bestCost
+    for candidate, item in ipairs(pending) do
+      local target = item.target
+      local distance = Waypoints.Vector(at.mapID, at.x, at.y, target.mapID, target.x, target.y) or math.huge
+      local cost = distance * (item.kind == "turnIn" and QuestAdvisor.TURN_IN_PULL or 1)
+      if not bestCost or cost < bestCost then
+        bestIndex, bestCost = candidate, cost
+      end
+    end
+    items[index] = table.remove(pending, bestIndex)
+    at = items[index].target
+  end
 end
 
 ---------------------------------------------------------------------------
