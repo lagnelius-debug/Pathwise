@@ -21,7 +21,10 @@ Pathwise.Data.StatWeights = {
       ITEM_MOD_INTELLECT_SHORT = 0.25,
       ITEM_MOD_SPIRIT_SHORT = 0.1,
       ITEM_MOD_STRENGTH_SHORT = 0.05,
-      RESISTANCE0_NAME = 0.04, -- armor; matters most at low level where gear has no stats
+      -- Armor: 1 Stamina ~ 40 armor. +1 Stamina is +10 health (about 4% at
+      -- level 10, 0.3% at 60); 40 armor is about 1-2% less physical damage
+      -- at level 10. Still breaks ties between items without stats.
+      RESISTANCE0_NAME = 0.01,
       RANGED_WEAPON_DPS = 3.0, -- custom key: ranged weapon DPS is weighted heavily
       MELEE_WEAPON_DPS = 0.2,  -- custom key: melee weapon is mostly a stat stick
     },
@@ -35,7 +38,7 @@ Pathwise.Data.StatWeights = {
       ITEM_MOD_INTELLECT_SHORT = 0.35,
       ITEM_MOD_SPIRIT_SHORT = 0.15,
       ITEM_MOD_STRENGTH_SHORT = 0.05,
-      RESISTANCE0_NAME = 0.05,
+      RESISTANCE0_NAME = 0.014, -- 1 Stamina ~ 40 armor
       RANGED_WEAPON_DPS = 2.8,
       MELEE_WEAPON_DPS = 0.2,
     },
@@ -48,7 +51,7 @@ Pathwise.Data.StatWeights = {
       ITEM_MOD_INTELLECT_SHORT = 0.3,
       ITEM_MOD_SPIRIT_SHORT = 0.05,
       ITEM_MOD_STRENGTH_SHORT = 0.03,
-      RESISTANCE0_NAME = 0.02,
+      RESISTANCE0_NAME = 0.006, -- 1 Stamina ~ 40 armor
       RANGED_WEAPON_DPS = 3.5,
       MELEE_WEAPON_DPS = 0.1,
     },
@@ -62,7 +65,7 @@ Pathwise.Data.StatWeights = {
       ITEM_MOD_INTELLECT_SHORT = 0.25,
       ITEM_MOD_SPIRIT_SHORT = 0.05,
       ITEM_MOD_STRENGTH_SHORT = 0.1,
-      RESISTANCE0_NAME = 0.04,
+      RESISTANCE0_NAME = 0.01, -- 1 Stamina ~ 40 armor
       RANGED_WEAPON_DPS = 2.8,
       MELEE_WEAPON_DPS = 0.5,
     },

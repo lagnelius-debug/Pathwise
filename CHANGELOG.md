@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.6.1
+
+- Gear advisor: armor counted for much less against stats. 1 Stamina now
+  equals about 40 armor (it was 10), so an item with +1 Stamina and a bit
+  less armor is no longer shown as a downgrade. Between items without
+  stats, more armor still wins.
+
 ## 0.6.0
 
 - Professions: a recommendation for your class (for hunters Skinning +
