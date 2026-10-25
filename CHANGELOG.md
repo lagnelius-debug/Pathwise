@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.5.0
+
+- The guide arrow is now 3D: a lit, faceted arrowhead tilted as if lying
+  on the ground, in 64 pre-rendered directions, with an outline and a
+  soft shadow. Its color fades from green (ahead) through yellow (to the
+  side) to red (behind you).
+- **Fully restart WoW** (not just `/reload`) after updating: the arrow
+  texture is a new file.
+
 ## 0.4.1
 
 - Far quest steps are now planned as a route: the guide goes to the

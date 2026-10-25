@@ -39,12 +39,28 @@ check("waypoint set", WoW.ChatContains("Arrow pointing to Test spot."))
 Tick()
 check("arrow shown with label and distance", arrow:IsShown() and arrow.label:GetText() == "Test spot"
   and arrow.distance:GetText() == "300 yd")
-check("facing the target: no rotation, green", Near(arrow.arrow._rotation, 0) and arrow.arrow._color[2] == 1)
+local function Frame() return table.concat(arrow.arrow._texcoord or {}, ",") end
+check("3D arrow texture, 64x64", arrow.arrow._texture:find("Media\\Arrow\\arrow3d$") ~= nil and arrow.arrow._width == 64)
+check("facing the target: straight-ahead frame, green", Frame() == "0,0.125,0,0.125"
+  and arrow.arrow._color[1] == 0.2 and arrow.arrow._color[2] == 1)
 
 S.facing = math.pi / 2 -- facing west; target is north, so to the right
 Tick()
-check("target to the right: rotated -90 degrees", Near(arrow.arrow._rotation, 3 * math.pi / 2)
-  and arrow.arrow._color[1] == 1)
+-- 270 degrees counterclockwise = frame 48: row 6, column 0
+check("target to the right: frame turned 270 degrees, yellow", Frame() == "0,0.125,0.75,0.875"
+  and arrow.arrow._color[1] == 1 and Near(arrow.arrow._color[2], 0.85))
+
+S.facing = math.pi / 4 -- target 45 degrees to the right: frame 56
+Tick()
+check("45 degrees right: frame 56, between green and yellow", Frame() == "0,0.125,0.875,1"
+  and arrow.arrow._color[1] > 0.2 and arrow.arrow._color[1] < 1)
+
+S.facing = math.pi -- target behind: frame 32, red
+Tick()
+check("target behind: frame 32, red", Frame() == "0,0.125,0.5,0.625" and arrow.arrow._color[1] == 1
+  and Near(arrow.arrow._color[2], 0.25))
+S.facing = math.pi / 2
+Tick()
 
 S.mapY = 0.401
 WoW.ClearChat()

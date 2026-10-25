@@ -11,11 +11,45 @@ local L = Pathwise.L
 local Arrow = Pathwise:NewModule("Arrow")
 
 local UPDATE_INTERVAL = 0.05
-local ARROW_TEXTURE = "Interface\\Minimap\\MinimapArrow"
--- Within this angle (radians) of straight ahead the arrow turns green.
+
+-- 3D arrow: a sprite sheet of 64 pre-rendered rotations (8x8 grid, frame k
+-- turned k * 360/64 degrees counterclockwise; tools/render_arrow.py). The
+-- frame for the direction is picked with SetTexCoord - rotating one flat
+-- image can't show the arrow's sides and tilt.
+local ARROW_TEXTURE = "Interface\\AddOns\\" .. addonName .. "\\Media\\Arrow\\arrow3d"
+local SHEET_COLUMNS = 8
+local SHEET_FRAMES = SHEET_COLUMNS * SHEET_COLUMNS
+local ARROW_SIZE = 64
+
+-- Within this angle (radians) of straight ahead the arrow is fully green;
+-- beyond it the color goes through yellow (to the side) to red (behind).
 local ON_COURSE = 0.25
+local GREEN, YELLOW, RED = { 0.2, 1, 0.2 }, { 1, 0.85, 0.2 }, { 1, 0.25, 0.2 }
 
 local frame, elapsedSinceUpdate = nil, 0
+
+-- Shows the sprite sheet frame for `relative` (radians counterclockwise,
+-- 0 = straight ahead).
+local function SetDirection(texture, relative)
+  local index = math.floor(relative / (2 * math.pi) * SHEET_FRAMES + 0.5) % SHEET_FRAMES
+  local column, row = index % SHEET_COLUMNS, math.floor(index / SHEET_COLUMNS)
+  texture:SetTexCoord(column / SHEET_COLUMNS, (column + 1) / SHEET_COLUMNS,
+    row / SHEET_COLUMNS, (row + 1) / SHEET_COLUMNS)
+end
+
+local function Mix(a, b, t)
+  return a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t
+end
+
+-- Green when on course, yellow at 90 degrees off, red when it's behind you.
+function Arrow.CourseColor(offCourse)
+  if offCourse <= ON_COURSE then
+    return GREEN[1], GREEN[2], GREEN[3]
+  elseif offCourse <= math.pi / 2 then
+    return Mix(GREEN, YELLOW, (offCourse - ON_COURSE) / (math.pi / 2 - ON_COURSE))
+  end
+  return Mix(YELLOW, RED, (offCourse - math.pi / 2) / (math.pi / 2))
+end
 
 local function GetWaypoints()
   return Pathwise:GetModule("Waypoints")
@@ -62,14 +96,9 @@ function Arrow:Update()
   end
 
   frame.distance:SetText(target.spawn and "" or string.format(L.ARROW_YARDS, distance))
-  if relative and frame.arrow.SetRotation then
-    frame.arrow:SetRotation(relative)
-    local offCourse = math.min(relative, 2 * math.pi - relative)
-    if offCourse <= ON_COURSE then
-      frame.arrow:SetVertexColor(0.2, 1, 0.2)
-    else
-      frame.arrow:SetVertexColor(1, 0.85, 0.2)
-    end
+  if relative then
+    SetDirection(frame.arrow, relative)
+    frame.arrow:SetVertexColor(Arrow.CourseColor(math.min(relative, 2 * math.pi - relative)))
     frame.arrow:Show()
   else
     frame.arrow:Hide()
@@ -92,7 +121,7 @@ end
 
 local function CreateArrow()
   frame = CreateFrame("Frame", "PathwiseArrow", UIParent)
-  frame:SetSize(120, 116)
+  frame:SetSize(120, 128)
   frame:SetFrameStrata("MEDIUM")
   frame:SetClampedToScreen(true)
   frame:EnableMouse(true)
@@ -117,7 +146,7 @@ local function CreateArrow()
 
   frame.arrow = frame:CreateTexture(nil, "ARTWORK")
   frame.arrow:SetTexture(ARROW_TEXTURE)
-  frame.arrow:SetSize(52, 52)
+  frame.arrow:SetSize(ARROW_SIZE, ARROW_SIZE)
   frame.arrow:SetPoint("TOP", frame, "TOP", 0, 0)
 
   frame.label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")

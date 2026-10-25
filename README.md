@@ -119,7 +119,7 @@ Test with a fresh level 1 Night Elf Hunter.
 
 ## In-game test checklist (navigation arrow)
 
-- [ ] `/pw way 50 50 Test` shows an arrow near the top of the screen. It rotates as you turn, turns green when you face the target, and shows the distance in yards. Walking there prints `Arrived at Test.` and the arrow disappears.
+- [ ] `/pw way 50 50 Test` shows an arrow near the top of the screen. It turns as you turn, is green when you face the target, yellow when it's to your side and red when it's behind you, and shows the distance in yards. Walking there prints `Arrived at Test.` and the arrow disappears.
 - [ ] The arrow can be dragged. Right-click clears a `/pw way` waypoint.
 - [ ] With QuestieDB installed, the arrow points to the nearest quest mob or object for a quest as soon as you accept it, and to the turn-in NPC once it's complete. Quests under a subzone header, like "Shadowglen", no longer say "in Shadowglen" while you're there.
 - [ ] Without QuestieDB: accept a quest, then make progress on it, e.g. kill one quest mob. The Next Steps line for that quest gets a blue `*`, and the arrow points to where you made progress.
@@ -187,6 +187,15 @@ From docs/PATHWISE_THEMES_V2.md. **Fully restart WoW** first (not just `/reload`
 - [ ] In the settings (`/pw settings`), a "Wildwood season" choice (Summer / Autumn / Auto) appears under the theme buttons only while Wildwood is active. Clicking one changes the leaves right away.
 - [ ] The close button (X) is never covered by the art and still closes the window, in every theme.
 - [ ] Cycle `/pw theme next` many times: no Lua errors and no art left over from the previous theme.
+
+## In-game test checklist (3D arrow)
+
+**Fully restart WoW** first (not just `/reload`): the arrow uses a new texture file. A green square instead of the arrow means it didn't load.
+
+- [ ] The guide arrow is a solid, lit 3D arrowhead with a dark outline and a soft shadow, tilted as if lying on the ground in front of you.
+- [ ] Turning your character turns the arrow smoothly, and you see its sides and back when it points sideways or toward you.
+- [ ] The color fades from green (ahead) through yellow (to the side) to red (behind you).
+- [ ] Label, distance and the Next button sit below the arrow without overlapping it.
 
 ## In-game test checklist (emblem themes)
 
