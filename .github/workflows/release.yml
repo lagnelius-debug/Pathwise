@@ -1,15 +1,23 @@
 # Publishes a GitHub release with the installable zip, for the version in
-# Pathwise_Vanilla.toc. Start it from the Actions tab (Release > Run
-# workflow), or by pushing a version tag (v0.2.0, ...).
+# Pathwise_Vanilla.toc. Runs by itself on every push to main: a version
+# that has no release yet gets one; otherwise nothing happens. Can also be
+# started from the Actions tab (Release > Run workflow - replaces the zip of
+# an existing release) or by pushing a version tag (v0.2.0, ...).
 name: Release
 
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ["v*"]
 
 permissions:
   contents: write
+
+# One release run at a time; a newer push waits for the one before it.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -28,20 +36,33 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "TAG=v$VERSION" >> "$GITHUB_ENV"
 
+      - name: Skip versions that are already released
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "$TAG is already released; nothing to do."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+
       - name: Run the offline tests
+        if: env.SKIP != '1'
         run: |
           sudo apt-get install -y -qq lua5.1
           lua5.1 tests/run.lua
 
       - name: Build the zip
+        if: env.SKIP != '1'
         run: tools/build_zip.sh "Pathwise-$VERSION.zip"
 
       - name: Publish the release
+        if: env.SKIP != '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$TAG" > /dev/null 2>&1; then
-            # Same version released again: replace the zip.
+            # Same version released again (Run workflow, tag): replace the zip.
             gh release upload "$TAG" "Pathwise-$VERSION.zip" --clobber
             exit 0
           fi
