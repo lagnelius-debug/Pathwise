@@ -27,6 +27,8 @@ function Tooltip.FormatResult(result)
 
   if kind == "equipped" then
     return nil
+  elseif kind == "unusable" and result.reason == "TOO_FAR" then
+    return COLOR_GREY .. PREFIX .. string.format(L.TOOLTIP_TOO_FAR, result.level) .. "|r"
   elseif kind == "unusable" then
     return COLOR_GREY .. PREFIX .. L.TOOLTIP_UNUSABLE .. "|r"
   elseif kind == "upgrade" then

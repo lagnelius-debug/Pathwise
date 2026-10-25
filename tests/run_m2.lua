@@ -71,8 +71,13 @@ check("cloth boots usable for hunter", WoW.HoverItem(9002) == "Pathwise: +24% up
 
 check("plate not usable", WoW.HoverItem(9004) == "Pathwise: not usable by your class")
 check("mace not usable", WoW.HoverItem(9005) == "Pathwise: not usable by your class")
-check("mail below 40: upgrade at level 40", WoW.HoverItem(9003) == "Pathwise: +10% upgrade at level 40")
+-- Reported in game: Barkmail Leggings showed "+24% upgrade at level 40" to
+-- a low-level hunter. Too far away to count as an upgrade.
+check("mail below 40: not an upgrade, usable much later", WoW.HoverItem(9003)
+  == "Pathwise: usable at level 40 - you'll have better gear by then")
 check("bow above player level", WoW.HoverItem(9006) == "Pathwise: +107% upgrade at level 8")
+check("5 levels away: still an upgrade later", (WoW.HoverItem(9030) or ""):find("upgrade at level 10$") ~= nil)
+check("6 levels away: too far", WoW.HoverItem(9031) == "Pathwise: usable at level 11 - you'll have better gear by then")
 
 check("ring into empty slot", WoW.HoverItem(9007) == "Pathwise: +38% upgrade (empty slot)")
 Equip(11, 9007)

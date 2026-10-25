@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.7.1
+
+- Gear you can only use more than 5 levels from now (like mail before 40)
+  is no longer called an upgrade. The tooltip says "usable at level 40 -
+  you'll have better gear by then", and the quest reward picker goes for
+  the best sell value instead. Items within 5 levels still show
+  "upgrade at level X".
+
 ## 0.7.0
 
 - Distances are shown in meters (`/pw units yards` switches back to

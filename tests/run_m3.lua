@@ -80,7 +80,9 @@ check("sell highlight on choice 2", highlight:IsShown() and highlight._parent ==
 WoW.FireEvent("QUEST_FINISHED")
 
 TurnIn(9004, 9003)
-check("only a later upgrade", WoW.ChatContains("Best reward: [Chain Vest] (upgrade once you reach level 40)."))
+check("an upgrade only at level 40 doesn't count: best to sell instead",
+  WoW.ChatContains("No upgrade among the rewards. [Plate Helm] sells for the most")
+  and not WoW.ChatContains("Chain Vest"))
 WoW.FireEvent("QUEST_FINISHED")
 
 TurnIn(9001)

@@ -15,6 +15,11 @@ local GearScore = Pathwise:NewModule("GearScore")
 -- Differences smaller than this (in percent) count as "about the same".
 local SAME_THRESHOLD_PERCENT = 1
 
+-- An item usable from a later level only counts as an "upgrade later" if
+-- that level is at most this far away; by then better gear comes along
+-- (e.g. a mail reward at level 12 is useless until 40).
+GearScore.LATER_LEVELS = 5
+
 local DPS_STAT = "ITEM_MOD_DAMAGE_PER_SECOND_SHORT"
 
 -- Item scores by link; cleared when the active spec changes.
@@ -161,6 +166,8 @@ end
 -- Compares an item with the equipped gear. Returns nil if it can't be
 -- scored, otherwise a table:
 --   kind     = "upgrade", "downgrade", "same", "equipped" or "unusable"
+--              ("unusable" with reason "TOO_FAR": usable only from a level
+--              more than LATER_LEVELS away)
 --   percent  = change to the total score of all equipped gear, in percent
 --              (nil when nothing equipped scores above 0)
 --   empty    = true if compared against an empty slot
@@ -185,6 +192,9 @@ function GearScore:Compare(link)
   local usable, reason, level, skillSpell = self:CheckUsable(info)
   if not usable and reason == "TYPE" then
     return { kind = "unusable", reason = reason, newScore = scored.score }
+  end
+  if not usable and reason == "LEVEL" and level > (GetSnapshot().level or 1) + GearScore.LATER_LEVELS then
+    return { kind = "unusable", reason = "TOO_FAR", level = level, newScore = scored.score }
   end
 
   -- Which equipped score to compare against.
