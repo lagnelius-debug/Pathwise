@@ -297,9 +297,10 @@ local function FindTalent(trees, pick)
 end
 
 -- Pure function: the upcoming points of a build the player hasn't spent yet.
--- Returns a list of { pick, talent, rank, maxRank, name } (rank = the rank
--- this point brings the talent to), at most `limit` long. Points whose tier
--- isn't open yet are listed after the open ones.
+-- Returns a list of { pick, talent, rank, maxRank, name, open } (rank = the
+-- rank this point brings the talent to; open = its tier is reachable), at
+-- most `limit` long. Points whose tier isn't open yet are listed after the
+-- open ones.
 function Talents.UpcomingPoints(trees, build, limit)
   local open, closed = {}, {}
   local spentInTree = {}
@@ -318,6 +319,7 @@ function Talents.UpcomingPoints(trees, build, limit)
           rank = rank,
           maxRank = talent and talent.maxRank or pick[4],
           name = talent and talent.name or pick[5],
+          open = tierOpen,
         }
         table.insert(tierOpen and open or closed, point)
         if tierOpen then
@@ -371,7 +373,28 @@ function Talents:GetUpcoming(limit)
   return Talents.UpcomingPoints(GetSnapshot().talents.trees, build, limit or PREVIEW_PICKS), build
 end
 
+-- The talent to put the next point into, for highlighting it in the
+-- talent window: { tab, index, name, rank, maxRank }, or nil when there's no
+-- unspent point, no build, or the next build point can't be taken yet.
+function Talents:GetNextPoint()
+  if (GetSnapshot().talents.unspent or 0) <= 0 then
+    return nil
+  end
+  local point = self:GetUpcoming(1)[1]
+  if not point or not point.open or not point.talent then
+    return nil
+  end
+  return {
+    tab = point.pick[1],
+    index = point.talent.index,
+    name = point.name,
+    rank = point.rank,
+    maxRank = point.maxRank,
+  }
+end
+
 -- Updates the Next Steps item and, once per level, the chat reminder.
+-- Fires TALENT_ADVICE_UPDATED (for the talent window highlight).
 function Talents:UpdateAdvice(allowAnnounce)
   local NextSteps = Pathwise:GetModule("NextSteps")
   local snapshot = GetSnapshot()
@@ -407,6 +430,7 @@ function Talents:UpdateAdvice(allowAnnounce)
     end
   end
   NextSteps:SetItems("talents", items)
+  Pathwise:FireCallback("TALENT_ADVICE_UPDATED")
 end
 
 function Talents:OnSpecChangedAdvice()

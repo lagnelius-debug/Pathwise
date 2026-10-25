@@ -98,6 +98,44 @@ WoW.ClearChat()
 WoW.Slash("talents")
 check("/pw talents lists next points", WoW.ChatContains("Beast Mastery leveling (31/20/0) - unspent points: 1. Next:")
   and WoW.ChatContains("1. Endurance Training (1/5)"))
+-- Talent window highlight (Blizzard_TalentUI loads on demand)
+TalentFrame = CreateFrame("Frame", "TalentFrame", UIParent)
+for i = 1, 3 do
+  CreateFrame("Button", "TalentFrameTalent" .. i, TalentFrame)
+  CreateFrame("Button", "TalentFrameTab" .. i, TalentFrame)
+end
+local selectedTab = 1
+PanelTemplates_GetSelectedTab = function() return selectedTab end
+function TalentFrame_Update() end
+WoW.FireEvent("ADDON_LOADED", "Blizzard_TalentUI")
+local function GlowOn(target)
+  for _, f in ipairs(WoW.frames) do
+    if f._parent == target and f:IsShown() and f ~= TalentFrame then return true end
+  end
+  return false
+end
+local nextPoint = Talents:GetNextPoint()
+check("next point for the talent window: Endurance Training, tree 1, talent 2", nextPoint and nextPoint.tab == 1
+  and nextPoint.index == 2 and nextPoint.rank == 1 and nextPoint.maxRank == 5)
+TalentFrame_Update()
+check("talent window: the recommended talent glows", GlowOn(TalentFrameTalent2) and not GlowOn(TalentFrameTalent1)
+  and not GlowOn(TalentFrameTab1))
+GameTooltip:ClearLines()
+TalentFrameTalent2._scripts.OnEnter(TalentFrameTalent2)
+check("its tooltip says it's the recommended point", table.concat(WoW.TooltipLines(GameTooltip), "|")
+  :find("Pathwise: recommended next point (rank 1/5)", 1, true) ~= nil)
+GameTooltip:ClearLines()
+TalentFrameTalent1._scripts.OnEnter(TalentFrameTalent1)
+check("other talents: no line", #WoW.TooltipLines(GameTooltip) == 0)
+selectedTab = 2
+TalentFrame_Update()
+check("another tree shown: its tab glows instead", GlowOn(TalentFrameTab1) and not GlowOn(TalentFrameTalent2))
+selectedTab = 1
+TalentFrame:Hide()
+Pathwise:GetModule("TalentHighlight"):Update()
+check("window closed: no glow", not GlowOn(TalentFrameTalent2) and not GlowOn(TalentFrameTab1))
+TalentFrame:Show()
+
 WoW.ClearChat()
 WoW.Slash("talents check")
 check("/pw talents check: all match", WoW.ChatContains("Checked 16 talent picks: 0 mismatches."))

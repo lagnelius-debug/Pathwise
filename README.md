@@ -190,6 +190,14 @@ From docs/PATHWISE_THEMES_V2.md. **Fully restart WoW** first (not just `/reload`
 - [ ] The close button (X) is never covered by the art and still closes the window, in every theme.
 - [ ] Cycle `/pw theme next` many times: no Lua errors and no art left over from the previous theme.
 
+## In-game test checklist (talent highlight)
+
+A `/reload` is enough.
+
+- [ ] With an unspent talent point, open the talent window (N). The recommended talent has a pulsing gold glow, and hovering it adds `Pathwise: recommended next point (rank 1/5)` to its tooltip.
+- [ ] When the recommended talent is in another tree, that tree's tab at the bottom glows instead. Clicking the tab moves the glow onto the talent.
+- [ ] After spending the point, the glow moves to the next recommended talent, or disappears when no points are left.
+
 ## In-game test checklist (professions)
 
 A `/reload` is enough. The trainer arrow needs QuestieDB.

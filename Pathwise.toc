@@ -2,7 +2,7 @@
 ## Title: Pathwise
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
-## Version: 0.7.3
+## Version: 0.8.0
 ## OptionalDeps: QuestieDB
 ## SavedVariables: PathwiseDB
 ## SavedVariablesPerCharacter: PathwiseCharDB
@@ -63,6 +63,7 @@ UI\Tooltip.lua
 UI\ProfessionTooltip.lua
 UI\QuestRewardUI.lua
 UI\TrainerPanel.lua
+UI\TalentHighlight.lua
 UI\NextStepsFrame.lua
 UI\Arrow.lua
 UI\TargetButton.lua

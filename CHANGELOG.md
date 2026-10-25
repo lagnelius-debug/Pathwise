@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.8.0
+
+- The talent window highlights the recommended talent for your next point
+  with a pulsing gold glow, and its tooltip says so. When it's in another
+  tree, that tree's tab glows instead.
+
 ## 0.7.3
 
 - Hunter taming: once a Taming the Beast quest is in your log, the "Get
