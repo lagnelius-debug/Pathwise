@@ -681,6 +681,41 @@ function Platform.GetMapWorldRect(mapID)
   return rect or nil
 end
 
+-- The quests the NPC the player is talking to offers, as { title,
+-- questID (when the client says) }, or nil when the window doesn't list
+-- them all. Only the gossip window (GOSSIP_SHOW) and the quest greeting
+-- (QUEST_GREETING) list every available quest; a quest detail window shows
+-- just one.
+function Platform.GetOfferedQuests(event)
+  local offered = {}
+  if event == "GOSSIP_SHOW" then
+    if C_GossipInfo and C_GossipInfo.GetAvailableQuests then
+      for _, info in ipairs(C_GossipInfo.GetAvailableQuests() or {}) do
+        offered[#offered + 1] = { title = info.title, questID = info.questID }
+      end
+    elseif GetGossipAvailableQuests then
+      -- Older clients: title, level, flags... per quest; only titles are strings.
+      for _, value in ipairs({ GetGossipAvailableQuests() }) do
+        if type(value) == "string" then
+          offered[#offered + 1] = { title = value }
+        end
+      end
+    else
+      return nil
+    end
+  elseif event == "QUEST_GREETING" then
+    if not (GetNumAvailableQuests and GetAvailableTitle) then
+      return nil
+    end
+    for i = 1, GetNumAvailableQuests() do
+      offered[#offered + 1] = { title = GetAvailableTitle(i) }
+    end
+  else
+    return nil
+  end
+  return offered
+end
+
 -- Name of the NPC the player is talking to (quest giver dialogs), or nil.
 function Platform.GetInteractionNPCName()
   if UnitExists("npc") then

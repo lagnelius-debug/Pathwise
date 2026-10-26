@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.10.1
+
+- Quest pickups no longer suggest quests that aren't really offered, like
+  "The Hunter's Path" from Jocaste:
+  - with the Questie addon loaded, Questie's own check decides (its list
+    of quests that are in the database but not in the game, breadcrumbs,
+    reputation, events, ...);
+  - quests whose later chain quest (or breadcrumb target) is already done
+    or in your log are skipped;
+  - when you talk to a quest giver and a suggested quest isn't in their
+    list, Pathwise remembers it and only tries again after a level up.
+
 ## 0.10.0
 
 - The arrow knows about portals and boats: Rut'theran Village is reached

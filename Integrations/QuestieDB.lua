@@ -533,6 +533,8 @@ local function ScanQuest(id, scan)
     preSingle = Get(id, "preQuestSingle"),
     preGroup = Get(id, "preQuestGroup"),
     exclusive = Get(id, "exclusiveTo"),
+    nextInChain = Get(id, "nextQuestInChain"),
+    breadcrumbFor = Get(id, "breadcrumbForQuestId"),
     npcs = startedBy[1],
     objects = startedBy[2],
   }
@@ -624,9 +626,11 @@ local function GiverPoints(candidate)
   return points
 end
 
+-- (Negative IDs in preQuestGroup mean the same quest, without its
+-- exclusive alternatives.)
 local function AllCompleted(list, isCompleted)
   for _, questID in ipairs(list) do
-    if not isCompleted(questID) then
+    if not isCompleted(math.abs(questID)) then
       return false
     end
   end
@@ -642,11 +646,36 @@ local function AnyCompleted(list, isCompleted)
   return false
 end
 
+-- Questie's own "can this character take this quest" check, when the full
+-- Questie addon is loaded: it knows much more than the fields above (its
+-- blacklist of quests that aren't really in the game, breadcrumbs,
+-- reputation, events, ...). true/false, or nil when it can't be asked (not
+-- installed, not set up yet, or changed). It's Questie's internal module,
+-- not a public API, so it's only ever called protected.
+local function QuestieIsDoable(questID)
+  local loader = _G.QuestieLoader
+  if type(loader) ~= "table" or type(loader.ImportModule) ~= "function" then
+    return nil
+  end
+  local ok, result = pcall(function()
+    return loader:ImportModule("QuestieDB").IsDoable(questID)
+  end)
+  if ok and type(result) == "boolean" then
+    return result
+  end
+  return nil
+end
+
+local function DoneOrInLog(questID, isCompleted, inLog)
+  return type(questID) == "number" and questID ~= 0 and (isCompleted(questID) or inLog[questID] == true)
+end
+
 -- Quests the player can pick up now, nearest giver first (same continent
 -- only), at most `limit`:
 --   { questID, title, level, target, giver, distance }
 -- Returns nil while the quest list isn't scanned yet (or no QuestieDB).
--- ctx: { level, inLog = { [questID] = true }, isGrey(questLevel) }
+-- ctx: { level, inLog = { [questID] = true }, isGrey(questLevel),
+--        skip(questID) - true for quests to leave out (e.g. not offered) }
 function QuestieData:GetPickups(ctx, limit)
   if not self:PickupsReady() then
     return nil
@@ -665,7 +694,13 @@ function QuestieData:GetPickups(ctx, limit)
       and (not NonEmpty(candidate.preGroup) or AllCompleted(candidate.preGroup, isCompleted))
       and (not NonEmpty(candidate.preSingle) or AnyCompleted(candidate.preSingle, isCompleted))
       and not (NonEmpty(candidate.exclusive) and (AnyCompleted(candidate.exclusive, isCompleted)
-        or AnyCompleted(candidate.exclusive, function(id) return ctx.inLog[id] end))) then
+        or AnyCompleted(candidate.exclusive, function(id) return ctx.inLog[id] end)))
+      -- A later quest of the chain (or the quest a breadcrumb leads to) is
+      -- already done or in the log: this one is no longer offered.
+      and not DoneOrInLog(candidate.nextInChain, isCompleted, ctx.inLog)
+      and not DoneOrInLog(candidate.breadcrumbFor, isCompleted, ctx.inLog)
+      and not (ctx.skip and ctx.skip(candidate.id))
+      and QuestieIsDoable(candidate.id) ~= false then
       local ok, points = pcall(GiverPoints, candidate)
       local best, bestDistance
       for _, point in ipairs(ok and points or {}) do

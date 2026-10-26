@@ -46,6 +46,8 @@ local quests = {
   [7012] = { name = "Either This", requiredLevel = 1, questLevel = L, exclusiveTo = { 7001 }, startedBy = { { 9102 } } },
   [7013] = { name = "Wanted: Poster", requiredLevel = 1, questLevel = L, startedBy = { nil, { 9201 } } },
   [7014] = { name = "Far Quest", requiredLevel = 1, questLevel = L, startedBy = { { 9103 } } },
+  [7015] = { name = "Earlier In Chain", requiredLevel = 1, questLevel = L, nextQuestInChain = 7011,
+    startedBy = { { 9101 } } },
 }
 local npcs = {
   [9101] = { name = "Giver Near", spawns = { [141] = { { 58, 41 } } } },   -- 30 yd
@@ -125,6 +127,49 @@ WoW.Slash("pickups off")
 check("/pw pickups off", Pickups() == "" and Item("zone:next") == nil and WoW.ChatContains("no longer suggested"))
 WoW.Slash("pickups on")
 check("/pw pickups on", Pickups() ~= "")
+
+---------------------------------------------------------------------------
+section("Pickups: only quests that are really offered")
+
+local function Has(id) return Item("pickup:" .. id) ~= nil end
+UpdateLog({ { header = true, title = "Teldrassil" },
+  { title = "In The Log", level = L, questID = 7011, objectives = { { text = "Thing: 0/5" } } } })
+check("a later quest of its chain is in the log: not suggested", not Has(7015))
+
+-- Reported in game: "Pick up: The Hunter's Path (Jocaste)", a quest that's
+-- in the database but not in the game (Questie blacklists it). With the
+-- Questie addon loaded, its own check decides.
+QuestieLoader = { ImportModule = function(_, name)
+  return { IsDoable = function(id) return id ~= 7001 end }
+end }
+UpdateLog(WoW.questLog)
+check("Questie says it isn't doable: not suggested", not Has(7001) and Has(7013))
+QuestieLoader = { ImportModule = function() return {} end } -- changed Questie: no IsDoable
+UpdateLog(WoW.questLog)
+check("Questie can't be asked: Pathwise's own rules", Has(7001))
+QuestieLoader = nil
+
+-- Talking to the giver: the gossip window lists everything they offer.
+S.npcName = "Giver Near"
+C_GossipInfo = { GetAvailableQuests = function() return { { title = "Something Else", questID = 7999 } } end }
+WoW.ClearChat()
+WoW.FireEvent("QUEST_DETAIL") -- one quest's window: not the full list, no conclusion
+WoW.RunTimers()
+check("a single quest window doesn't hide anything", Has(7001))
+WoW.FireEvent("GOSSIP_SHOW")
+WoW.RunTimers()
+check("the giver doesn't offer it: not suggested again", not Has(7001)
+  and Pathwise.charDB.notOffered[7001] == S.level and Has(7013))
+S.npcName = "Giver Mid"
+C_GossipInfo = { GetAvailableQuests = function() return { { title = "Hunter Quest" }, { title = "Either This" } } end }
+WoW.FireEvent("GOSSIP_SHOW")
+WoW.RunTimers()
+check("offered quests (matched by title) stay", Has(7004) and Has(7012))
+S.npcName, C_GossipInfo = nil, nil
+Pathwise.charDB.notOffered[7001] = S.level - 1 -- as if seen a level ago
+UpdateLog(WoW.questLog)
+check("after a level up it's tried again", Has(7001))
+Pathwise.charDB.notOffered = {}
 
 -- Without a scannable QuestieDB: no pickups and no zone guesses
 LibQuestieDB.Quest.GetAllIds = nil

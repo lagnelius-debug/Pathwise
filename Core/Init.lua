@@ -51,6 +51,7 @@ local CHAR_DEFAULTS = {
   tamingReminded = false,      -- hunter: the taming quest reminder was shown
   professionAdvice = false,    -- the profession recommendation was shown in chat
   professionsOff = false,      -- /pw professions off: no profession steps
+  notOffered = {},             -- [questID] = level: suggested pickup its giver didn't offer
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 

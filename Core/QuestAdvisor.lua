@@ -27,6 +27,7 @@ local MOVE_REPLAN_YARDS = 40
 local MOVE_CHECK_SECONDS = 5
 
 local lastPlanPosition -- { mapID, x, y } where the last plan was made
+local lastPickups = {} -- the quests to pick up suggested by the last plan
 
 -- Quests whose nearest objectives are this close to each other are done
 -- together as one step (e.g. Timberling Seeds and Timberling Sprouts).
@@ -439,14 +440,21 @@ function QuestAdvisor:Update()
         inLog[quest.questID] = true
       end
     end
+    local notOffered = Pathwise.charDB.notOffered
     pickups = QuestieData:GetPickups({
       level = level,
       inLog = inLog,
       isGrey = function(questLevel)
         return QuestAdvisor.Difficulty(questLevel, level, greenRange) == "GREY"
       end,
+      -- The giver didn't offer it when the player talked to them at this
+      -- level (see OnQuestGiverShown); try again after a level up.
+      skip = function(questID)
+        return notOffered[questID] ~= nil and level <= notOffered[questID]
+      end,
     }, QuestAdvisor.MAX_PICKUPS)
   end
+  lastPickups = pickups or {}
   local items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, pickups)
   local zoneItem = pickups and QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone)
   if zoneItem then
@@ -503,6 +511,39 @@ function QuestAdvisor.NextZoneItem(items, level, faction, currentZone)
   }
 end
 
+-- Talking to an NPC whose window lists every quest they offer: a suggested
+-- pickup from this NPC that isn't in the list isn't really available (the
+-- quest database can be wrong, or a condition isn't known to Pathwise).
+-- Remember that, so it isn't suggested again at this level.
+function QuestAdvisor:OnQuestGiverShown(event)
+  local npc = Platform.GetInteractionNPCName()
+  local offered = Platform.GetOfferedQuests(event)
+  if not npc or not offered then
+    return
+  end
+  local ids, titles = {}, {}
+  for _, quest in ipairs(offered) do
+    if quest.questID then
+      ids[quest.questID] = true
+    end
+    if quest.title then
+      titles[quest.title] = true
+    end
+  end
+  local level = Pathwise:GetModule("Character"):GetSnapshot().level or 1
+  local changed = false
+  for _, pickup in ipairs(lastPickups) do
+    if pickup.giver == npc and not ids[pickup.questID] and not titles[pickup.title] then
+      Pathwise.charDB.notOffered[pickup.questID] = level
+      self:Debugf("%s doesn't offer %s (%d); not suggested again at this level.", npc, pickup.title, pickup.questID)
+      changed = true
+    end
+  end
+  if changed then
+    self:ScheduleUpdate()
+  end
+end
+
 function QuestAdvisor:ScheduleUpdate()
   if updatePending then
     return
@@ -556,6 +597,8 @@ function QuestAdvisor:OnEnable()
   self:RegisterEvent("QUEST_ACCEPTED", "OnQuestEvent")
   self:RegisterEvent("QUEST_REMOVED", "OnQuestEvent")
   self:RegisterEvent("QUEST_TURNED_IN", "OnQuestEvent")
+  self:RegisterEvent("GOSSIP_SHOW", "OnQuestGiverShown")
+  self:RegisterEvent("QUEST_GREETING", "OnQuestGiverShown")
 end
 
 ---------------------------------------------------------------------------

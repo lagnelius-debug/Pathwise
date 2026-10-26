@@ -209,6 +209,7 @@ Needs QuestieDB. A `/reload` is enough. The quest list is read a few seconds aft
 - [ ] Only quests for your race and class, at your level (not grey, not too high), not done before, and with their earlier quests done. No holiday, profession or repeatable quests.
 - [ ] Nearby pickups (about 300 m) come right after nearby quest work; far ones join the route with your other far steps. The arrow and the target macro go to the quest giver.
 - [ ] Taking the quest makes its pickup line disappear; turning in a quest can bring up its follow-up.
+- [ ] No quests that aren't really offered (like "The Hunter's Path" from Jocaste at low level). If one shows up anyway, talk to the giver: when the quest isn't in their list, the line disappears and stays away until your next level.
 - [ ] With nothing left to pick up on this continent and nothing to do in your log: `No quests left nearby: try Darkshore (10-20)`, with other zones for your level in the tooltip.
 - [ ] `/pw pickups off` hides pickups and the zone suggestion; `/pw pickups on` brings them back.
 
