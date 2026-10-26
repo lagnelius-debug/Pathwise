@@ -5,9 +5,24 @@ local addonName, Pathwise = ...
 -- finds the cheapest chain of connectors (walking yards plus each
 -- connector's cost); the arrow then points at the first connector, and
 -- distances used for ordering steps count the whole route.
+-- For longer trips a flight between two known flight points (Core/Flights)
+-- is considered too, when it's clearly faster than going on foot.
 
+local L = Pathwise.L
 local Travel = Pathwise:NewModule("Travel")
 local Data = Pathwise.Data
+
+-- Flights are only considered for trips at least this long (yards)...
+Travel.FLIGHT_MIN_YARDS = 800
+-- ...and only taken when they cost at most this share of going on foot.
+Travel.FLIGHT_SAVING = 0.75
+-- Cost of a flight in "yards on foot": a flight covers ground about three
+-- times faster (counting the detours of the flight paths), plus a fixed
+-- part for talking to the flight master, taking off and landing.
+Travel.FLY_FACTOR = 0.3
+Travel.FLY_OVERHEAD = 250
+-- Flight points tried at each end: the ones nearest to the start and goal.
+local NEAREST_NODES = 2
 
 local function Vector(...)
   return Pathwise:GetModule("Waypoints").Vector(...)
@@ -33,11 +48,10 @@ function Travel.RegionOf(mapID, x, y)
   return rect and Data.Travel.CONTINENTS[rect.continent] or nil
 end
 
--- The way from one map position to another through connectors:
---   { legs = { connector, ... }, distance }
--- or nil when both are in the same region (or a region is unknown, or no
--- connectors lead there) - then walking straight is the way.
-function Travel.Route(fromMap, fromX, fromY, toMap, toX, toY)
+-- The way on foot (with portals and boats) from one map position to
+-- another: { legs = { connector, ... }, distance }, or nil when both are in
+-- the same region (or a region is unknown, or no connectors lead there).
+local function StaticRoute(fromMap, fromX, fromY, toMap, toX, toY)
   local start = Travel.RegionOf(fromMap, fromX, fromY)
   local goal = Travel.RegionOf(toMap, toX, toY)
   if not start or not goal or start == goal then
@@ -77,6 +91,90 @@ function Travel.Route(fromMap, fromX, fromY, toMap, toX, toY)
   end
   Walk(start, fromMap, fromX, fromY, 0)
   return best
+end
+
+-- Yards on foot (with portals and boats) between two positions, or nil.
+local function FootDistance(fromMap, fromX, fromY, toMap, toX, toY)
+  local route = StaticRoute(fromMap, fromX, fromY, toMap, toX, toY)
+  if route then
+    return route.distance, route.legs
+  end
+  return (Vector(fromMap, fromX, fromY, toMap, toX, toY)), {}
+end
+
+-- The flight points nearest to a position (by straight distance).
+local function NearestNodes(nodes, mapID, x, y)
+  local list = {}
+  for _, node in ipairs(nodes) do
+    local distance = Vector(mapID, x, y, node.mapID, node.x, node.y)
+    if distance then
+      list[#list + 1] = { node = node, distance = distance }
+    end
+  end
+  table.sort(list, function(a, b) return a.distance < b.distance end)
+  local result = {}
+  for i = 1, math.min(NEAREST_NODES, #list) do
+    result[i] = list[i].node
+  end
+  return result
+end
+
+-- The best way that includes a flight, or nil: walk (and take portals) to
+-- a flight point near the start, fly to one near the goal, walk on.
+local function FlightRoute(fromMap, fromX, fromY, toMap, toX, toY)
+  local rect = Pathwise.Platform.GetMapWorldRect(fromMap)
+  if not rect then
+    return nil
+  end
+  local nodes = Pathwise:GetModule("Flights"):GetNodes(rect.continent)
+  if #nodes < 2 then
+    return nil
+  end
+  local best
+  for _, from in ipairs(NearestNodes(nodes, fromMap, fromX, fromY)) do
+    for _, to in ipairs(NearestNodes(nodes, toMap, toX, toY)) do
+      if from ~= to then
+        local walkTo, legsTo = FootDistance(fromMap, fromX, fromY, from.mapID, from.x, from.y)
+        local walkFrom, legsFrom = FootDistance(to.mapID, to.x, to.y, toMap, toX, toY)
+        local flight = Vector(from.mapID, from.x, from.y, to.mapID, to.x, to.y)
+        if walkTo and walkFrom and flight then
+          local cost = walkTo + flight * Travel.FLY_FACTOR + Travel.FLY_OVERHEAD + walkFrom
+          if not best or cost < best.distance then
+            local legs = {}
+            for _, leg in ipairs(legsTo) do
+              legs[#legs + 1] = leg
+            end
+            legs[#legs + 1] = {
+              flight = true,
+              text = string.format(L.TRAVEL_FLY, from.town, to.town, from.npc or "?"),
+              entry = { from.mapID, from.x, from.y },
+              exit = { to.mapID, to.x, to.y },
+            }
+            for _, leg in ipairs(legsFrom) do
+              legs[#legs + 1] = leg
+            end
+            best = { legs = legs, distance = cost }
+          end
+        end
+      end
+    end
+  end
+  return best
+end
+
+-- The way from one map position to another: { legs = { connector, ... },
+-- distance }, where a connector is a portal, boat or flight; or nil when
+-- walking straight is the way (or there's no way to tell).
+function Travel.Route(fromMap, fromX, fromY, toMap, toX, toY)
+  local route = StaticRoute(fromMap, fromX, fromY, toMap, toX, toY)
+  local onFoot = route and route.distance or Vector(fromMap, fromX, fromY, toMap, toX, toY)
+  if onFoot and onFoot >= Travel.FLIGHT_MIN_YARDS then
+    local flight = FlightRoute(fromMap, fromX, fromY, toMap, toX, toY)
+    if flight and flight.distance <= onFoot * Travel.FLIGHT_SAVING then
+      return flight
+    end
+  end
+  return route
 end
 
 -- Distance in yards along the route (through connectors when needed), or

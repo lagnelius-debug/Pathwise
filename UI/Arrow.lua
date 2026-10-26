@@ -82,7 +82,7 @@ function Arrow:Update()
   local distance, relative, via = Waypoints:GetDirection()
   if via then
     -- A portal or boat first: say which, with the destination underneath.
-    frame.label:SetText(L[via.label] .. "\n" .. string.format(L.TRAVEL_THEN, target.label or ""))
+    frame.label:SetText((via.text or L[via.label]) .. "\n" .. string.format(L.TRAVEL_THEN, target.label or ""))
   else
     frame.label:SetText(target.label or "")
   end

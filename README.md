@@ -45,6 +45,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
 | `/pw minimap` | Show or hide the minimap button |
 | `/pw professions` | Profession advice for your class and your current skills. `/pw professions off` / `on` hides or shows the profession steps |
+| `/pw flights` | List the flight points Pathwise knows for this character (talk to a flight master to update them) |
 | `/pw pickups on\|off` | Suggest quests to pick up nearby (needs QuestieDB) |
 | `/pw units meters\|yards` | Show distances in meters (default) or yards |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
@@ -201,6 +202,16 @@ A `/reload` is enough.
 - [ ] From Darkshore to Teldrassil: `Take the boat to Rut'theran Village (Auberdine docks)`, then the portal up if needed. The other way: `Take the boat to Auberdine (Rut'theran docks)`.
 - [ ] Steps in Rut'theran now count as far away when you're up on the tree, so walkable steps come first.
 - [ ] Finish the zone before leaving: in Rut'theran with turn-ins still waiting on Teldrassil (or in Darnassus), the guide sends you back up through the portal before anything in Darkshore. "Flight to Auberdine" (turned in in Darkshore) is only suggested once Teldrassil is done; its tooltip says why.
+
+## In-game test checklist (flight paths)
+
+A `/reload` is enough.
+
+- [ ] Talk to a flight master once (the flight map opens). `/pw flights` then lists the flight points you know, e.g. `Rut'theran Village, Auberdine`.
+- [ ] On a long trip (roughly 800 m or more) where a known flight point is near you and another near the destination, the arrow says `Fly from Auberdine to <town> (<flight master>)` with your step underneath, and points at the flight master. Short trips stay on foot.
+- [ ] From the top of Teldrassil to Darkshore with Rut'theran known: the portal first, then the flight from Rut'theran.
+- [ ] During the flight the arrow points straight at your step; after landing it continues on foot.
+- [ ] Discovering a new flight point (talking to its flight master) adds it right away.
 
 ## In-game test checklist (quest pickups)
 

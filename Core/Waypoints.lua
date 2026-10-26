@@ -81,7 +81,11 @@ function Waypoints:GetDirection()
   if not mapID then
     return nil
   end
-  local route = Pathwise:GetModule("Travel").Route(mapID, x, y, target.mapID, target.x, target.y)
+  -- (On a flight: straight at the target; the flight goes where it goes.)
+  local route
+  if not Platform.IsOnTaxi() then
+    route = Pathwise:GetModule("Travel").Route(mapID, x, y, target.mapID, target.x, target.y)
+  end
   local via = route and route.legs[1]
   local aim = via and { mapID = via.entry[1], x = via.entry[2], y = via.entry[3] } or target
   local distance, bearing = Waypoints.Vector(mapID, x, y, aim.mapID, aim.x, aim.y)

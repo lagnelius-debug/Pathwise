@@ -21,6 +21,8 @@ Pathwise.Data.Travel = {
   },
   -- Continent (world instance ID) -> region for maps not in AREAS.
   CONTINENTS = { [1] = "KALIMDOR", [0] = "EASTERN_KINGDOMS" },
+  -- Continent (world instance ID) -> its world map (what flight maps show).
+  CONTINENT_MAPS = { [1] = 1414, [0] = 1415 },
 
   -- Capitals belong to the zone around them when deciding what's "in this
   -- zone" (finish the zone before leaving it): uiMapID -> zone uiMapID.

@@ -52,6 +52,7 @@ local CHAR_DEFAULTS = {
   professionAdvice = false,    -- the profession recommendation was shown in chat
   professionsOff = false,      -- /pw professions off: no profession steps
   notOffered = {},             -- [questID] = level: suggested pickup its giver didn't offer
+  flightNodes = {},            -- known flight points: [name] = { mapID, x, y, npc, continent }
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 

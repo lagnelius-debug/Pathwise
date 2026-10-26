@@ -2,7 +2,7 @@
 ## Title: Pathwise
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
-## Version: 0.10.2
+## Version: 0.11.0
 ## OptionalDeps: QuestieDB
 ## SavedVariables: PathwiseDB
 ## SavedVariablesPerCharacter: PathwiseCharDB
@@ -49,6 +49,7 @@ Core\NextSteps.lua
 Core\Trainer.lua
 Core\QuestLocations.lua
 Core\QuestAdvisor.lua
+Core\Flights.lua
 Core\Travel.lua
 Core\Waypoints.lua
 Core\TargetMacro.lua

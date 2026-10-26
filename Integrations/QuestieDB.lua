@@ -375,9 +375,17 @@ local TRAINER_SCAN_CHUNK = 400
 local trainerIndex -- [title] = { npcIds }, once scanned
 local trainerScan  -- in progress: { ids, next }
 
+-- Flight masters' titles, per faction's mount.
+local FLIGHT_TITLES = { "Gryphon Master", "Hippogryph Master", "Wind Rider Master", "Bat Handler", "Flight Master" }
+local FLIGHT_TITLE_SET = {}
+for _, title in ipairs(FLIGHT_TITLES) do
+  FLIGHT_TITLE_SET[title] = true
+end
+
 local function IsTrainerTitle(title)
   return title:find(" Trainer$") ~= nil or title:find("^Journeyman ") ~= nil
     or title:find("^Expert ") ~= nil or title:find("^Artisan ") ~= nil or title:find("^Master ") ~= nil
+    or FLIGHT_TITLE_SET[title] ~= nil
 end
 
 local function ScanTrainerChunk()
@@ -466,6 +474,28 @@ function QuestieData:GetTrainerTarget(titles, label)
     return best and WithNames(best, { best })
   end)
   return ok and target or nil
+end
+
+-- Every friendly flight master spawn: list of { mapID, x, y, npcName }, or
+-- nil while the NPC list isn't scanned yet (or no QuestieDB).
+function QuestieData:GetFlightMasters()
+  if not self:TrainersReady() then
+    return nil
+  end
+  local ok, points = pcall(function()
+    local letter = FactionLetter()
+    local list = {}
+    for _, title in ipairs(FLIGHT_TITLES) do
+      for _, npcId in ipairs(trainerIndex[title] or {}) do
+        local friendly = lib.Npc.Get(npcId, "friendlyToFaction")
+        if not letter or type(friendly) ~= "string" or friendly:find(letter, 1, true) then
+          NpcPoints(list, { npcId })
+        end
+      end
+    end
+    return list
+  end)
+  return ok and points or nil
 end
 
 ---------------------------------------------------------------------------

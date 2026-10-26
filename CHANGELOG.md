@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.11.0
+
+- Flight paths: Pathwise remembers the flight points your character knows
+  (they're read each time you talk to a flight master; `/pw flights` lists
+  them). On long trips it suggests flying when that's clearly faster:
+  "Fly from Auberdine to <town> (<flight master>)", with a portal first
+  when needed. Distances used to order steps count the flight too.
+
 ## 0.10.2
 
 - Finish the zone before leaving: far steps in your current zone (its

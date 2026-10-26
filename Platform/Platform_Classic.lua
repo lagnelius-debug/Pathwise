@@ -716,6 +716,30 @@ function Platform.GetOfferedQuests(event)
   return offered
 end
 
+-- The flight points on the open flight map (TAXIMAP_OPENED): list of
+-- { name = "Rut'theran Village, Teldrassil", state = "CURRENT" |
+-- "REACHABLE" | ..., x, y } (x, y: position on the flight map, 0-1, which
+-- shows the continent). Empty when no flight map is open.
+function Platform.GetTaxiNodes()
+  local nodes = {}
+  if not (NumTaxiNodes and TaxiNodeName and TaxiNodeGetType) then
+    return nodes
+  end
+  for i = 1, NumTaxiNodes() or 0 do
+    local x, y
+    if TaxiNodePosition then
+      x, y = TaxiNodePosition(i)
+    end
+    nodes[#nodes + 1] = { name = TaxiNodeName(i), state = TaxiNodeGetType(i), x = x, y = y }
+  end
+  return nodes
+end
+
+-- True while the player is on a flight.
+function Platform.IsOnTaxi()
+  return UnitOnTaxi and UnitOnTaxi("player") and true or false
+end
+
 -- Name of the NPC the player is talking to (quest giver dialogs), or nil.
 function Platform.GetInteractionNPCName()
   if UnitExists("npc") then

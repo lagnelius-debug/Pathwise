@@ -523,6 +523,8 @@ function GetSubZoneText() return S.subZone end
 WoW.mapRects = {
   [1438] = { continent = 1, top = 10000, left = 12000, bottom = 7000, right = 9000 }, -- Teldrassil
   [1439] = { continent = 1, top = 7000, left = 12000, bottom = 3000, right = 8000 },  -- Darkshore
+  -- Kalimdor (the continent map, what flight maps show): 20000 x 20000 yd
+  [1414] = { continent = 1, top = 12000, left = 14000, bottom = -8000, right = -6000 },
   -- Darnassus: Teldrassil x 0.20-0.40, y 0.25-0.55
   [1457] = { continent = 1, top = 9250, left = 11400, bottom = 8350, right = 10800 },
   [1429] = { continent = 0, top = 1000, left = 1000, bottom = 0, right = 0 },          -- Elwynn
