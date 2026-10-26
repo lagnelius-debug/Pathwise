@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.12.0
+
+- Hearthstone tip: when you have 4 or more quest steps in a zone and your
+  hearthstone is set somewhere else, the To-do window suggests setting it
+  at an inn here, with the arrow to the nearest innkeeper (QuestieDB). It
+  moves up when you pass the inn. Pathwise learns where your hearthstone
+  is set when you set it, use it, or walk through that town.
+  `/pw hearth off` turns it off.
+
 ## 0.11.2
 
 - Boats now count the time spent sailing (and waiting for the boat), not

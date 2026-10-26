@@ -375,17 +375,20 @@ local TRAINER_SCAN_CHUNK = 400
 local trainerIndex -- [title] = { npcIds }, once scanned
 local trainerScan  -- in progress: { ids, next }
 
--- Flight masters' titles, per faction's mount.
+-- Flight masters' titles, per faction's mount, and the innkeepers'.
 local FLIGHT_TITLES = { "Gryphon Master", "Hippogryph Master", "Wind Rider Master", "Bat Handler", "Flight Master" }
-local FLIGHT_TITLE_SET = {}
-for _, title in ipairs(FLIGHT_TITLES) do
-  FLIGHT_TITLE_SET[title] = true
+local INNKEEPER_TITLES = { "Innkeeper" }
+local OTHER_TITLES = {}
+for _, list in ipairs({ FLIGHT_TITLES, INNKEEPER_TITLES }) do
+  for _, title in ipairs(list) do
+    OTHER_TITLES[title] = true
+  end
 end
 
 local function IsTrainerTitle(title)
   return title:find(" Trainer$") ~= nil or title:find("^Journeyman ") ~= nil
     or title:find("^Expert ") ~= nil or title:find("^Artisan ") ~= nil or title:find("^Master ") ~= nil
-    or FLIGHT_TITLE_SET[title] ~= nil
+    or OTHER_TITLES[title] ~= nil
 end
 
 local function ScanTrainerChunk()
@@ -476,16 +479,17 @@ function QuestieData:GetTrainerTarget(titles, label)
   return ok and target or nil
 end
 
--- Every friendly flight master spawn: list of { mapID, x, y, npcName }, or
--- nil while the NPC list isn't scanned yet (or no QuestieDB).
-function QuestieData:GetFlightMasters()
-  if not self:TrainersReady() then
+-- Every friendly spawn of NPCs with one of the titles: list of { mapID, x,
+-- y, npcName }, or nil while the NPC list isn't scanned yet (or no
+-- QuestieDB).
+local function NpcsWithTitles(titles)
+  if not QuestieData:TrainersReady() then
     return nil
   end
   local ok, points = pcall(function()
     local letter = FactionLetter()
     local list = {}
-    for _, title in ipairs(FLIGHT_TITLES) do
+    for _, title in ipairs(titles) do
       for _, npcId in ipairs(trainerIndex[title] or {}) do
         local friendly = lib.Npc.Get(npcId, "friendlyToFaction")
         if not letter or type(friendly) ~= "string" or friendly:find(letter, 1, true) then
@@ -496,6 +500,14 @@ function QuestieData:GetFlightMasters()
     return list
   end)
   return ok and points or nil
+end
+
+function QuestieData:GetFlightMasters()
+  return NpcsWithTitles(FLIGHT_TITLES)
+end
+
+function QuestieData:GetInnkeepers()
+  return NpcsWithTitles(INNKEEPER_TITLES)
 end
 
 ---------------------------------------------------------------------------

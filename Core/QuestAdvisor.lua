@@ -498,6 +498,8 @@ function QuestAdvisor:Update()
     }
   end
   Pathwise:GetModule("NextSteps"):SetItems("quests", items)
+  -- (For the hearthstone tip: how much there is to do in this zone.)
+  Pathwise:FireCallback("QUESTS_PLANNED", items)
 
   -- Chat nudge when a quest becomes complete (not for quests that were
   -- already complete when we first looked).

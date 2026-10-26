@@ -46,6 +46,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw minimap` | Show or hide the minimap button |
 | `/pw professions` | Profession advice for your class and your current skills. `/pw professions off` / `on` hides or shows the profession steps |
 | `/pw flights` | List the flight points Pathwise knows for this character (talk to a flight master to update them) |
+| `/pw hearth on\|off` | Suggest setting your hearthstone in the zone you're questing in |
 | `/pw pickups on\|off` | Suggest quests to pick up nearby (needs QuestieDB) |
 | `/pw units meters\|yards` | Show distances in meters (default) or yards |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
@@ -202,6 +203,16 @@ A `/reload` is enough.
 - [ ] From Darkshore to Teldrassil: `Take the boat to Rut'theran Village (Auberdine docks)`, then the portal up if needed. The other way: `Take the boat to Auberdine (Rut'theran docks)`.
 - [ ] Steps in Rut'theran now count as far away when you're up on the tree, so walkable steps come first.
 - [ ] Finish the zone before leaving: in Rut'theran with turn-ins still waiting on Teldrassil (or in Darnassus), the guide sends you back up through the portal before anything in Darkshore. "Flight to Auberdine" (turned in in Darkshore) is only suggested once Teldrassil is done; its tooltip says why.
+
+## In-game test checklist (hearthstone)
+
+A `/reload` is enough.
+
+- [ ] Pathwise first has to learn where your hearthstone is set: walk through that town once, set it at an innkeeper, or use it once.
+- [ ] In a zone with 4 or more quest steps while your hearthstone is set elsewhere, the To-do window shows `Set your hearthstone in Darkshore: talk to Innkeeper Shaussiy`. The tooltip says why; with QuestieDB the arrow points at the nearest innkeeper.
+- [ ] Walking past the inn moves the step up so you can do it on the way.
+- [ ] After "Make this inn your home" the step disappears.
+- [ ] `/pw hearth off` turns the tips off.
 
 ## In-game test checklist (flight paths)
 

@@ -735,6 +735,14 @@ function Platform.GetTaxiNodes()
   return nodes
 end
 
+-- Where the hearthstone is set: the town's name (e.g. "Dolanaar"), or nil.
+function Platform.GetBindLocation()
+  return GetBindLocation and GetBindLocation() or nil
+end
+
+-- The Hearthstone spell (cast when the item is used).
+Platform.HEARTHSTONE_SPELL = 8690
+
 -- True while the player is on a flight.
 function Platform.IsOnTaxi()
   return UnitOnTaxi and UnitOnTaxi("player") and true or false

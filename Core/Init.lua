@@ -32,6 +32,7 @@ local DB_DEFAULTS = {
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
   distanceUnit = "meters",      -- "meters" or "yards" (/pw units)
   questPickups = true,          -- suggest quests to pick up (QuestieDB)
+  hearthTips = true,            -- suggest moving the hearthstone (/pw hearth)
   targetMacro = true,           -- keep the "Pathwise" target macro up to date
   targetButton = { shown = true }, -- floating target button: on/off and position
   sellPrice = true,             -- show vendor sell prices in item tooltips
@@ -53,6 +54,7 @@ local CHAR_DEFAULTS = {
   professionsOff = false,      -- /pw professions off: no profession steps
   notOffered = {},             -- [questID] = level: suggested pickup its giver didn't offer
   flightNodes = {},            -- known flight points: [name] = { mapID, x, y, npc, continent }
+  bind = {},                   -- where the hearthstone is set: { name, mapID } once known
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 
