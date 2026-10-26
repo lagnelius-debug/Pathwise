@@ -79,9 +79,13 @@ function Arrow:Update()
     frame:Hide()
     return
   end
-  frame.label:SetText(target.label or "")
-
-  local distance, relative = Waypoints:GetDirection()
+  local distance, relative, via = Waypoints:GetDirection()
+  if via then
+    -- A portal or boat first: say which, with the destination underneath.
+    frame.label:SetText(L[via.label] .. "\n" .. string.format(L.TRAVEL_THEN, target.label or ""))
+  else
+    frame.label:SetText(target.label or "")
+  end
   if not distance then
     -- No position (instance) or the target is on another continent.
     frame.arrow:Hide()
@@ -89,8 +93,15 @@ function Arrow:Update()
     return
   end
 
-  local roaming = target.spawn and target.npcName ~= nil -- a mob's spawn spot
-  if distance <= Waypoints.ARRIVE_YARDS then
+  local roaming = not via and target.spawn and target.npcName ~= nil -- a mob's spawn spot
+  if via then
+    -- On the way: no arrival here (the portal moves the player on).
+    if distance <= Waypoints.ARRIVE_YARDS then
+      frame.arrow:Hide()
+      frame.distance:SetText(L.TRAVEL_HERE)
+      return
+    end
+  elseif distance <= Waypoints.ARRIVE_YARDS then
     frame.arrow:Hide()
     frame.distance:SetText(roaming and L.ARROW_SPAWN_HERE or L.ARROW_HERE)
     Waypoints:OnArrived()

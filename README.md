@@ -191,6 +191,16 @@ From docs/PATHWISE_THEMES_V2.md. **Fully restart WoW** first (not just `/reload`
 - [ ] The close button (X) is never covered by the art and still closes the window, in every theme.
 - [ ] Cycle `/pw theme next` many times: no Lua errors and no art left over from the previous theme.
 
+## In-game test checklist (portals and boats)
+
+A `/reload` is enough.
+
+- [ ] On top of Teldrassil, with a step in Rut'theran Village (e.g. turning in to Nessa Shadowsong): the arrow says `Take the portal to Rut'theran Village (in Darnassus)` with `then: <your step>` underneath, and points to the portal in Darnassus (30, 41), not down the tree. The distance is to the portal.
+- [ ] At the portal it says `Take it here`. After the portal, the arrow points straight to the step.
+- [ ] From Rut'theran back up: `Take the portal up to Darnassus`.
+- [ ] From Darkshore to Teldrassil: `Take the boat to Rut'theran Village (Auberdine docks)`, then the portal up if needed. The other way: `Take the boat to Auberdine (Rut'theran docks)`.
+- [ ] Steps in Rut'theran now count as far away when you're up on the tree, so walkable steps come first.
+
 ## In-game test checklist (quest pickups)
 
 Needs QuestieDB. A `/reload` is enough. The quest list is read a few seconds after login.

@@ -60,8 +60,18 @@ function Waypoints.Vector(fromMap, fromX, fromY, toMap, toX, toY)
   return math.sqrt(dNorth * dNorth + dWest * dWest), math.atan2(dWest, dNorth)
 end
 
+-- Distance (yards) along the travel route - through portals and boats when
+-- walking can't get there (Core/Travel.lua) - or straight; nil if unknown.
+-- Used to order steps and pick the nearest spawn or NPC.
+function Waypoints.TravelDistance(fromMap, fromX, fromY, toMap, toX, toY)
+  return Pathwise:GetModule("Travel").Distance(fromMap, fromX, fromY, toMap, toX, toY)
+end
+
 -- Where the arrow should point: returns distance, angle relative to the
--- player's facing (radians, counterclockwise; 0 = straight ahead), or nil.
+-- player's facing (radians, counterclockwise; 0 = straight ahead), and the
+-- connector to take first (a portal or boat, see Core/Travel.lua) when the
+-- target can't be walked to - then distance and angle are to that
+-- connector. nil if there's no position.
 function Waypoints:GetDirection()
   local target = self:GetTarget()
   if not target then
@@ -71,16 +81,19 @@ function Waypoints:GetDirection()
   if not mapID then
     return nil
   end
-  local distance, bearing = Waypoints.Vector(mapID, x, y, target.mapID, target.x, target.y)
+  local route = Pathwise:GetModule("Travel").Route(mapID, x, y, target.mapID, target.x, target.y)
+  local via = route and route.legs[1]
+  local aim = via and { mapID = via.entry[1], x = via.entry[2], y = via.entry[3] } or target
+  local distance, bearing = Waypoints.Vector(mapID, x, y, aim.mapID, aim.x, aim.y)
   if not distance then
     return nil
   end
   local facing = Platform.GetPlayerFacing()
   if not facing then
-    return distance, nil
+    return distance, nil, via
   end
   local relative = (bearing - facing) % (2 * math.pi)
-  return distance, relative
+  return distance, relative, via
 end
 
 ---------------------------------------------------------------------------

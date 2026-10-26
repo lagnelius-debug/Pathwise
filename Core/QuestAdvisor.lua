@@ -281,7 +281,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
 
     local distance
     if target and location and location.mapID and location.x then
-      distance = Pathwise:GetModule("Waypoints").Vector(location.mapID, location.x, location.y,
+      distance = Pathwise:GetModule("Waypoints").TravelDistance(location.mapID, location.x, location.y,
         target.mapID, target.x, target.y)
     end
     local near = distance ~= nil and distance <= QuestAdvisor.NEAR_YARDS
@@ -397,7 +397,7 @@ function QuestAdvisor.RouteFar(items, location)
     local bestIndex, bestCost
     for candidate, item in ipairs(pending) do
       local target = item.target
-      local distance = Waypoints.Vector(at.mapID, at.x, at.y, target.mapID, target.x, target.y) or math.huge
+      local distance = Waypoints.TravelDistance(at.mapID, at.x, at.y, target.mapID, target.x, target.y) or math.huge
       local quick = item.kind == "turnIn" or item.kind == "pickup"
       local cost = distance * (quick and QuestAdvisor.TURN_IN_PULL or 1)
       if not bestCost or cost < bestCost then

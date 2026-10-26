@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.10.0
+
+- The arrow knows about portals and boats: Rut'theran Village is reached
+  through the portal in Darnassus (and back up), and Teldrassil and
+  Darkshore through the Rut'theran-Auberdine boat. When a step can't be
+  walked to, the arrow leads to the portal or boat first and says which
+  one, with the step underneath.
+- Distances used to order steps (and to pick the nearest quest giver,
+  trainer or spawn) follow these routes, so a step "right below" but
+  behind a portal no longer counts as close.
+
 ## 0.9.0
 
 - Quest pickups (needs QuestieDB): the To-do window suggests up to 4

@@ -118,7 +118,7 @@ local function Distance(target)
   if not (target and mapID) then
     return nil
   end
-  return Pathwise:GetModule("Waypoints").Vector(mapID, x, y, target.mapID, target.x, target.y)
+  return Pathwise:GetModule("Waypoints").TravelDistance(mapID, x, y, target.mapID, target.x, target.y)
 end
 
 -- Steps at a trainer within reach take the arrow; the others wait below the

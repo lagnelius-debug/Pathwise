@@ -114,7 +114,7 @@ local function Nearest(points)
   local best, bestDistance = nil, math.huge
   local fallback, fallbackDistance = nil, math.huge
   for _, point in ipairs(points) do
-    local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+    local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
     if distance then
       if distance < fallbackDistance then
         fallback, fallbackDistance = point, distance
@@ -255,7 +255,7 @@ local function TurnInTarget(quest)
   if mapID then
     local Waypoints = Pathwise:GetModule("Waypoints")
     for _, point in ipairs(points) do
-      local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
       if distance and distance < bestDistance then
         best, bestDistance = point, distance
       end
@@ -338,7 +338,7 @@ function QuestieData:GetQuestGiverTarget(questID, label)
     if mapID then
       local Waypoints = Pathwise:GetModule("Waypoints")
       for _, point in ipairs(points) do
-        local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+        local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
         if distance and distance < bestDistance then
           best, bestDistance = point, distance
         end
@@ -457,7 +457,7 @@ function QuestieData:GetTrainerTarget(titles, label)
     local best, bestDistance
     for _, point in ipairs(points) do
       point.spawn = nil -- a destination, never skipped as visited
-      local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
       if distance and (not bestDistance or distance < bestDistance) then
         best, bestDistance = point, distance
       end
@@ -669,7 +669,7 @@ function QuestieData:GetPickups(ctx, limit)
       local ok, points = pcall(GiverPoints, candidate)
       local best, bestDistance
       for _, point in ipairs(ok and points or {}) do
-        local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+        local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
         if distance and (not bestDistance or distance < bestDistance) then
           best, bestDistance = point, distance
         end
