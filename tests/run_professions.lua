@@ -157,6 +157,32 @@ check("tooltip hook adds the line once", count == 1)
 GameTooltip.GetUnit = nil
 UnitLevel, UnitCreatureType, UnitIsPlayer = unitLevel, creatureType, nil
 
+---------------------------------------------------------------------------
+section("Professions: book and quest ranks, hidden skills")
+
+-- (A level 20 copy of the character, just for this: the tracked level
+-- never goes down, and later tests need the current one.)
+local Character = Pathwise:GetModule("Character")
+local realSnapshot = Character.GetSnapshot
+local fake = setmetatable({ level = 20, skills = {
+  { name = "First Aid", rank = 130, maxRank = 150 }, { name = "Skinning", rank = 130, maxRank = 150 },
+  { name = "Leatherworking", rank = 1, maxRank = 75 } }, collapsedSkillHeaders = {} }, { __index = realSnapshot(Character) })
+Character.GetSnapshot = function() return fake end
+local built = {}
+for _, item in ipairs(Professions:BuildItems()) do built[item.id] = item end
+Character.GetSnapshot = realSnapshot
+local firstAid, skinning = built["prof:train:First Aid"], built["prof:train:Skinning"]
+check("Expert First Aid: no trainer arrow, says it's a book or quest", firstAid and firstAid.target == nil
+  and firstAid.text == "Train Expert First Aid (130/150)" and firstAid.detail[2]:find("book", 1, true))
+check("Expert Skinning: from a trainer as usual", skinning and skinning.detail[2] == nil
+  or (skinning and not skinning.detail[2]:find("book", 1, true)))
+
+-- The Professions header collapsed in the skills window: can't tell
+S.skills = { { "Professions", true, false }, { "Weapon Skills", true, true }, { "Bows", false, false, 50, 60 } }
+WoW.FireEvent("SKILL_LINES_CHANGED")
+WoW.RunTimers()
+check("professions hidden by a collapsed header: no 'learn' suggestion", Item("prof:learn") == nil)
+
 -- Back to the default test character's skills.
 SetSkills({ { "Skinning", 1, 75 } })
 WoW.bagCounts = {}

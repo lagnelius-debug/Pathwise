@@ -78,6 +78,21 @@ At(1438, 0.55, 0.57, "Teldrassil", "Shadowglen") -- (not the town's name)
 WoW.RunTimers()
 check("after hearthing: the arrival zone", Pathwise.charDB.bind.mapID == 1438)
 
+-- To another continent: a loading screen; the map counts only after it
+Pathwise.charDB.bind = {}
+S.mapID, S.mapX, S.mapY = 1439, 0.4, 0.7
+WoW.FireEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-2", 556) -- Astral Recall counts too
+WoW.FireEvent("LOADING_SCREEN_ENABLED")
+S.mapID = 1438 -- (the client may still say anything while loading)
+WoW.FireEvent("PLAYER_ENTERING_WORLD", false, false)
+WoW.RunTimers()
+check("after a loading screen: recorded once in the world", Pathwise.charDB.bind.mapID == 1438)
+
+-- QuestieDB knows no inn in the zone: no tip (rather than "an inn" that isn't there)
+Pathwise.charDB.bind = { name = "Dolanaar", mapID = 1438 }
+At(1440, 0.5, 0.5, "Ashenvale", "Astranaar")
+check("no friendly inn in this zone: no tip", Hearthstone:BuildItem(Steps(6, 1440)) == nil)
+
 ---------------------------------------------------------------------------
 section("Hearthstone: on/off")
 
@@ -87,6 +102,24 @@ WoW.Slash("hearth off")
 check("/pw hearth off", Hearthstone:BuildItem(Steps(6)) == nil and WoW.ChatContains("Hearthstone tips are off"))
 WoW.Slash("hearth on")
 check("/pw hearth on", Hearthstone:BuildItem(Steps(6)) ~= nil)
+
+-- A module switched off in the saved settings reacts to nothing
+local function HasHearth()
+  for _, item in ipairs(Pathwise:GetModule("NextSteps"):GetItems()) do
+    if item.id == "hearth" then return true end
+  end
+  return false
+end
+Pathwise.charDB.bind = { name = "Dolanaar", mapID = 1438 }
+At(1439, 0.40, 0.70, "Darkshore", "Bashal'Aran")
+Pathwise:FireCallback("QUESTS_PLANNED", Steps(6))
+check("module on: the tip is in the To-do list", HasHearth())
+Pathwise.db.modules.Hearthstone = false
+Pathwise:GetModule("NextSteps"):SetItems("hearth", {})
+Pathwise:FireCallback("QUESTS_PLANNED", Steps(6))
+check("module switched off: callbacks don't reach it", not HasHearth())
+Pathwise.db.modules.Hearthstone = nil
+Pathwise:GetModule("NextSteps"):SetItems("hearth", {})
 
 -- Clean up
 LibQuestieDB.Npc.Get, LibQuestieDB.Npc.GetAllIds = npcGet, nil

@@ -61,10 +61,11 @@ function Waypoints.Vector(fromMap, fromX, fromY, toMap, toX, toY)
 end
 
 -- Distance (yards) along the travel route - through portals and boats when
--- walking can't get there (Core/Travel.lua) - or straight; nil if unknown.
--- Used to order steps and pick the nearest spawn or NPC.
-function Waypoints.TravelDistance(fromMap, fromX, fromY, toMap, toX, toY)
-  return Pathwise:GetModule("Travel").Distance(fromMap, fromX, fromY, toMap, toX, toY)
+-- walking can't get there (Core/Travel.lua), flights when they're faster -
+-- or straight; nil if unknown. Used to order steps and pick the nearest
+-- spawn or NPC. onFoot: without flights (for picking among many points).
+function Waypoints.TravelDistance(fromMap, fromX, fromY, toMap, toX, toY, onFoot)
+  return Pathwise:GetModule("Travel").Distance(fromMap, fromX, fromY, toMap, toX, toY, onFoot)
 end
 
 -- Where the arrow should point: returns distance, angle relative to the

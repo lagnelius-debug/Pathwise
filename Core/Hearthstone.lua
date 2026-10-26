@@ -16,10 +16,19 @@ local Hearthstone = Pathwise:NewModule("Hearthstone")
 -- At least this many quest steps (quests, pickups) in the zone make it
 -- worth moving the hearthstone.
 Hearthstone.MIN_STEPS = 4
--- After using the hearthstone, the arrival spot is recorded this much later.
-local ARRIVAL_DELAY = 5
+-- Spells that take the player to the hearthstone's inn: Hearthstone, and
+-- the shaman's Astral Recall.
+local RECALL_SPELLS = { [Platform.HEARTHSTONE_SPELL] = true, [556] = true }
+-- After such a spell, the arrival is checked every ARRIVAL_POLL seconds:
+-- recorded once the map changed, or after ARRIVAL_SETTLE seconds on the same
+-- map (a short trip), but never during or right after a loading screen
+-- (only once PLAYER_ENTERING_WORLD came); given up after ARRIVAL_GIVE_UP.
+local ARRIVAL_POLL = 2
+local ARRIVAL_SETTLE = 6
+local ARRIVAL_GIVE_UP = 60
 
 local lastItems = {}
+local arrival -- { startMap, started, loading, loaded } while waiting to arrive
 
 local function GetSnapshot()
   return Pathwise:GetModule("Character"):GetSnapshot()
@@ -51,12 +60,32 @@ local function BindMap()
   if bind.name ~= name then
     bind.name, bind.mapID = name, nil
   end
-  -- In the town it's set to: that's where it is.
-  local zone = GetSnapshot().zone or {}
-  if not bind.mapID and (zone.subZone == name or zone.zone == name) then
-    bind.mapID = Platform.GetPlayerMapPosition()
+  -- In the town it's set to: that's where it is. (Zone names and map read
+  -- together, live, so a zone border can't mix them up.)
+  local here = Platform.GetZone()
+  if not bind.mapID and here.mapID and (here.subZone == name or here.zone == name) then
+    bind.mapID = here.mapID
   end
   return bind.mapID
+end
+
+-- Waiting to arrive after a recall spell (see RECALL_SPELLS).
+local function CheckArrival()
+  if not arrival then
+    return
+  end
+  local elapsed = Platform.GetTime() - arrival.started
+  local mapID = Platform.GetPlayerMapPosition()
+  local waitingForLoad = arrival.loading and not arrival.loaded
+  if mapID and not waitingForLoad
+    and (mapID ~= arrival.startMap or arrival.loaded or elapsed >= ARRIVAL_SETTLE) then
+    arrival = nil
+    RecordBindHere()
+  elseif elapsed < ARRIVAL_GIVE_UP then
+    Platform.After(ARRIVAL_POLL, CheckArrival)
+  else
+    arrival = nil
+  end
 end
 
 -- Pure-ish: the hearthstone step for the planned quest items, or nil.
@@ -71,6 +100,7 @@ function Hearthstone:BuildItem(items)
   end
   local zone = ZoneGroup(mapID)
   local steps = 0
+  -- (Built from the planned quest items; see OnQuestsPlanned.)
   for _, item in ipairs(items) do
     local target = item.target
     if target and (item.kind == "do" or item.kind == "turnIn" or item.kind == "pickup")
@@ -89,14 +119,18 @@ function Hearthstone:BuildItem(items)
 
   -- The nearest innkeeper in this zone (QuestieDB), if any.
   local Waypoints = Pathwise:GetModule("Waypoints")
+  local innkeepers = Pathwise:GetModule("QuestieData"):GetInnkeepers()
   local best, bestDistance
-  for _, point in ipairs(Pathwise:GetModule("QuestieData"):GetInnkeepers() or {}) do
+  for _, point in ipairs(innkeepers or {}) do
     if ZoneGroup(point.mapID) == zone then
-      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
+      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
       if distance and (not bestDistance or distance < bestDistance) then
         best, bestDistance = point, distance
       end
     end
+  end
+  if innkeepers and not best then
+    return nil -- QuestieDB knows no friendly inn in this zone
   end
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local zoneName = Platform.GetMapName(zone) or GetSnapshot().zone and GetSnapshot().zone.zone or "?"
@@ -131,18 +165,40 @@ function Hearthstone:OnQuestsPlanned(_, items)
 end
 
 function Hearthstone:OnSpellcast(_, unit, _, spellID)
-  if unit == "player" and spellID == Platform.HEARTHSTONE_SPELL then
-    Platform.After(ARRIVAL_DELAY, RecordBindHere)
+  if unit == "player" and RECALL_SPELLS[spellID] then
+    local first = not arrival
+    arrival = { startMap = Platform.GetPlayerMapPosition(), started = Platform.GetTime() }
+    if first then
+      Platform.After(ARRIVAL_POLL, CheckArrival)
+    end
+  end
+end
+
+-- A loading screen (another continent): the map isn't trustworthy until
+-- PLAYER_ENTERING_WORLD.
+function Hearthstone:OnLoadingScreen()
+  if arrival then
+    arrival.loading = true
+  end
+end
+
+function Hearthstone:OnEnteringWorld()
+  if arrival then
+    arrival.loading, arrival.loaded = true, true
   end
 end
 
 function Hearthstone:OnInitialize()
   self:RegisterCallback("QUESTS_PLANNED", "OnQuestsPlanned")
+  -- The innkeepers are known once QuestieDB's NPC list is scanned.
+  self:RegisterCallback("QUESTIE_TRAINERS_READY", "Update")
 end
 
 function Hearthstone:OnEnable()
   self:RegisterEvent("HEARTHSTONE_BOUND", RecordBindHere)
   self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", "OnSpellcast")
+  self:RegisterEvent("LOADING_SCREEN_ENABLED", "OnLoadingScreen")
+  self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnEnteringWorld")
 end
 
 -- /pw hearth on|off

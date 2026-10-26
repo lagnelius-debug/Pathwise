@@ -180,8 +180,13 @@ function Travel.Route(fromMap, fromX, fromY, toMap, toX, toY)
 end
 
 -- Distance in yards along the route (through connectors when needed), or
--- straight; nil if there's no way to measure it.
-function Travel.Distance(fromMap, fromX, fromY, toMap, toX, toY)
+-- straight; nil if there's no way to measure it. onFoot: leave flights out
+-- (picking the nearest of many spawns or NPCs doesn't need them, and it's
+-- much cheaper).
+function Travel.Distance(fromMap, fromX, fromY, toMap, toX, toY, onFoot)
+  if onFoot then
+    return (FootDistance(fromMap, fromX, fromY, toMap, toX, toY))
+  end
   local route = Travel.Route(fromMap, fromX, fromY, toMap, toX, toY)
   if route then
     return route.distance

@@ -3,6 +3,24 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.12.1
+
+Fixes from a full check of the addon:
+
+- Modules switched off in the saved settings no longer react to anything.
+- Faster while moving: picking the nearest mob spawn, quest giver, trainer
+  or innkeeper no longer tries flight routes for every point, and the
+  flight master and innkeeper lists are built once instead of every update.
+- Expert and Artisan First Aid, Cooking and Fishing: no arrow to a trainer
+  (they come from a book and a quest); the step says so.
+- With the Professions header collapsed in the skills window (which hides
+  those skills from addons), Pathwise no longer suggests learning
+  professions you may already have.
+- Hearthstone: the arrival after using it is recorded once you've really
+  arrived (also after a loading screen), Astral Recall counts too, no tip
+  when QuestieDB knows no inn in the zone, and the innkeeper arrow appears
+  as soon as the NPC list is ready.
+
 ## 0.12.0
 
 - Hearthstone tip: when you have 4 or more quest steps in a zone and your

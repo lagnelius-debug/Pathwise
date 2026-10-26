@@ -114,7 +114,7 @@ local function Nearest(points)
   local best, bestDistance = nil, math.huge
   local fallback, fallbackDistance = nil, math.huge
   for _, point in ipairs(points) do
-    local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
+    local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
     if distance then
       if distance < fallbackDistance then
         fallback, fallbackDistance = point, distance
@@ -255,7 +255,7 @@ local function TurnInTarget(quest)
   if mapID then
     local Waypoints = Pathwise:GetModule("Waypoints")
     for _, point in ipairs(points) do
-      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
+      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
       if distance and distance < bestDistance then
         best, bestDistance = point, distance
       end
@@ -338,7 +338,7 @@ function QuestieData:GetQuestGiverTarget(questID, label)
     if mapID then
       local Waypoints = Pathwise:GetModule("Waypoints")
       for _, point in ipairs(points) do
-        local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
+        local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
         if distance and distance < bestDistance then
           best, bestDistance = point, distance
         end
@@ -468,7 +468,7 @@ function QuestieData:GetTrainerTarget(titles, label)
     local best, bestDistance
     for _, point in ipairs(points) do
       point.spawn = nil -- a destination, never skipped as visited
-      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
+      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
       if distance and (not bestDistance or distance < bestDistance) then
         best, bestDistance = point, distance
       end
@@ -481,10 +481,15 @@ end
 
 -- Every friendly spawn of NPCs with one of the titles: list of { mapID, x,
 -- y, npcName }, or nil while the NPC list isn't scanned yet (or no
--- QuestieDB).
+-- QuestieDB). Built once per title list (and faction).
+local titleCache = {} -- [titles table] = { letter, list }
 local function NpcsWithTitles(titles)
   if not QuestieData:TrainersReady() then
     return nil
+  end
+  local cached = titleCache[titles]
+  if cached and cached.letter == FactionLetter() and cached.index == trainerIndex then
+    return cached.list
   end
   local ok, points = pcall(function()
     local letter = FactionLetter()
@@ -499,6 +504,9 @@ local function NpcsWithTitles(titles)
     end
     return list
   end)
+  if ok then
+    titleCache[titles] = { letter = FactionLetter(), index = trainerIndex, list = points }
+  end
   return ok and points or nil
 end
 
@@ -668,8 +676,6 @@ local function GiverPoints(candidate)
   return points
 end
 
--- (Negative IDs in preQuestGroup mean the same quest, without its
--- exclusive alternatives.)
 -- The map where a candidate is turned in (its first finisher's spawn), or
 -- false when unknown. Worked out once per candidate.
 local function FinishMap(candidate)
@@ -686,6 +692,8 @@ local function FinishMap(candidate)
   return candidate.finishMapID or nil
 end
 
+-- (Negative IDs in preQuestGroup mean the same quest, without its
+-- exclusive alternatives.)
 local function AllCompleted(list, isCompleted)
   for _, questID in ipairs(list) do
     if not isCompleted(math.abs(questID)) then
@@ -763,7 +771,7 @@ function QuestieData:GetPickups(ctx, limit)
       local ok, points = pcall(GiverPoints, candidate)
       local best, bestDistance
       for _, point in ipairs(ok and points or {}) do
-        local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y)
+        local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
         if distance and (not bestDistance or distance < bestDistance) then
           best, bestDistance = point, distance
         end

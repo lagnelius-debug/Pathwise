@@ -220,13 +220,17 @@ local function CreateRegistry(onFirst, onLast)
 
   -- Each handler runs protected: an error in one module is reported (by
   -- WoW's error handler / BugSack) without stopping the other handlers.
+  -- Modules switched off (PathwiseDB.modules[name] = false) get nothing,
+  -- even for what they registered in OnInitialize.
   function registry:Fire(name, ...)
     local list = self.lists[name]
     if not list then
       return
     end
     for _, entry in ipairs(list) do
-      if not entry.removed then
+      local owner = entry.owner
+      local off = type(owner) == "table" and owner.isModule and not Pathwise:IsModuleEnabled(owner.name)
+      if not entry.removed and not off then
         local handler = entry.handler
         if type(handler) == "string" then
           handler = entry.owner[handler]
@@ -317,7 +321,7 @@ end
 
 function Pathwise:NewModule(name)
   assert(not self.modules[name], "Module already exists: " .. name)
-  local module = setmetatable({ name = name }, { __index = ModuleMixin })
+  local module = setmetatable({ name = name, isModule = true }, { __index = ModuleMixin })
   self.modules[name] = module
   moduleOrder[#moduleOrder + 1] = module
   return module

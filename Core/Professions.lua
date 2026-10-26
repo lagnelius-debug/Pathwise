@@ -118,7 +118,7 @@ local function Distance(target)
   if not (target and mapID) then
     return nil
   end
-  return Pathwise:GetModule("Waypoints").TravelDistance(mapID, x, y, target.mapID, target.x, target.y)
+  return Pathwise:GetModule("Waypoints").TravelDistance(mapID, x, y, target.mapID, target.x, target.y, true)
 end
 
 -- Steps at a trainer within reach take the arrow; the others wait below the
@@ -180,9 +180,14 @@ local function TrainItems(snapshot, known)
     local rank = Professions.NextRank(skill.maxRank)
     if rank and level >= rank.level and skill.rank >= rank.skill then
       local capped = skill.rank >= skill.maxRank
-      local target = TrainerTarget(name)
+      -- First Aid, Cooking and Fishing: Expert comes from a book and
+      -- Artisan from a quest, not from a trainer - no trainer arrow.
+      local fromTrainer = Data.Professions.LIST[name].primary or rank.level < 20
+      local target = fromTrainer and TrainerTarget(name) or nil
       local detail = { capped and L.PROF_CAPPED_DETAIL or string.format(L.PROF_TRAIN_DETAIL, rank.cap) }
-      if rank.level >= 20 then
+      if not fromTrainer then
+        detail[#detail + 1] = string.format(L.PROF_SECONDARY_RANK_DETAIL, rank.name, name)
+      elseif rank.level >= 20 then
         detail[#detail + 1] = L.PROF_HIGH_RANK_DETAIL
       end
       items[#items + 1] = {
@@ -224,7 +229,9 @@ function Professions:BuildItems()
   end
   local known, primaries = Professions.Known(snapshot.skills)
   local items = {}
-  local learn = LearnItem(snapshot, known, primaries)
+  -- A collapsed header in the skills window hides its skills from addons
+  -- too: then Pathwise can't tell what's missing, so it suggests nothing.
+  local learn = #(snapshot.collapsedSkillHeaders or {}) == 0 and LearnItem(snapshot, known, primaries)
   if learn then
     items[1] = learn
   end
@@ -243,6 +250,9 @@ local function MaybeAdvise(snapshot)
   if charDB.professionAdvice or charDB.professionsOff or not Pathwise.db.chatMessages
     or (snapshot.level or 1) < Data.Professions.RANKS[1].level then
     return
+  end
+  if #(snapshot.collapsedSkillHeaders or {}) > 0 then
+    return -- can't see all professions yet (see BuildItems); ask later
   end
   local _, primaries = Professions.Known(snapshot.skills)
   charDB.professionAdvice = true
