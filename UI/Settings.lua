@@ -1,7 +1,7 @@
 local addonName, Pathwise = ...
 
 -- Settings panel (Esc > Options > AddOns > Pathwise, or /pw settings).
--- For now: General (minimap and target buttons) and Appearance (one button per window
+-- For now: General (minimap and target buttons, meters or yards) and Appearance (one button per window
 -- theme with a two-color swatch; the active theme has a gold outline, and
 -- the Wildwood season choice while Wildwood is active). More
 -- settings (module toggles, ammo thresholds, chat messages) come with M7.
@@ -26,9 +26,12 @@ local INACTIVE_OUTLINE = "#3a3a3a"
 local SEASON_BUTTON_WIDTH = 90
 local SEASON_BUTTON_HEIGHT = 24
 
+local UNITS = { "meters", "yards" }
+
 local panel
 local themeButtons = {}
 local seasonButtons = {}
+local unitButtons = {}
 
 local function RGB(hex, alpha)
   return Pathwise.HexToRGB(hex, alpha)
@@ -53,6 +56,10 @@ local function UpdateOutlines()
   for _, button in ipairs(seasonButtons) do
     Outline(button, button.season == season)
     button:SetShown(seasonal and true or false)
+  end
+  local unit = Pathwise.db.distanceUnit == "yards" and "yards" or "meters"
+  for _, button in ipairs(unitButtons) do
+    Outline(button, button.unit == unit)
   end
 end
 
@@ -141,9 +148,26 @@ local function CreatePanel()
   end)
   panel.targetButtonCheck = targetButton
 
+  -- Distances: Meters / Yards
+  local units = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  units:SetPoint("TOPLEFT", targetButton, "BOTTOMLEFT", 4, -10)
+  units:SetText(L.SETTINGS_UNITS)
+  for index, unit in ipairs(UNITS) do
+    local button = CreateChoiceButton(SEASON_BUTTON_WIDTH, SEASON_BUTTON_HEIGHT)
+    button:SetPoint("LEFT", units, "RIGHT", 10 + (index - 1) * (SEASON_BUTTON_WIDTH + ROW_GAP), 0)
+    button.unit = unit
+    button.name = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    button.name:SetPoint("CENTER", button, "CENTER", 0, 0)
+    button.name:SetText(L["SETTINGS_UNITS_" .. unit:upper()])
+    button:SetScript("OnClick", function(self)
+      Pathwise:GetModule("QuestAdvisor"):SetDistanceUnit(self.unit)
+    end)
+    unitButtons[index] = button
+  end
+
   -- Appearance
   local header = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  header:SetPoint("TOPLEFT", targetButton, "BOTTOMLEFT", 4, -16)
+  header:SetPoint("TOPLEFT", units, "BOTTOMLEFT", 0, -22)
   header:SetText(L.SETTINGS_APPEARANCE)
   panel.themeHeader = header
 
@@ -217,6 +241,7 @@ function SettingsPanel:OnInitialize()
   self:RegisterCallback("THEME_SEASON_CHANGED", "OnThemeChanged")
   self:RegisterCallback("MINIMAP_BUTTON_CHANGED", "OnMinimapButtonChanged")
   self:RegisterCallback("TARGET_BUTTON_CHANGED", "OnTargetButtonChanged")
+  self:RegisterCallback("DISTANCE_UNIT_CHANGED", "OnThemeChanged") -- refreshes all outlines
   UpdateOutlines()
 end
 

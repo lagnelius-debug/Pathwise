@@ -3,6 +3,11 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.8.1
+
+- Settings: a "Distances" choice (Meters / Yards) under General, next to
+  the `/pw units` command. The arrow and the To-do window switch right away.
+
 ## 0.8.0
 
 - The talent window highlights the recommended talent for your next point

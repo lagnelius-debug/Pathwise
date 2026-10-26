@@ -41,7 +41,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw talents` | Show your next talent points from the build for your path. `/pw talents check` compares the build data with the game's talent tree |
 | `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
 | `/pw theme` | List the window themes (numbered, active one marked). `/pw theme 7` or `/pw theme wildwood` sets one, `/pw theme next` cycles |
-| `/pw settings` | Open the Pathwise settings (minimap button, target button, window theme) |
+| `/pw settings` | Open the Pathwise settings (minimap button, target button, meters or yards, window theme) |
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
 | `/pw minimap` | Show or hide the minimap button |
 | `/pw professions` | Profession advice for your class and your current skills. `/pw professions off` / `on` hides or shows the profession steps |

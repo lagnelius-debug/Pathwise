@@ -499,15 +499,22 @@ Pathwise:RegisterCommand("quests", function()
   end
 end, L.CMD_QUESTS)
 
--- /pw units meters|yards: how distances are shown (the step texts carry
--- them, so the plan is rebuilt; the arrow follows by itself).
+-- How distances are shown: "meters" or "yards". The step texts carry them,
+-- so the plan is rebuilt; the arrow follows by itself. Fires
+-- DISTANCE_UNIT_CHANGED (unit).
+function QuestAdvisor:SetDistanceUnit(unit)
+  Pathwise.db.distanceUnit = unit == "yards" and "yards" or "meters"
+  self:Update()
+  Pathwise:FireCallback("DISTANCE_UNIT_CHANGED", Pathwise.db.distanceUnit)
+end
+
+-- /pw units meters|yards (also in the settings: General > Distances)
 Pathwise:RegisterCommand("units", function(args)
   args = args:lower()
   if args == "meters" or args == "m" or args == "yards" or args == "yd" then
     local yards = args == "yards" or args == "yd"
-    Pathwise.db.distanceUnit = yards and "yards" or "meters"
+    QuestAdvisor:SetDistanceUnit(yards and "yards" or "meters")
     Pathwise:Print(yards and L.UNITS_SET_YARDS or L.UNITS_SET_METERS)
-    QuestAdvisor:Update()
   else
     Pathwise:Print(L.UNITS_USAGE)
   end

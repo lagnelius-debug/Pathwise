@@ -60,6 +60,31 @@ check("/pw units yards", arrow.distance:GetText() == "300 yd" and WoW.ChatContai
 WoW.Slash("units meters")
 Arrow:Update()
 check("/pw units meters", arrow.distance:GetText() == "274 m")
+-- Settings: General > Distances: Meters / Yards
+local unitButtons = {}
+for _, f in ipairs(WoW.frames) do
+  if f.unit and f._parent == _G.PathwiseSettingsPanel then unitButtons[f.unit] = f end
+end
+local gold = Pathwise.HexToRGB("#ffd100")
+check("settings: Meters and Yards buttons", unitButtons.meters and unitButtons.yards
+  and unitButtons.meters.name:GetText() == "Meters" and unitButtons.yards.name:GetText() == "Yards")
+unitButtons.yards:Click()
+Arrow:Update()
+local function QuestLine()
+  for _, item in ipairs(Pathwise:GetModule("NextSteps"):GetItems()) do
+    if item.id == "quest:916" then return item.text end
+  end
+  return ""
+end
+check("clicking Yards: arrow and To-do lines in yards", Pathwise.db.distanceUnit == "yards"
+  and arrow.distance:GetText() == "300 yd" and QuestLine():find("%d+ yd") ~= nil)
+check("Yards outlined", math.abs(unitButtons.yards._borderColor[1] - gold) < 1e-6
+  and math.abs(unitButtons.meters._borderColor[1] - gold) > 1e-6)
+WoW.Slash("units meters")
+Arrow:Update()
+check("/pw units meters: outline follows", math.abs(unitButtons.meters._borderColor[1] - gold) < 1e-6
+  and arrow.distance:GetText() == "274 m" and QuestLine():find("%d+ m") ~= nil)
+
 WoW.ClearChat()
 WoW.Slash("units feet")
 check("unknown unit: usage", WoW.ChatContains("Usage: /pw units meters|yards"))
