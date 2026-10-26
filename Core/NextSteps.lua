@@ -31,6 +31,7 @@ NextSteps.PRIORITY = {
   QUEST_HERE = 60,
   QUEST_FAR = 56, -- all far quest steps; QuestAdvisor orders them as a route
   QUEST_ELSEWHERE = 50,
+  QUEST_ZONE = 49, -- nothing left nearby: try another zone
   PROFESSION_CAPPED = 48, -- skill at the cap: skill-ups are being wasted
   PROFESSION_TOOL = 46,
   PROFESSION_TRAIN = 42,

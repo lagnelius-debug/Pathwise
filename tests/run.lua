@@ -118,7 +118,7 @@ Pathwise:UnregisterCallback("TEST_CB2", good)
 
 ---------------------------------------------------------------------------
 -- Milestone-specific tests are appended below.
-for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua", "./tests/run_m3.lua", "./tests/run_m4.lua", "./tests/run_quests.lua", "./tests/run_arrow.lua", "./tests/run_questie.lua", "./tests/run_macro.lua", "./tests/run_m5_m6.lua", "./tests/run_theme.lua", "./tests/run_window.lua", "./tests/run_target_button.lua", "./tests/run_professions.lua" }) do
+for _, file in ipairs({ "./tests/run_m1.lua", "./tests/run_m2.lua", "./tests/run_m3.lua", "./tests/run_m4.lua", "./tests/run_quests.lua", "./tests/run_arrow.lua", "./tests/run_questie.lua", "./tests/run_macro.lua", "./tests/run_m5_m6.lua", "./tests/run_theme.lua", "./tests/run_window.lua", "./tests/run_target_button.lua", "./tests/run_professions.lua", "./tests/run_pickups.lua" }) do
   local chunk = assert(loadfile(file))
   chunk(WoW, Pathwise, check, section)
 end

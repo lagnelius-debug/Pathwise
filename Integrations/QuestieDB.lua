@@ -467,3 +467,222 @@ function QuestieData:GetTrainerTarget(titles, label)
   end)
   return ok and target or nil
 end
+
+---------------------------------------------------------------------------
+-- Quests to pick up
+---------------------------------------------------------------------------
+
+-- The quest list is scanned once (in chunks, like the trainers) for the
+-- quests this character could ever get: race and class allowed, started by
+-- an NPC or object, not repeatable, not a profession/reputation/holiday
+-- quest. GetPickups then checks what's available right now. Fires
+-- QUESTIE_PICKUPS_READY when the scan is done.
+local PICKUP_SCAN_CHUNK = 100
+local REPEATABLE_FLAG = 1 -- specialFlags bit
+-- Negative zoneOrSort values are quest categories; only the class quest
+-- ones are wanted (the rest are holidays, events, professions, ...).
+local CLASS_SORTS = {
+  [-81] = true, [-141] = true, [-261] = true, [-162] = true, [-262] = true,
+  [-82] = true, [-161] = true, [-61] = true, [-263] = true,
+}
+
+local pickupCandidates -- list once scanned; false: can't scan (old QuestieDB)
+local pickupScan       -- in progress: { ids, next, list, raceBit, classBit }
+
+-- bit: a power of two. Works without the bit library (and in tests).
+local function HasBit(mask, bit)
+  return math.floor(mask / bit) % 2 == 1
+end
+
+-- An empty mask (nil or 0) allows everyone.
+local function MaskAllows(mask, bit)
+  return type(mask) ~= "number" or mask == 0 or not bit or HasBit(mask, bit)
+end
+
+local function NonEmpty(value)
+  return type(value) == "table" and next(value) ~= nil
+end
+
+local function ScanQuest(id, scan)
+  local Get = lib.Quest.Get
+  if not MaskAllows(Get(id, "requiredRaces"), scan.raceBit)
+    or not MaskAllows(Get(id, "requiredClasses"), scan.classBit) then
+    return nil
+  end
+  if NonEmpty(Get(id, "requiredSkill")) or NonEmpty(Get(id, "requiredMinRep")) then
+    return nil
+  end
+  local parent = Get(id, "parentQuest")
+  local special = Get(id, "specialFlags")
+  local sort = Get(id, "zoneOrSort")
+  if (type(parent) == "number" and parent ~= 0)
+    or (type(special) == "number" and HasBit(special, REPEATABLE_FLAG))
+    or (type(sort) == "number" and sort < 0 and not CLASS_SORTS[sort]) then
+    return nil
+  end
+  local startedBy = Get(id, "startedBy") or {}
+  if not NonEmpty(startedBy[1]) and not NonEmpty(startedBy[2]) then
+    return nil -- started by an item (or nothing): not a place to go
+  end
+  local requiredLevel = Get(id, "requiredLevel") or 1
+  return {
+    id = id,
+    name = Get(id, "name"),
+    requiredLevel = requiredLevel,
+    level = Get(id, "questLevel") or requiredLevel,
+    preSingle = Get(id, "preQuestSingle"),
+    preGroup = Get(id, "preQuestGroup"),
+    exclusive = Get(id, "exclusiveTo"),
+    npcs = startedBy[1],
+    objects = startedBy[2],
+  }
+end
+
+local function ScanPickupChunk()
+  local scan = pickupScan
+  local ok = pcall(function()
+    local last = math.min(scan.next + PICKUP_SCAN_CHUNK - 1, #scan.ids)
+    for i = scan.next, last do
+      local okQuest, candidate = pcall(ScanQuest, scan.ids[i], scan)
+      if okQuest and candidate and candidate.name then
+        scan.list[#scan.list + 1] = candidate
+      end
+    end
+    scan.next = last + 1
+  end)
+  if ok and scan.next <= #scan.ids then
+    Platform.After(0, ScanPickupChunk)
+    return
+  end
+  pickupCandidates = ok and scan.list or false
+  pickupScan = nil
+  Pathwise:FireCallback("QUESTIE_PICKUPS_READY")
+end
+
+-- True once the quest list is scanned; starts the scan if needed.
+function QuestieData:PickupsReady()
+  if pickupCandidates ~= nil then
+    return pickupCandidates ~= false
+  end
+  if not pickupScan and Load() then
+    local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
+    local ok, ids = pcall(lib.Quest.GetAllIds)
+    if ok and type(ids) == "table" then
+      -- Race and class bits as in the client's masks (race 4 = 8, ...);
+      -- QuestieDB's own race masks when it has them.
+      local raceBit = snapshot.raceID and 2 ^ (snapshot.raceID - 1)
+      local enum = lib.Enum
+      if enum and type(enum.raceMaskById) == "table" and enum.raceMaskById[snapshot.raceID] then
+        raceBit = enum.raceMaskById[snapshot.raceID]
+      end
+      pickupScan = {
+        ids = ids, next = 1, list = {},
+        raceBit = raceBit,
+        classBit = snapshot.classID and 2 ^ (snapshot.classID - 1),
+      }
+      Platform.After(0, ScanPickupChunk)
+    else
+      pickupCandidates = false -- older QuestieDB without GetAllIds
+    end
+  end
+  return false
+end
+
+-- Forgets the scanned quest list (tests; another character's data).
+function QuestieData:ResetPickups()
+  pickupCandidates, pickupScan = nil, nil
+end
+
+-- Where a candidate is started: points with .giver (NPC or object name),
+-- labelled "Pick up: <quest> (<giver>)". Built once per candidate.
+local function GiverPoints(candidate)
+  if candidate.points then
+    return candidate.points
+  end
+  local points = {}
+  local labelFormat = string.format(L.ARROW_PICKUP, (candidate.name:gsub("%%", "%%%%")))
+  for _, npcId in ipairs(candidate.npcs or {}) do
+    local first = #points + 1
+    NpcPoints(points, { npcId }, labelFormat)
+    for i = first, #points do
+      points[i].giver = points[i].npcName
+    end
+  end
+  for _, objectId in ipairs(candidate.objects or {}) do
+    local first = #points + 1
+    ObjectPoints(points, { objectId }, labelFormat)
+    local name = lib.Object.Get(objectId, "name")
+    for i = first, #points do
+      points[i].giver = name
+    end
+  end
+  for _, point in ipairs(points) do
+    point.spawn = nil -- a destination, never skipped as visited
+    point.names = point.npcName and { point.npcName } or nil
+  end
+  candidate.points = points
+  return points
+end
+
+local function AllCompleted(list, isCompleted)
+  for _, questID in ipairs(list) do
+    if not isCompleted(questID) then
+      return false
+    end
+  end
+  return true
+end
+
+local function AnyCompleted(list, isCompleted)
+  for _, questID in ipairs(list) do
+    if isCompleted(questID) then
+      return true
+    end
+  end
+  return false
+end
+
+-- Quests the player can pick up now, nearest giver first (same continent
+-- only), at most `limit`:
+--   { questID, title, level, target, giver, distance }
+-- Returns nil while the quest list isn't scanned yet (or no QuestieDB).
+-- ctx: { level, inLog = { [questID] = true }, isGrey(questLevel) }
+function QuestieData:GetPickups(ctx, limit)
+  if not self:PickupsReady() then
+    return nil
+  end
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  if not mapID then
+    return {}
+  end
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local isCompleted = Platform.IsQuestCompleted
+  local found = {}
+  for _, candidate in ipairs(pickupCandidates) do
+    local level = candidate.level == -1 and ctx.level or candidate.level
+    if candidate.requiredLevel <= ctx.level and not ctx.inLog[candidate.id] and not ctx.isGrey(level)
+      and not isCompleted(candidate.id)
+      and (not NonEmpty(candidate.preGroup) or AllCompleted(candidate.preGroup, isCompleted))
+      and (not NonEmpty(candidate.preSingle) or AnyCompleted(candidate.preSingle, isCompleted))
+      and not (NonEmpty(candidate.exclusive) and (AnyCompleted(candidate.exclusive, isCompleted)
+        or AnyCompleted(candidate.exclusive, function(id) return ctx.inLog[id] end))) then
+      local ok, points = pcall(GiverPoints, candidate)
+      local best, bestDistance
+      for _, point in ipairs(ok and points or {}) do
+        local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+        if distance and (not bestDistance or distance < bestDistance) then
+          best, bestDistance = point, distance
+        end
+      end
+      if best then
+        found[#found + 1] = { questID = candidate.id, title = candidate.name, level = level,
+          target = best, giver = best.giver, distance = bestDistance }
+      end
+    end
+  end
+  table.sort(found, function(a, b) return a.distance < b.distance end)
+  for i = #found, limit + 1, -1 do
+    found[i] = nil
+  end
+  return found
+end

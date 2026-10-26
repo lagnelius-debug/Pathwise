@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.9.0
+
+- Quest pickups (needs QuestieDB): the To-do window suggests up to 4
+  quests you can pick up now, nearest first - right race, class and level,
+  not done before, earlier quests in the chain done. The arrow and target
+  macro point at the quest giver, and pickups join the same near-first
+  route as your other steps.
+- When nothing is left to pick up on your continent and nothing to do in
+  your log, it suggests zones for your level.
+- `/pw pickups off` turns it off.
+
 ## 0.8.1
 
 - Settings: a "Distances" choice (Meters / Yards) under General, next to

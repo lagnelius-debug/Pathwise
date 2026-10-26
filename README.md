@@ -45,6 +45,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
 | `/pw minimap` | Show or hide the minimap button |
 | `/pw professions` | Profession advice for your class and your current skills. `/pw professions off` / `on` hides or shows the profession steps |
+| `/pw pickups on\|off` | Suggest quests to pick up nearby (needs QuestieDB) |
 | `/pw units meters\|yards` | Show distances in meters (default) or yards |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
@@ -189,6 +190,17 @@ From docs/PATHWISE_THEMES_V2.md. **Fully restart WoW** first (not just `/reload`
 - [ ] In the settings (`/pw settings`), a "Wildwood season" choice (Summer / Autumn / Auto) appears under the theme buttons only while Wildwood is active. Clicking one changes the leaves right away.
 - [ ] The close button (X) is never covered by the art and still closes the window, in every theme.
 - [ ] Cycle `/pw theme next` many times: no Lua errors and no art left over from the previous theme.
+
+## In-game test checklist (quest pickups)
+
+Needs QuestieDB. A `/reload` is enough. The quest list is read a few seconds after login.
+
+- [ ] The To-do window shows up to 4 `Pick up: [level] Quest - 27 m` lines for quests you can take now, nearest first. Hovering one says who gives it; under the current one it says `Get the quest from <NPC>`. Wanted posters count too.
+- [ ] Only quests for your race and class, at your level (not grey, not too high), not done before, and with their earlier quests done. No holiday, profession or repeatable quests.
+- [ ] Nearby pickups (about 300 m) come right after nearby quest work; far ones join the route with your other far steps. The arrow and the target macro go to the quest giver.
+- [ ] Taking the quest makes its pickup line disappear; turning in a quest can bring up its follow-up.
+- [ ] With nothing left to pick up on this continent and nothing to do in your log: `No quests left nearby: try Darkshore (10-20)`, with other zones for your level in the tooltip.
+- [ ] `/pw pickups off` hides pickups and the zone suggestion; `/pw pickups on` brings them back.
 
 ## In-game test checklist (talent highlight)
 

@@ -33,10 +33,16 @@ local lastPlanPosition -- { mapID, x, y } where the last plan was made
 QuestAdvisor.TOGETHER_YARDS = 120
 
 -- Far steps are done as a route: each next one is the closest to where the
--- previous one ends. Turn-ins count as this much closer than they are
--- (they're quick and give rewards), but a far turn-in in the other
--- direction doesn't come before a much closer quest any more.
+-- previous one ends. Turn-ins and pickups count as this much closer than
+-- they are (they're quick), but a far turn-in in the other direction
+-- doesn't come before a much closer quest any more.
 QuestAdvisor.TURN_IN_PULL = 0.75
+
+-- Quests to pick up (from QuestieDB): at most this many, nearest first.
+QuestAdvisor.MAX_PICKUPS = 4
+
+-- "Next zone" suggestion: at most this many zones listed.
+local MAX_ZONES = 3
 
 local DIFFICULTY_COLORS = {
   RED = "ff2020",
@@ -258,7 +264,9 @@ end
 -- location: { zone, subZone, mapID, x, y } of the player.
 -- locate(quest, kind) optionally returns an arrow target for a quest
 -- ("turnIn" for complete quests, "do" for quests to work on).
-function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
+-- pickups: optional quests to pick up (QuestieData:GetPickups), which join
+-- the same near/far order as kind "pickup".
+function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pickups)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local items = {}
 
@@ -327,6 +335,25 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate)
     }
   end
 
+  for _, pickup in ipairs(pickups or {}) do
+    local difficulty = QuestAdvisor.Difficulty(pickup.level, playerLevel, greenRange)
+    local name = QuestText(pickup, difficulty)
+    local near = pickup.distance <= QuestAdvisor.NEAR_YARDS
+    items[#items + 1] = {
+      id = "pickup:" .. pickup.questID,
+      priority = near and P.QUEST_NEAR or P.QUEST_FAR,
+      text = string.format(L.QA_PICKUP, name) .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(pickup.distance)),
+      detail = { string.format(L.QA_PICKUP_DETAIL, pickup.giver or "?") },
+      target = pickup.target,
+      kind = "pickup",
+      title = pickup.title,
+      questName = name,
+      distance = pickup.distance,
+      subLines = { { text = string.format(L.TASK_PICKUP, pickup.giver or "?"), level = 1, task = true } },
+      order = { pickup.distance, 0, 0, pickup.level },
+    }
+  end
+
   items = QuestAdvisor.CombineNearby(items)
 
   table.sort(items, function(a, b)
@@ -371,7 +398,8 @@ function QuestAdvisor.RouteFar(items, location)
     for candidate, item in ipairs(pending) do
       local target = item.target
       local distance = Waypoints.Vector(at.mapID, at.x, at.y, target.mapID, target.x, target.y) or math.huge
-      local cost = distance * (item.kind == "turnIn" and QuestAdvisor.TURN_IN_PULL or 1)
+      local quick = item.kind == "turnIn" or item.kind == "pickup"
+      local cost = distance * (quick and QuestAdvisor.TURN_IN_PULL or 1)
       if not bestCost or cost < bestCost then
         bestIndex, bestCost = candidate, cost
       end
@@ -400,7 +428,30 @@ function QuestAdvisor:Update()
   local function Locate(quest, kind)
     return QuestieData:GetTarget(quest, kind) or QuestLocations:GetTarget(quest, kind)
   end
-  local items = QuestAdvisor.Plan(quests, level, Platform.GetQuestGreenRange(level), location, Locate)
+  local greenRange = Platform.GetQuestGreenRange(level)
+  -- Quests to pick up (nil while QuestieDB's quest list is being scanned,
+  -- or without QuestieDB).
+  local pickups
+  if Pathwise.db.questPickups then
+    local inLog = {}
+    for _, quest in ipairs(quests) do
+      if quest.questID then
+        inLog[quest.questID] = true
+      end
+    end
+    pickups = QuestieData:GetPickups({
+      level = level,
+      inLog = inLog,
+      isGrey = function(questLevel)
+        return QuestAdvisor.Difficulty(questLevel, level, greenRange) == "GREY"
+      end,
+    }, QuestAdvisor.MAX_PICKUPS)
+  end
+  local items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, pickups)
+  local zoneItem = pickups and QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone)
+  if zoneItem then
+    items[#items + 1] = zoneItem
+  end
 
   if #collapsed > 0 then
     items[#items + 1] = {
@@ -423,6 +474,33 @@ function QuestAdvisor:Update()
     end
   end
   knownComplete = nowComplete
+end
+
+-- When there's nothing left to pick up on this continent and nothing to do
+-- from the quest log: a step suggesting zones for the player's level
+-- (Data/Classic/Zones.lua), or nil.
+function QuestAdvisor.NextZoneItem(items, level, faction, currentZone)
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  for _, item in ipairs(items) do
+    if item.priority >= P.QUEST_ELSEWHERE and (item.kind == "do" or item.kind == "turnIn" or item.kind == "pickup") then
+      return nil
+    end
+  end
+  local zones = {}
+  for _, zone in ipairs(Pathwise.Data.Zones[faction] or {}) do
+    if zone.min <= level and level < zone.max and zone.name ~= currentZone and #zones < MAX_ZONES then
+      zones[#zones + 1] = string.format(L.ZONE_RANGE, zone.name, zone.min, zone.max)
+    end
+  end
+  if #zones == 0 then
+    return nil
+  end
+  return {
+    id = "zone:next",
+    priority = P.QUEST_ZONE,
+    text = string.format(L.ZONE_NEXT, zones[1]),
+    detail = { string.format(L.ZONE_OPTIONS, table.concat(zones, ", ")), L.ZONE_DETAIL },
+  }
 end
 
 function QuestAdvisor:ScheduleUpdate()
@@ -452,6 +530,8 @@ function QuestAdvisor:OnInitialize()
   self:RegisterCallback("CHARACTER_UPDATED", "OnCharacterUpdated")
   -- Reached a spawn the arrow pointed at: pick the next one.
   self:RegisterCallback("WAYPOINT_VISITED", "OnQuestEvent")
+  -- QuestieDB's quest list is scanned: pickups can be suggested now.
+  self:RegisterCallback("QUESTIE_PICKUPS_READY", "OnQuestEvent")
 end
 
 -- Re-plans when the player has moved far enough since the last plan, so
@@ -519,3 +599,15 @@ Pathwise:RegisterCommand("units", function(args)
     Pathwise:Print(L.UNITS_USAGE)
   end
 end, L.CMD_UNITS)
+
+-- /pw pickups on|off: suggest quests to pick up (needs QuestieDB)
+Pathwise:RegisterCommand("pickups", function(args)
+  args = args:lower()
+  if args == "on" or args == "off" then
+    Pathwise.db.questPickups = args == "on"
+    Pathwise:Print(args == "on" and L.PICKUPS_ON or L.PICKUPS_OFF)
+    QuestAdvisor:Update()
+  else
+    Pathwise:Print(L.PICKUPS_USAGE)
+  end
+end, L.CMD_PICKUPS)

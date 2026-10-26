@@ -31,6 +31,7 @@ local DB_DEFAULTS = {
   arrowAuto = true,             -- arrow follows the top Next Steps item
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
   distanceUnit = "meters",      -- "meters" or "yards" (/pw units)
+  questPickups = true,          -- suggest quests to pick up (QuestieDB)
   targetMacro = true,           -- keep the "Pathwise" target macro up to date
   targetButton = { shown = true }, -- floating target button: on/off and position
   sellPrice = true,             -- show vendor sell prices in item tooltips

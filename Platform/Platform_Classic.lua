@@ -136,15 +136,17 @@ end
 -- Returns identity info. Tokens (class, race, faction) are locale-independent;
 -- the *Localized fields are for display only.
 function Platform.GetPlayerInfo()
-  local classLocalized, class = UnitClass("player")
-  local raceLocalized, race = UnitRace("player")
+  local classLocalized, class, classID = UnitClass("player")
+  local raceLocalized, race, raceID = UnitRace("player")
   local faction, factionLocalized = UnitFactionGroup("player")
   return {
     name = UnitName("player"),
     realm = GetRealmName(),
     class = class,
+    classID = classID,
     classLocalized = classLocalized,
     race = race,
+    raceID = raceID,
     raceLocalized = raceLocalized,
     faction = faction,
     factionLocalized = factionLocalized,
@@ -733,6 +735,16 @@ end
 ---------------------------------------------------------------------------
 -- Bag items and units (professions)
 ---------------------------------------------------------------------------
+
+-- True if the character has turned in quest questID at some point.
+function Platform.IsQuestCompleted(questID)
+  if C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted then
+    return C_QuestLog.IsQuestFlaggedCompleted(questID) and true or false
+  elseif IsQuestFlaggedCompleted then
+    return IsQuestFlaggedCompleted(questID) and true or false
+  end
+  return false
+end
 
 -- How many of an item the player has in the bags.
 function Platform.GetItemCount(itemID)
