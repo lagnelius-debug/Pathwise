@@ -35,16 +35,20 @@ Pathwise.Data.Travel = {
     [1458] = 1420, -- Undercity -> Tirisfal Glades
   },
 
-  -- One-way connectors (each direction listed). cost: extra yards the trip
-  -- counts as (waiting for a boat), on top of walking to it.
+  -- One-way connectors (each direction listed). Their cost in "yards on
+  -- foot", on top of walking to them: cost (a fixed part: waiting for the
+  -- boat) plus the distance crossed times pace (how long the crossing takes
+  -- compared to running it; a portal is instant).
   CONNECTORS = {
     { from = "TELDRASSIL", to = "RUTTHERAN", label = "TRAVEL_PORTAL_TO_RUTTHERAN", cost = 0,
       entry = { 1457, 0.30, 0.41 }, exit = { 1438, 0.56, 0.895 } },
     { from = "RUTTHERAN", to = "TELDRASSIL", label = "TRAVEL_PORTAL_TO_DARNASSUS", cost = 0,
       entry = { 1438, 0.56, 0.895 }, exit = { 1457, 0.30, 0.41 } },
-    { from = "RUTTHERAN", to = "KALIMDOR", label = "TRAVEL_BOAT_TO_AUBERDINE", cost = 400,
+    -- Boats sail about as fast as you run, and you wait for one about a
+    -- minute on average.
+    { from = "RUTTHERAN", to = "KALIMDOR", label = "TRAVEL_BOAT_TO_AUBERDINE", cost = 500, pace = 0.8,
       entry = { 1438, 0.55, 0.94 }, exit = { 1439, 0.33, 0.41 } },
-    { from = "KALIMDOR", to = "RUTTHERAN", label = "TRAVEL_BOAT_TO_RUTTHERAN", cost = 400,
+    { from = "KALIMDOR", to = "RUTTHERAN", label = "TRAVEL_BOAT_TO_RUTTHERAN", cost = 500, pace = 0.8,
       entry = { 1439, 0.33, 0.41 }, exit = { 1438, 0.55, 0.94 } },
   },
 }

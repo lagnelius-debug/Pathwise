@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.11.2
+
+- Boats now count the time spent sailing (and waiting for the boat), not
+  just the walk to the dock. From Rut'theran the arrow suggests the
+  flight to Auberdine when you know it, instead of the slower boat.
+
 ## 0.11.1
 
 - Quest pickups skip quests far above your level (red), like the level 60

@@ -85,6 +85,19 @@ local onFoot = Waypoints.Vector(1439, 0.37, 0.46, 1439, 0.50, 0.99)
 check("counts as much shorter than walking", route.distance < onFoot * Travel.FLIGHT_SAVING)
 check("a short trip: walk", Travel.Route(1439, 0.37, 0.46, 1439, 0.40, 0.55) == nil)
 
+-- Reported in game: at Vesprystus in Rut'theran, going to For Love Eternal
+-- in Auberdine, the arrow said to take the boat - the flight is right there
+-- and much faster (the boat's crossing used to count as instant).
+route = Travel.Route(1438, 0.58, 0.93, 1439, 0.37, 0.44)
+check("at the flight master, across the sea: fly, not the boat", route and #route.legs == 1 and route.legs[1].flight
+  and route.legs[1].text == "Fly from Rut'theran Village to Auberdine (Vesprystus)")
+Pathwise.charDB.flightNodes, saved = {}, Pathwise.charDB.flightNodes
+Flights:ClearCache()
+route = Travel.Route(1438, 0.58, 0.93, 1439, 0.37, 0.44)
+check("without the flight point: the boat", route and route.legs[1].label == "TRAVEL_BOAT_TO_AUBERDINE")
+Pathwise.charDB.flightNodes = saved
+Flights:ClearCache()
+
 -- From the top of Teldrassil: down through the portal, then fly
 route = Travel.Route(1438, 0.60, 0.50, 1439, 0.50, 0.99)
 check("portal first, then the flight from Rut'theran", route and route.legs[1].label == "TRAVEL_PORTAL_TO_RUTTHERAN"

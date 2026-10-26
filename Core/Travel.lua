@@ -80,9 +80,11 @@ local function StaticRoute(fromMap, fromX, fromY, toMap, toX, toY)
         local entry, exit = connector.entry, connector.exit
         local walk = Vector(mapID, x, y, entry[1], entry[2], entry[3])
         if walk then
+          -- The crossing itself (a boat sails the distance; a portal is instant).
+          local crossing = (connector.pace or 0) * (Vector(entry[1], entry[2], entry[3], exit[1], exit[2], exit[3]) or 0)
           visited[connector.to] = true
           legs[#legs + 1] = connector
-          Walk(connector.to, exit[1], exit[2], exit[3], cost + walk + (connector.cost or 0))
+          Walk(connector.to, exit[1], exit[2], exit[3], cost + walk + (connector.cost or 0) + crossing)
           legs[#legs] = nil
           visited[connector.to] = nil
         end
