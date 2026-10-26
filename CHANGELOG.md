@@ -3,6 +3,11 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.11.1
+
+- Quest pickups skip quests far above your level (red), like the level 60
+  cloth donations ("A Donation of Wool") that can be picked up at 12.
+
 ## 0.11.0
 
 - Flight paths: Pathwise remembers the flight points your character knows

@@ -46,6 +46,7 @@ local quests = {
   [7012] = { name = "Either This", requiredLevel = 1, questLevel = L, exclusiveTo = { 7001 }, startedBy = { { 9102 } } },
   [7013] = { name = "Wanted: Poster", requiredLevel = 1, questLevel = L, startedBy = { nil, { 9201 } } },
   [7014] = { name = "Far Quest", requiredLevel = 1, questLevel = L, startedBy = { { 9103 } } },
+  [7016] = { name = "A Donation of Wool", requiredLevel = 1, questLevel = 60, startedBy = { { 9101 } } },
   [7015] = { name = "Earlier In Chain", requiredLevel = 1, questLevel = L, nextQuestInChain = 7011,
     startedBy = { { 9101 } } },
 }
@@ -84,6 +85,7 @@ section("Pickups: what's available")
 UpdateLog({ { header = true, title = "Teldrassil" },
   { title = "In The Log", level = L, questID = 7011, objectives = { { text = "Thing: 0/5" } } } })
 local ids = Pickups()
+check("far too hard (red, like the level 60 cloth donations): not suggested", Item("pickup:7016") == nil)
 check("only quests this hunter can pick up now, nearest first (max 4)", ids == "7001,7013,7012,7004", ids) -- 7012 and 7004: same giver, by name
 local near = Item("pickup:7001")
 check("pick up step with the giver, distance and arrow target",

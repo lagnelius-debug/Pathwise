@@ -720,7 +720,8 @@ end
 -- only), at most `limit`:
 --   { questID, title, level, target, giver, distance, finishMapID }
 -- Returns nil while the quest list isn't scanned yet (or no QuestieDB).
--- ctx: { level, inLog = { [questID] = true }, isGrey(questLevel),
+-- ctx: { level, inLog = { [questID] = true }, outOfRange(questLevel) - true
+--        for quests too easy or too hard to suggest,
 --        skip(questID) - true for quests to leave out (e.g. not offered) }
 function QuestieData:GetPickups(ctx, limit)
   if not self:PickupsReady() then
@@ -735,7 +736,7 @@ function QuestieData:GetPickups(ctx, limit)
   local found = {}
   for _, candidate in ipairs(pickupCandidates) do
     local level = candidate.level == -1 and ctx.level or candidate.level
-    if candidate.requiredLevel <= ctx.level and not ctx.inLog[candidate.id] and not ctx.isGrey(level)
+    if candidate.requiredLevel <= ctx.level and not ctx.inLog[candidate.id] and not ctx.outOfRange(level)
       and not isCompleted(candidate.id)
       and (not NonEmpty(candidate.preGroup) or AllCompleted(candidate.preGroup, isCompleted))
       and (not NonEmpty(candidate.preSingle) or AnyCompleted(candidate.preSingle, isCompleted))

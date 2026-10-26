@@ -218,7 +218,7 @@ A `/reload` is enough.
 Needs QuestieDB. A `/reload` is enough. The quest list is read a few seconds after login.
 
 - [ ] The To-do window shows up to 4 `Pick up: [level] Quest - 27 m` lines for quests you can take now, nearest first. Hovering one says who gives it; under the current one it says `Get the quest from <NPC>`. Wanted posters count too.
-- [ ] Only quests for your race and class, at your level (not grey, not too high), not done before, and with their earlier quests done. No holiday, profession or repeatable quests.
+- [ ] Only quests for your race and class, at your level (not grey, not red - no level 60 cloth donations at 12), not done before, and with their earlier quests done. No holiday, profession or repeatable quests.
 - [ ] Nearby pickups (about 300 m) come right after nearby quest work; far ones join the route with your other far steps. The arrow and the target macro go to the quest giver.
 - [ ] Taking the quest makes its pickup line disappear; turning in a quest can bring up its follow-up.
 - [ ] No quests that aren't really offered (like "The Hunter's Path" from Jocaste at low level). If one shows up anyway, talk to the giver: when the quest isn't in their list, the line disappears and stays away until your next level.

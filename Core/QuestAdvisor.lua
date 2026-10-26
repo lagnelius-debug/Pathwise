@@ -470,8 +470,11 @@ function QuestAdvisor:Update()
     pickups = QuestieData:GetPickups({
       level = level,
       inLog = inLog,
-      isGrey = function(questLevel)
-        return QuestAdvisor.Difficulty(questLevel, level, greenRange) == "GREY"
+      -- Too easy (grey) or far too hard (red, e.g. the level 60 cloth
+      -- donations that can be picked up at 12): not worth suggesting.
+      outOfRange = function(questLevel)
+        local difficulty = QuestAdvisor.Difficulty(questLevel, level, greenRange)
+        return difficulty == "GREY" or difficulty == "RED"
       end,
       -- The giver didn't offer it when the player talked to them at this
       -- level (see OnQuestGiverShown); try again after a level up.
