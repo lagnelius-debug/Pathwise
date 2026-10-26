@@ -79,4 +79,36 @@ local items = QuestAdvisor.Plan({ Quest(1, "In Rut'theran"), Quest(2, "Up Here")
 check("a quest straight below but behind a portal comes after one that's walkable",
   items[1].title == "Up Here" and items[2].title == "In Rut'theran", items[1].title)
 
+---------------------------------------------------------------------------
+section("Travel: finish the zone before leaving")
+
+-- Reported in game: in Rut'theran Village with turn-ins still waiting up on
+-- Teldrassil, the guide went on towards Darkshore (the boat and "Flight to
+-- Auberdine" from Vesprystus).
+local function Done(id, title) local q = Quest(id, title); q.complete = 1; q.objectives = {}; return q end
+local places = {
+  [10] = { mapID = 1438, x = 0.58, y = 0.93, label = "Vesprystus" },    -- 60 yd away
+  [11] = { mapID = 1438, x = 0.90, y = 0.10, label = "Up the tree" },    -- through the portal, far
+  [12] = { mapID = 1439, x = 0.33, y = 0.45, label = "Darkshore" },      -- by boat: closer than that
+}
+local pickups = { { questID = 13, title = "Flight to Auberdine", level = 10, giver = "Vesprystus", distance = 60,
+  target = { mapID = 1438, x = 0.58, y = 0.93, label = "Pick up" }, finishMapID = 1439 } }
+local here = { zone = "Teldrassil", mapID = 1438, x = 0.562, y = 0.922 }
+local function Titles(list)
+  local titles = {}
+  for _, item in ipairs(list) do titles[#titles + 1] = item.title end
+  return table.concat(titles, ", ")
+end
+local plan = QuestAdvisor.Plan({ Done(10, "The Bounty of Teldrassil"), Done(11, "Teldrassil Turn-in"), Quest(12, "Darkshore Quest") },
+  10, 4, here, function(q) return places[q.questID] end, pickups)
+check("nearby turn-in first, then the rest of Teldrassil, then Darkshore and the flight",
+  Titles(plan):find("^The Bounty of Teldrassil, Teldrassil Turn%-in, ") ~= nil, Titles(plan))
+local flight
+for _, item in ipairs(plan) do if item.id == "pickup:13" then flight = item end end
+check("a pickup turned in in another zone waits, and says why", flight.priority == Pathwise:GetModule("NextSteps").PRIORITY.QUEST_FAR
+  and flight.leadsAway and flight.detail[2]:find("comes after the steps in this zone", 1, true))
+plan = QuestAdvisor.Plan({ Quest(12, "Darkshore Quest") }, 10, 4, here, function(q) return places[q.questID] end, pickups)
+check("with nothing left in the zone: on to Darkshore", Titles(plan) ~= "" and plan[1].title ~= nil)
+check("a capital counts as its zone", Travel.ZoneGroup(1457) == 1438 and Travel.ZoneGroup(1439) == 1439)
+
 At(1438, 0.58, 0.40)

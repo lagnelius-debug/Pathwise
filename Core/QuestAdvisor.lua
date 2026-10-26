@@ -336,15 +336,25 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
     }
   end
 
+  local Travel = Pathwise:GetModule("Travel")
   for _, pickup in ipairs(pickups or {}) do
     local difficulty = QuestAdvisor.Difficulty(pickup.level, playerLevel, greenRange)
     local name = QuestText(pickup, difficulty)
     local near = pickup.distance <= QuestAdvisor.NEAR_YARDS
+    local detail = { string.format(L.QA_PICKUP_DETAIL, pickup.giver or "?") }
+    -- Turned in in another zone (e.g. "Flight to Auberdine"): taking it
+    -- leads away, so it waits until the steps in this zone are done.
+    local leadsAway = pickup.finishMapID ~= nil
+      and Travel.ZoneGroup(pickup.finishMapID) ~= Travel.ZoneGroup(pickup.target.mapID)
+    if leadsAway then
+      detail[#detail + 1] = string.format(L.QA_PICKUP_LEADS_AWAY, Platform.GetMapName(pickup.finishMapID) or "?")
+    end
     items[#items + 1] = {
       id = "pickup:" .. pickup.questID,
-      priority = near and P.QUEST_NEAR or P.QUEST_FAR,
+      priority = (near and not leadsAway) and P.QUEST_NEAR or P.QUEST_FAR,
+      leadsAway = leadsAway,
       text = string.format(L.QA_PICKUP, name) .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(pickup.distance)),
-      detail = { string.format(L.QA_PICKUP_DETAIL, pickup.giver or "?") },
+      detail = detail,
       target = pickup.target,
       kind = "pickup",
       title = pickup.title,
@@ -377,6 +387,10 @@ end
 -- remaining step from where the last one was, turn-ins pulled closer by
 -- TURN_IN_PULL. Without this, a far turn-in to the west came before a much
 -- closer quest to the east, and the player crossed the zone twice.
+-- The zone is finished before leaving it: steps in the player's zone (its
+-- capital included) come first, then steps elsewhere and pickups that lead
+-- away - otherwise e.g. the boat from Rut'theran to Darkshore "won" over
+-- the turn-ins still waiting up on Teldrassil.
 function QuestAdvisor.RouteFar(items, location)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local first, last
@@ -389,20 +403,32 @@ function QuestAdvisor.RouteFar(items, location)
     return
   end
   local Waypoints = Pathwise:GetModule("Waypoints")
+  local Travel = Pathwise:GetModule("Travel")
+  local zone = Travel.ZoneGroup(location.mapID)
+  local function InZone(item)
+    return not item.leadsAway and Travel.ZoneGroup(item.target.mapID) == zone
+  end
   local pending = {}
   for index = first, last do
     pending[#pending + 1] = items[index]
   end
   local at = location
   for index = first, last do
+    local zoneLeft = false
+    for _, item in ipairs(pending) do
+      zoneLeft = zoneLeft or InZone(item)
+    end
     local bestIndex, bestCost
     for candidate, item in ipairs(pending) do
-      local target = item.target
-      local distance = Waypoints.TravelDistance(at.mapID, at.x, at.y, target.mapID, target.x, target.y) or math.huge
-      local quick = item.kind == "turnIn" or item.kind == "pickup"
-      local cost = distance * (quick and QuestAdvisor.TURN_IN_PULL or 1)
-      if not bestCost or cost < bestCost then
-        bestIndex, bestCost = candidate, cost
+      -- While steps in this zone are left, only they count.
+      if not zoneLeft or InZone(item) then
+        local target = item.target
+        local distance = Waypoints.TravelDistance(at.mapID, at.x, at.y, target.mapID, target.x, target.y) or math.huge
+        local quick = item.kind == "turnIn" or item.kind == "pickup"
+        local cost = distance * (quick and QuestAdvisor.TURN_IN_PULL or 1)
+        if not bestCost or cost < bestCost then
+          bestIndex, bestCost = candidate, cost
+        end
       end
     end
     items[index] = table.remove(pending, bestIndex)

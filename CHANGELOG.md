@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.10.2
+
+- Finish the zone before leaving: far steps in your current zone (its
+  capital included, e.g. Darnassus for Teldrassil) come before steps in
+  other zones, and a quest to pick up that's turned in in another zone
+  (like "Flight to Auberdine") waits until the zone is done. Teldrassil
+  turn-ins are no longer left behind when you reach Rut'theran.
+
 ## 0.10.1
 
 - Quest pickups no longer suggest quests that aren't really offered, like

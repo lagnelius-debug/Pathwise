@@ -628,6 +628,22 @@ end
 
 -- (Negative IDs in preQuestGroup mean the same quest, without its
 -- exclusive alternatives.)
+-- The map where a candidate is turned in (its first finisher's spawn), or
+-- false when unknown. Worked out once per candidate.
+local function FinishMap(candidate)
+  if candidate.finishMapID == nil then
+    candidate.finishMapID = false
+    local finishedBy = lib.Quest.Get(candidate.id, "finishedBy") or {}
+    local points = {}
+    NpcPoints(points, finishedBy[1])
+    ObjectPoints(points, finishedBy[2])
+    if points[1] then
+      candidate.finishMapID = points[1].mapID
+    end
+  end
+  return candidate.finishMapID or nil
+end
+
 local function AllCompleted(list, isCompleted)
   for _, questID in ipairs(list) do
     if not isCompleted(math.abs(questID)) then
@@ -672,7 +688,7 @@ end
 
 -- Quests the player can pick up now, nearest giver first (same continent
 -- only), at most `limit`:
---   { questID, title, level, target, giver, distance }
+--   { questID, title, level, target, giver, distance, finishMapID }
 -- Returns nil while the quest list isn't scanned yet (or no QuestieDB).
 -- ctx: { level, inLog = { [questID] = true }, isGrey(questLevel),
 --        skip(questID) - true for quests to leave out (e.g. not offered) }
@@ -710,8 +726,9 @@ function QuestieData:GetPickups(ctx, limit)
         end
       end
       if best then
+        local okFinish, finishMapID = pcall(FinishMap, candidate)
         found[#found + 1] = { questID = candidate.id, title = candidate.name, level = level,
-          target = best, giver = best.giver, distance = bestDistance }
+          target = best, giver = best.giver, distance = bestDistance, finishMapID = okFinish and finishMapID or nil }
       end
     end
   end

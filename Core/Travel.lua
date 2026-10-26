@@ -13,6 +13,12 @@ local function Vector(...)
   return Pathwise:GetModule("Waypoints").Vector(...)
 end
 
+-- The zone a map belongs to for "finish the zone before leaving": the map
+-- itself, or the zone around it for a capital.
+function Travel.ZoneGroup(mapID)
+  return Data.Travel.ZONE_GROUPS[mapID] or mapID
+end
+
 -- The region a map position is in, or nil (unknown map).
 function Travel.RegionOf(mapID, x, y)
   for _, area in ipairs(Data.Travel.AREAS) do

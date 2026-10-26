@@ -22,6 +22,17 @@ Pathwise.Data.Travel = {
   -- Continent (world instance ID) -> region for maps not in AREAS.
   CONTINENTS = { [1] = "KALIMDOR", [0] = "EASTERN_KINGDOMS" },
 
+  -- Capitals belong to the zone around them when deciding what's "in this
+  -- zone" (finish the zone before leaving it): uiMapID -> zone uiMapID.
+  ZONE_GROUPS = {
+    [1457] = 1438, -- Darnassus -> Teldrassil
+    [1453] = 1429, -- Stormwind -> Elwynn Forest
+    [1455] = 1426, -- Ironforge -> Dun Morogh
+    [1454] = 1411, -- Orgrimmar -> Durotar
+    [1456] = 1412, -- Thunder Bluff -> Mulgore
+    [1458] = 1420, -- Undercity -> Tirisfal Glades
+  },
+
   -- One-way connectors (each direction listed). cost: extra yards the trip
   -- counts as (waiting for a boat), on top of walking to it.
   CONNECTORS = {

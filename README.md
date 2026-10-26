@@ -200,6 +200,7 @@ A `/reload` is enough.
 - [ ] From Rut'theran back up: `Take the portal up to Darnassus`.
 - [ ] From Darkshore to Teldrassil: `Take the boat to Rut'theran Village (Auberdine docks)`, then the portal up if needed. The other way: `Take the boat to Auberdine (Rut'theran docks)`.
 - [ ] Steps in Rut'theran now count as far away when you're up on the tree, so walkable steps come first.
+- [ ] Finish the zone before leaving: in Rut'theran with turn-ins still waiting on Teldrassil (or in Darnassus), the guide sends you back up through the portal before anything in Darkshore. "Flight to Auberdine" (turned in in Darkshore) is only suggested once Teldrassil is done; its tooltip says why.
 
 ## In-game test checklist (quest pickups)
 
