@@ -25,13 +25,15 @@ C_QuestLog = { IsQuestFlaggedCompleted = function(id) return completed[id] == tr
 
 -- A made-up dungeon with its entrance in Teldrassil.
 local L = S.level
-local dungeon = { id = 9500, name = "The Test Mines", min = L - 2, max = L + 5, entrances = { { 141, 50, 80 } } }
+local dungeon = { id = 9500, name = "The Test Mines", min = L - 2, max = L + 5, entrances = { { 141, 50, 80 } },
+  instance = 9550, bosses = { { "Mine Boss", "the deep end" }, { "Foreman Boss", "the office" } } }
 table.insert(Pathwise.Data.Dungeons, dungeon)
 local quests = {
   [9600] = { name = "Pre-quest", requiredLevel = 1, questLevel = L, zoneOrSort = 141, startedBy = { { 9701 } } },
   [9601] = { name = "Into the Mines", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, preQuestSingle = { 9600 },
     startedBy = { { 9702 } } },
-  [9602] = { name = "Mine Quest", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, startedBy = { { 9702 } } },
+  [9602] = { name = "Mine Quest", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, startedBy = { { 9702 } },
+    objectives = { { { 9801 } }, nil, { { 9901 } } } }, -- kill Mine Boss, loot a Mine Key from Mine Rats
   [9603] = { name = "Deep Mine Quest", requiredLevel = L + 5, questLevel = L + 6, zoneOrSort = 9500,
     startedBy = { { 9702 } } },
   [9604] = { name = "Normal Quest", requiredLevel = 1, questLevel = L, zoneOrSort = 141, startedBy = { { 9701 } } },
@@ -44,8 +46,16 @@ local quests = {
 local npcs = {
   [9701] = { name = "Village Elder", spawns = { [141] = { { 58, 41 } } } },
   [9702] = { name = "Mine Foreman", spawns = { [141] = { { 60, 45 } } } },
+  [9801] = { name = "Mine Boss" },
+  [9802] = { name = "Mine Rat" },
 }
+local items = { [9901] = { name = "Mine Key", npcDrops = { 9802 } } }
 local questGet, npcGet, allIds = LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Quest.GetAllIds
+local itemGet = LibQuestieDB.Item.Get
+LibQuestieDB.Item.Get = function(id, key)
+  if items[id] then return items[id][key] end
+  return itemGet(id, key)
+end
 LibQuestieDB.Quest.Get = function(id, key)
   if quests[id] then return quests[id][key] end
   return questGet(id, key)
@@ -149,7 +159,42 @@ WoW.ClearChat()
 WoW.Slash("dungeon atlantis")
 check("unknown dungeon", WoW.ChatContains("Unknown dungeon 'atlantis'") and DungeonGuide:GetActive() == nil)
 
+---------------------------------------------------------------------------
+section("Dungeons: inside")
+
+-- Inside the dungeon (no position, no arrow): one step per boss the quests
+-- need, in order, and the rest "along the way".
+IsInInstance = function() return true, "party" end
+GetInstanceInfo = function() return "The Test Mines", "party", 1, "Normal", 5, 0, false, 9550 end
+local log = { { title = "Mine Quest", level = L, questID = 9602, zone = "The Test Mines",
+  objectives = { { text = "Mine Boss slain: 0/1" }, { text = "Mine Key: 0/1" } } } }
+UpdateLog(log)
+check("inside: the dungeon is known by its instance", DungeonGuide:GetInside() == dungeon
+  and window.title:GetText() == "Dungeon: The Test Mines")
+local boss = Item("inside:boss:1")
+check("one step per quest boss, with its place and where (" .. tostring(boss and boss.text) .. ")",
+  boss and boss.text == "Boss 1 of 2: Mine Boss - the deep end" and boss.subLines[1].text:find("^Kill Mine Boss %(") ~= nil
+  and boss.subLines[1].text:find("Mine Quest", 1, true) and not boss.target)
+local along = Item("inside:along:9602")
+check("objectives on other mobs: along the way", along and along.subLines[1].text == "Loot Mine Key from Mine Rat")
+check("no boss step for bosses no quest needs", Item("inside:boss:2") == nil)
+local order = {}
+for index, it in ipairs(NextSteps:GetItems()) do order[it.id] = index end
+check("the next boss before the rest", order["inside:boss:1"] < order["inside:along:9602"])
+log[1].objectives[1].finished = true
+UpdateLog(log)
+check("boss done: its step is gone", Item("inside:boss:1") == nil and Item("inside:along:9602") ~= nil)
+log[1].complete = 1
+UpdateLog(log)
+check("quest done: turn it in after the dungeon", Item("inside:done:9602") ~= nil and Item("inside:along:9602") == nil)
+UpdateLog({})
+check("no quests for it: says so", Item("inside:none") and Item("inside:none").text == "None of your quests are for The Test Mines.")
+IsInInstance, GetInstanceInfo = nil, nil
+UpdateLog({})
+check("outside again: the usual list", DungeonGuide:GetInside() == nil and Item("inside:none") == nil)
+
 -- Clean up
+LibQuestieDB.Item.Get = itemGet
 table.remove(Pathwise.Data.Dungeons)
 LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Quest.GetAllIds = questGet, npcGet, allIds
 C_QuestLog = nil

@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.21.0
+
+- **Inside dungeons**: the To-do list guides you through the dungeon
+  (the game gives addons no position inside, so there's no arrow there). It
+  shows one step per boss your quests need, in the dungeon's usual order
+  and with where to find it - e.g. "Boss 7 of 8: Edwin VanCleef - the top
+  deck of the ship" - with what to do and for which quest underneath; the
+  objectives on other mobs "along the way"; and the finished quests to turn
+  in afterwards. Works in every classic dungeon, with or without dungeon
+  mode (boss orders for all 19 dungeons, names checked against QuestieDB).
+
 ## 0.20.1
 
 - Dungeon guide: the entrance is no longer the first step when you're far

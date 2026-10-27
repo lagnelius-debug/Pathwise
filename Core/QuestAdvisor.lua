@@ -526,6 +526,79 @@ end
 -- "finish the zone first"; the dungeon's own quests point at the entrance.
 local DUNGEON_MAX_PICKUPS = 12
 
+-- Inside a dungeon: the game gives no position there (no arrow), so the
+-- list says where instead - one step per boss the quests need, in the
+-- dungeon's order ("Boss 7 of 8: Edwin VanCleef - the top deck of the
+-- ship") with what to do there, the objectives on other mobs "along the
+-- way", and the quests already done. For the dungeon's quests and any
+-- other quest that needs one of its bosses.
+local function InsidePlan(dungeon, quests, level, greenRange)
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local belongs = DungeonGuide:GetQuests(dungeon)
+  local bosses = {}  -- [boss index] = { lines }
+  local along, done = {}, {}
+  for _, quest in ipairs(quests) do
+    local tasks = QuestieData:QuestTasks(quest) or {}
+    local name = QuestText(quest, QuestAdvisor.Difficulty(quest.level, level, greenRange))
+    local forBoss, forOther = {}, {}
+    for _, task in ipairs(tasks) do
+      local bossIndex
+      for _, npc in ipairs(task.npcs or {}) do
+        bossIndex = bossIndex or DungeonGuide.Boss(dungeon, npc)
+      end
+      if task.kind == "kill" then
+        local line = string.format(L.INSIDE_KILL, task.npcs[1] or "?")
+        table.insert(bossIndex and forBoss or forOther, { index = bossIndex, text = line })
+      elseif task.kind == "loot" then
+        local line = #task.npcs > 0 and string.format(L.INSIDE_LOOT_FROM, task.item, table.concat(task.npcs, ", ", 1,
+          math.min(#task.npcs, 2))) or string.format(L.INSIDE_LOOT, task.item)
+        table.insert(bossIndex and forBoss or forOther, { index = bossIndex, text = line })
+      else
+        table.insert(forOther, { text = string.format(L.INSIDE_USE, task.object or "?") })
+      end
+    end
+    local mine = (belongs and belongs.inDungeon[quest.questID]) or #forBoss > 0
+    if mine and QuestAdvisor.IsReady(quest) then
+      done[#done + 1] = quest
+    elseif mine then
+      for _, task in ipairs(forBoss) do
+        bosses[task.index] = bosses[task.index] or {}
+        table.insert(bosses[task.index], { text = string.format(L.INSIDE_FOR, task.text, name), level = 1, task = true })
+      end
+      if #forOther > 0 then
+        local lines = {}
+        for _, task in ipairs(forOther) do
+          lines[#lines + 1] = { text = task.text, level = 1, task = true }
+        end
+        along[#along + 1] = { quest = quest, name = name, lines = lines }
+      end
+    end
+  end
+
+  -- (The next boss first: the To-do window opens up the first step.)
+  local items = {}
+  for index, boss in ipairs(dungeon.bosses or {}) do
+    if bosses[index] then
+      items[#items + 1] = { id = "inside:boss:" .. index, priority = P.QUEST_NEAR,
+        text = string.format(L.INSIDE_BOSS, index, #dungeon.bosses, boss[1], boss[2]), subLines = bosses[index] }
+    end
+  end
+  for _, entry in ipairs(along) do
+    items[#items + 1] = { id = "inside:along:" .. tostring(entry.quest.questID or entry.quest.title), priority = P.QUEST_NEAR,
+      text = string.format(L.INSIDE_ALONG, entry.name), subLines = entry.lines }
+  end
+  for _, quest in ipairs(done) do
+    items[#items + 1] = { id = "inside:done:" .. tostring(quest.questID or quest.title), priority = P.QUEST_ELSEWHERE,
+      text = string.format(L.INSIDE_DONE, QuestText(quest, QuestAdvisor.Difficulty(quest.level, level, greenRange))) }
+  end
+  if #items == 0 then
+    items[1] = { id = "inside:none", priority = P.QUEST_ELSEWHERE, text = string.format(L.INSIDE_NONE, dungeon.name) }
+  end
+  return items
+end
+
 local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
   local belongs = DungeonGuide:GetQuests(dungeon)
@@ -565,8 +638,10 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
 end
 
 function QuestAdvisor:Update()
-  local dungeon = Pathwise:GetModule("DungeonGuide"):GetActive()
-  if not Pathwise.db.questGuide and not dungeon then
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local inside = DungeonGuide:GetInside()
+  local dungeon = DungeonGuide:GetActive()
+  if not Pathwise.db.questGuide and not dungeon and not inside then
     lastPickups = {}
     Pathwise:GetModule("NextSteps"):SetItems("quests", {})
     Pathwise:FireCallback("QUESTS_PLANNED", {})
@@ -588,7 +663,10 @@ function QuestAdvisor:Update()
   end
   local greenRange = Platform.GetQuestGreenRange(level)
   local items
-  if dungeon then
+  if inside then
+    lastPickups = {}
+    items = InsidePlan(inside, quests, level, greenRange)
+  elseif dungeon then
     lastPickups = {}
     items = DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
   else

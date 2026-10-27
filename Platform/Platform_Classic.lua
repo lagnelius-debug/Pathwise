@@ -756,6 +756,20 @@ function Platform.QuestFromPlayer()
   return UnitIsPlayer and UnitExists and UnitExists("npc") and UnitIsPlayer("npc") and true or false
 end
 
+-- The instance ID while inside a dungeon (GetInstanceInfo's 8th value),
+-- else nil.
+function Platform.GetDungeonInstanceID()
+  if not (IsInInstance and GetInstanceInfo) then
+    return nil
+  end
+  local inside, kind = IsInInstance()
+  if not inside or kind ~= "party" then
+    return nil
+  end
+  local instanceID = select(8, GetInstanceInfo())
+  return instanceID
+end
+
 function Platform.IsShiftKeyDown()
   return IsShiftKeyDown and IsShiftKeyDown() and true or false
 end

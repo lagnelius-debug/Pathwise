@@ -190,6 +190,14 @@ Needs QuestieDB. Try it with a dungeon of your level, e.g. The Deadmines or Wail
 - [ ] "Leave dungeon mode" at the top of the list (or `/pw dungeon off`): the usual guide is back. Dungeon mode stays on over a /reload until you leave it.
 - [ ] Check whether a quest you know belongs to the dungeon is missing, or one that doesn't shows up, and tell me.
 
+Inside a dungeon (works in any of them, with or without dungeon mode):
+
+- [ ] The title says `Dungeon: <name>` and the footer `... inside the dungeon`. The arrow has nothing to point at (the game gives addons no position inside dungeons).
+- [ ] One step per boss your quests need, in the dungeon's order: `Boss 7 of 8: Edwin VanCleef - the top deck of the ship`, with what to do underneath and the quest it's for. The next boss is opened up.
+- [ ] Objectives on ordinary mobs are listed as `Along the way: <quest>` (e.g. "Loot Red Silk Bandana from Defias ...").
+- [ ] Kill a quest boss: its step goes away. A finished quest shows `Done: <quest> - turn it in after the dungeon`.
+- [ ] Tell me if a boss order or place sounds wrong for a dungeon you know (Data/Classic/Dungeons.lua has them all).
+
 ## In-game test checklist (auto-accept)
 
 Needs QuestieDB (for the quests to pick up).

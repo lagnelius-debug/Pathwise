@@ -52,6 +52,28 @@ function DungeonGuide.List()
   return list
 end
 
+-- The dungeon the player is inside, or nil.
+function DungeonGuide:GetInside()
+  local instanceID = Platform.GetDungeonInstanceID()
+  if not instanceID then
+    return nil
+  end
+  for _, dungeon in ipairs(Data.Dungeons) do
+    if dungeon.instance == instanceID then
+      return dungeon
+    end
+  end
+end
+
+-- A boss of a dungeon by name: its place in the order, the count, where.
+function DungeonGuide.Boss(dungeon, name)
+  for index, boss in ipairs(dungeon.bosses or {}) do
+    if boss[1] == name then
+      return index, #dungeon.bosses, boss[2]
+    end
+  end
+end
+
 -- The dungeon of dungeon mode, or nil.
 function DungeonGuide:GetActive()
   return DungeonGuide.Get(Pathwise.charDB.dungeon)

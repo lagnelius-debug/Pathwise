@@ -286,6 +286,51 @@ local function TurnInTarget(quest)
   return best
 end
 
+-- What's left of a quest log entry, as tasks (the guide inside dungeons):
+-- list of { kind = "kill" | "loot" | "use", npcs = { names }, item, object }
+-- - "kill": one of npcs; "loot": item from npcs (can be empty); "use":
+-- object. nil without QuestieDB (or a quest it doesn't know).
+function QuestieData:QuestTasks(quest)
+  if not Load() or not quest.questID then
+    return nil
+  end
+  local ok, tasks = pcall(function()
+    local objectives = lib.Quest.Get(quest.questID, "objectives") or {}
+    local tasks = {}
+    for _, objective in ipairs(objectives[1] or {}) do
+      local npcName = lib.Npc.Get(objective[1], "name")
+      if not IsFinished(quest, objective[2] or npcName) then
+        tasks[#tasks + 1] = { kind = "kill", npcs = { npcName or objective[2] or "?" } }
+      end
+    end
+    for _, objective in ipairs(objectives[2] or {}) do
+      local name = lib.Object.Get(objective[1], "name")
+      if not IsFinished(quest, objective[2] or name) then
+        tasks[#tasks + 1] = { kind = "use", object = name or objective[2] or "?" }
+      end
+    end
+    for _, objective in ipairs(objectives[3] or {}) do
+      local itemName = lib.Item.Get(objective[1], "name")
+      if not IsFinished(quest, objective[2] or itemName) then
+        local npcs = {}
+        for _, npcId in ipairs(lib.Item.Get(objective[1], "npcDrops") or {}) do
+          npcs[#npcs + 1] = lib.Npc.Get(npcId, "name")
+        end
+        tasks[#tasks + 1] = { kind = "loot", item = itemName or objective[2] or "?", npcs = npcs }
+      end
+    end
+    -- [5] kill credit: { { npcIds }, rootNpcId, text?, index }
+    for _, objective in ipairs(objectives[5] or {}) do
+      local npcName = lib.Npc.Get(objective[2], "name")
+      if not IsFinished(quest, objective[3] or npcName) then
+        tasks[#tasks + 1] = { kind = "kill", npcs = { npcName or objective[3] or "?" } }
+      end
+    end
+    return tasks
+  end)
+  return ok and tasks or nil
+end
+
 local function DoTarget(quest)
   local objectives = lib.Quest.Get(quest.questID, "objectives") or {}
   local points, tasks = {}, {}

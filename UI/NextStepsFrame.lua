@@ -89,7 +89,10 @@ local function GetRow(index)
   return row
 end
 
+local UpdateTitle
+
 local function UpdateFooter(stepCount)
+  UpdateTitle()
   local active = Pathwise:GetModule("Talents"):GetSpecInfo().active
   local path = frame.path
   path.text:SetText(string.format(L.NS_PATH, L["SPEC_" .. active]))
@@ -97,7 +100,10 @@ local function UpdateFooter(stepCount)
   local dungeons = frame.dungeons
   dungeons.text:SetText(L.NS_DUNGEONS)
   dungeons:SetWidth(dungeons.text:GetStringWidth() + 4)
-  if Pathwise:GetModule("DungeonGuide"):GetActive() then
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  if DungeonGuide:GetInside() then
+    frame.footer.text:SetText(string.format(L.NS_FOOTER_INSIDE, stepCount))
+  elseif DungeonGuide:GetActive() then
     frame.footer.text:SetText(string.format(L.NS_FOOTER_DUNGEON, stepCount))
   else
     local zone = Pathwise:GetModule("Character"):GetSnapshot().zone
@@ -105,10 +111,15 @@ local function UpdateFooter(stepCount)
   end
 end
 
--- "To-do", or "Dungeon: The Deadmines" in dungeon mode.
-local function UpdateTitle()
-  local dungeon = Pathwise:GetModule("DungeonGuide"):GetActive()
-  frame:SetTitleText(dungeon and string.format(L.DUNGEON_TITLE, dungeon.name) or L.NS_TITLE)
+-- "To-do", or "Dungeon: The Deadmines" inside a dungeon or in dungeon
+-- mode. (Re-skins only when it changes.)
+function UpdateTitle()
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local dungeon = DungeonGuide:GetInside() or DungeonGuide:GetActive()
+  local title = dungeon and string.format(L.DUNGEON_TITLE, dungeon.name) or L.NS_TITLE
+  if frame.titleText ~= title then
+    frame:SetTitleText(title)
+  end
 end
 
 -- The step that gets its details listed underneath: the one the arrow
