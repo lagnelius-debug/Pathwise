@@ -266,7 +266,35 @@ end
 -- locate(quest, kind) optionally returns an arrow target for a quest
 -- ("turnIn" for complete quests, "do" for quests to work on).
 -- pickups: optional quests to pick up (QuestieData:GetPickups), which join
--- the same near/far order as kind "pickup".
+-- the same near/far order as kind "pickup"; class quest steps
+-- (Classes/ClassQuests.lua, with classQuest = true) join it the same way.
+-- A class quest step as a quest to pick up: near or far by its distance.
+-- The important ones (urgent) are never held back for "finish the zone
+-- first" (RouteFar).
+local function ClassQuestItem(step)
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  local near = step.distance ~= nil and step.distance <= QuestAdvisor.NEAR_YARDS
+  local text = step.text
+  if step.distance then
+    text = text .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(step.distance))
+  end
+  local giver = step.target.npcName or (step.target.names and step.target.names[1]) or "?"
+  return {
+    id = "classquest:" .. step.key,
+    priority = near and P.QUEST_NEAR or P.QUEST_FAR,
+    urgent = step.important,
+    text = text,
+    detail = { step.detail },
+    target = step.target,
+    kind = "pickup",
+    title = step.text,
+    questName = step.text,
+    distance = step.distance,
+    subLines = { { text = string.format(L.TASK_PICKUP, giver), level = 1, task = true } },
+    order = { step.distance or math.huge, 0, 0, 0 },
+  }
+end
+
 function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pickups)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local items = {}
@@ -338,31 +366,35 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
 
   local Travel = Pathwise:GetModule("Travel")
   for _, pickup in ipairs(pickups or {}) do
-    local difficulty = QuestAdvisor.Difficulty(pickup.level, playerLevel, greenRange)
-    local name = QuestText(pickup, difficulty)
-    local near = pickup.distance <= QuestAdvisor.NEAR_YARDS
-    local detail = { string.format(L.QA_PICKUP_DETAIL, pickup.giver or "?") }
-    -- Turned in in another zone (e.g. "Flight to Auberdine"): taking it
-    -- leads away, so it waits until the steps in this zone are done.
-    local leadsAway = pickup.finishMapID ~= nil
-      and Travel.ZoneGroup(pickup.finishMapID) ~= Travel.ZoneGroup(pickup.target.mapID)
-    if leadsAway then
-      detail[#detail + 1] = string.format(L.QA_PICKUP_LEADS_AWAY, Platform.GetMapName(pickup.finishMapID) or "?")
+    if pickup.classQuest then
+      items[#items + 1] = ClassQuestItem(pickup)
+    else
+      local difficulty = QuestAdvisor.Difficulty(pickup.level, playerLevel, greenRange)
+      local name = QuestText(pickup, difficulty)
+      local near = pickup.distance <= QuestAdvisor.NEAR_YARDS
+      local detail = { string.format(L.QA_PICKUP_DETAIL, pickup.giver or "?") }
+      -- Turned in in another zone (e.g. "Flight to Auberdine"): taking it
+      -- leads away, so it waits until the steps in this zone are done.
+      local leadsAway = pickup.finishMapID ~= nil
+        and Travel.ZoneGroup(pickup.finishMapID) ~= Travel.ZoneGroup(pickup.target.mapID)
+      if leadsAway then
+        detail[#detail + 1] = string.format(L.QA_PICKUP_LEADS_AWAY, Platform.GetMapName(pickup.finishMapID) or "?")
+      end
+      items[#items + 1] = {
+        id = "pickup:" .. pickup.questID,
+        priority = (near and not leadsAway) and P.QUEST_NEAR or P.QUEST_FAR,
+        leadsAway = leadsAway,
+        text = string.format(L.QA_PICKUP, name) .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(pickup.distance)),
+        detail = detail,
+        target = pickup.target,
+        kind = "pickup",
+        title = pickup.title,
+        questName = name,
+        distance = pickup.distance,
+        subLines = { { text = string.format(L.TASK_PICKUP, pickup.giver or "?"), level = 1, task = true } },
+        order = { pickup.distance, 0, 0, pickup.level },
+      }
     end
-    items[#items + 1] = {
-      id = "pickup:" .. pickup.questID,
-      priority = (near and not leadsAway) and P.QUEST_NEAR or P.QUEST_FAR,
-      leadsAway = leadsAway,
-      text = string.format(L.QA_PICKUP, name) .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(pickup.distance)),
-      detail = detail,
-      target = pickup.target,
-      kind = "pickup",
-      title = pickup.title,
-      questName = name,
-      distance = pickup.distance,
-      subLines = { { text = string.format(L.TASK_PICKUP, pickup.giver or "?"), level = 1, task = true } },
-      order = { pickup.distance, 0, 0, pickup.level },
-    }
   end
 
   items = QuestAdvisor.CombineNearby(items)
@@ -406,7 +438,7 @@ function QuestAdvisor.RouteFar(items, location)
   local Travel = Pathwise:GetModule("Travel")
   local zone = Travel.ZoneGroup(location.mapID)
   local function InZone(item)
-    return not item.leadsAway and Travel.ZoneGroup(item.target.mapID) == zone
+    return item.urgent or (not item.leadsAway and Travel.ZoneGroup(item.target.mapID) == zone)
   end
   local pending = {}
   for index = first, last do
@@ -462,6 +494,9 @@ function QuestAdvisor:Update()
     return QuestieData:GetTarget(quest, kind) or QuestLocations:GetTarget(quest, kind)
   end
   local greenRange = Platform.GetQuestGreenRange(level)
+  -- Class quest steps first: the pickups below leave their quests out.
+  local ClassQuests = Pathwise:GetModule("ClassQuests")
+  local classSteps = ClassQuests:GetSteps()
   -- Quests to pick up (nil while QuestieDB's quest list is being scanned,
   -- or without QuestieDB).
   local pickups
@@ -492,7 +527,20 @@ function QuestAdvisor:Update()
     }, QuestAdvisor.MAX_PICKUPS)
   end
   lastPickups = pickups or {}
-  local items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, pickups)
+  -- Class quest steps with a known giver join the plan like pickups.
+  local planned = {}
+  for _, pickup in ipairs(pickups or {}) do
+    planned[#planned + 1] = pickup
+  end
+  for _, step in ipairs(classSteps) do
+    if ClassQuests.InQuestPlan(step) then
+      step.classQuest = true
+      step.distance = mapID and Pathwise:GetModule("Waypoints").TravelDistance(mapID, x, y,
+        step.target.mapID, step.target.x, step.target.y, true)
+      planned[#planned + 1] = step
+    end
+  end
+  local items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, planned)
   local zoneItem = pickups and QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone)
   if zoneItem then
     items[#items + 1] = zoneItem

@@ -62,8 +62,9 @@ Become({ "Warrior", "WARRIOR", 1 }, { "Night Elf", "NightElf", 4 }, 9)
 check("level 9: no class quest yet", ClassItems() == "")
 Become({ "Warrior", "WARRIOR", 1 }, { "Night Elf", "NightElf", 4 }, 10)
 local item = Item("classquest:DEFENSIVE_STANCE")
-check("level 10: Defensive Stance quest", item and item.text == "Learn Defensive Stance: warrior quest"
-  and item.priority == P.CLASS_QUEST and item.detail[1]:find("From level 10", 1, true))
+check("level 10: Defensive Stance quest, a nearby step with its distance (" .. tostring(item and item.text) .. ")",
+  item and item.text:find("^Learn Defensive Stance: warrior quest %- %d+ m$") ~= nil
+  and item.priority == P.QUEST_NEAR and item.kind == "pickup" and item.detail[1]:find("From level 10", 1, true))
 check("arrow on the nearest giver for your race", item.target and item.target.label == "Class quest (Elanaria)")
 check("said once in chat", WoW.ChatContains("Class quest: Learn Defensive Stance: warrior quest."))
 check("quest pickups leave the start out", ClassQuests:Covers(1684) and not ClassQuests:Covers(1505))
@@ -120,9 +121,30 @@ check("Poisons skill there: done", ClassItems() == "")
 S.skills = saved.skills
 
 Become({ "Paladin", "PALADIN", 2 }, { "Human", "Human", 1 }, 40)
-check("level 40 paladin: the mount first, then the rest (" .. ClassItems() .. ")",
-  NextSteps:GetItems()[1].id ~= nil and Item("classquest:WARHORSE").priority == P.CLASS_QUEST
+check("no giver known: own steps after the quests nearby, the important ones first (" .. ClassItems() .. ")",
+  Item("classquest:WARHORSE").priority == P.QUEST_FAR
   and Item("classquest:TOME_OF_VALOR").priority == P.CLASS_QUEST_OPTIONAL)
+
+-- Reported in game: a level 1 warlock in Coldridge Valley got "Get your
+-- Imp" with the arrow on the trainer 173 m away, while a quest giver stood
+-- 23 m away. Class quests are ordered by distance like other pickups.
+local QuestAdvisor = Pathwise:GetModule("QuestAdvisor")
+local here = { zone = "Dun Morogh", mapID = 1426, x = 0.30, y = 0.70 }
+local plan = QuestAdvisor.Plan({}, 1, 4, here, function() end, {
+  { questID = 179, title = "Dwarven Outfitters", level = 1, giver = "Sten Stoutarm", distance = 23,
+    target = { mapID = 1426, x = 0.30, y = 0.71, label = "Pick up" } },
+  { classQuest = true, key = "IMP", text = "Get your Imp: warlock quest", detail = "From level 1", important = true,
+    distance = 173, target = { mapID = 1426, x = 0.32, y = 0.70, label = "Class quest (Alamar Grimm)", names = { "Alamar Grimm" } } },
+})
+check("the quest 23 m away first, then the Imp at 173 m (" .. (plan[1] and plan[1].id or "?") .. ")",
+  plan[1].id == "pickup:179" and plan[2].id == "classquest:IMP" and plan[2].priority == P.QUEST_NEAR
+  and plan[2].subLines[1].text:find("Alamar Grimm", 1, true))
+plan = QuestAdvisor.Plan({}, 10, 4, here, function() end, {
+  { classQuest = true, key = "VOIDWALKER", text = "Get your Voidwalker: warlock quest", detail = "", important = true,
+    distance = 2500, target = { mapID = 1455, x = 0.5, y = 0.5, label = "Class quest", names = { "Someone" } } },
+})
+check("far away: a far step on the route (never held back as 'leads away')", plan[1].priority == P.QUEST_FAR
+  and plan[1].urgent == true)
 
 Pathwise:GetModule("FeaturesPanel"):SetFeature((function()
   for i, feature in ipairs(Pathwise:GetModule("FeaturesPanel").FEATURES) do

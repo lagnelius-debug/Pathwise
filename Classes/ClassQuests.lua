@@ -6,6 +6,12 @@ local addonName, Pathwise = ...
 -- until it's done, Next Steps shows a step with the arrow on the nearest
 -- giver for your race; while a quest of the chain is in the log, the quest
 -- itself is the step. Each one is said once in chat.
+-- With the giver known (QuestieDB), the step joins the quest plan like a
+-- quest to pick up (Core/QuestAdvisor.lua), so it's ordered by distance: a
+-- quest 20 yards away comes before the class quest across the valley. The
+-- important ones are never held back for "finish the zone first". Without
+-- a known giver (or with the quest guide off) it's a step of its own,
+-- after the quests nearby.
 
 local L = Pathwise.L
 local Platform = Pathwise.Platform
@@ -132,39 +138,61 @@ function ClassQuests:Covers(questID)
   return shownStarts[questID] == true
 end
 
-function ClassQuests:Update()
-  local NextSteps = Pathwise:GetModule("NextSteps")
+-- The open reminders as steps: list of { key, text, detail, important,
+-- target } (target: the nearest giver, nil without QuestieDB).
+function ClassQuests:GetSteps()
   shownStarts = {}
   if not Pathwise.db.classQuests then
-    NextSteps:SetItems("classQuests", {})
-    return
+    return {}
   end
-  local P = NextSteps.PRIORITY
-  local reminded = Pathwise.charDB.classQuestsReminded
-  local items = {}
+  local steps = {}
   for _, entry in ipairs(self:GetOpen()) do
-    if #items >= ClassQuests.MAX_STEPS then
+    if #steps >= ClassQuests.MAX_STEPS then
       break
     end
     local reminder = entry.reminder
     local text, detail = StepText(reminder)
-    local item = {
-      id = "classquest:" .. reminder.key,
-      priority = reminder.important and P.CLASS_QUEST or P.CLASS_QUEST_OPTIONAL,
+    steps[#steps + 1] = {
+      key = reminder.key,
       text = text,
-      detail = { detail },
+      detail = detail,
+      important = reminder.important,
       target = Pathwise:GetModule("QuestieData"):GetQuestGiverTarget(entry.starts, L.CQ_TARGET),
     }
-    items[#items + 1] = item
     for _, questID in ipairs(entry.starts) do
       shownStarts[questID] = true
     end
-    if not reminded[reminder.key] and Pathwise.db.chatMessages then
-      reminded[reminder.key] = true
-      Pathwise:Printf(L.CQ_CHAT, text)
+  end
+  return steps
+end
+
+-- True when the quest plan places this step (it has a giver to go to).
+function ClassQuests.InQuestPlan(step)
+  return step.target ~= nil and Pathwise.db.questGuide
+end
+
+function ClassQuests:Update()
+  local NextSteps = Pathwise:GetModule("NextSteps")
+  local P = NextSteps.PRIORITY
+  local reminded = Pathwise.charDB.classQuestsReminded
+  local items = {}
+  for _, step in ipairs(self:GetSteps()) do
+    if not ClassQuests.InQuestPlan(step) then
+      items[#items + 1] = {
+        id = "classquest:" .. step.key,
+        priority = step.important and P.QUEST_FAR or P.CLASS_QUEST_OPTIONAL,
+        text = step.text,
+        detail = { step.detail },
+      }
+    end
+    if not reminded[step.key] and Pathwise.db.chatMessages then
+      reminded[step.key] = true
+      Pathwise:Printf(L.CQ_CHAT, step.text)
     end
   end
   NextSteps:SetItems("classQuests", items)
+  -- The steps with a giver are placed by the quest plan.
+  Pathwise:GetModule("QuestAdvisor"):ScheduleUpdate()
 end
 
 function ClassQuests:ScheduleUpdate()

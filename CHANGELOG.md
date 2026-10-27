@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.18.4
+
+- Class quest reminders no longer jump ahead of everything: with the
+  quest giver known, they join the quest plan like any quest to pick up,
+  ordered by distance, with the distance shown. A fresh warlock in
+  Coldridge Valley now gets the quest 23 m away first instead of the arrow
+  pointing at the Imp quest 173 m off. Important ones (stances, demons,
+  forms, totems, poisons, mounts) still go on the route even outside the
+  zone you're in.
+
 ## 0.18.3
 
 - Azure: the window's resize grip moved inside the window, just above the
