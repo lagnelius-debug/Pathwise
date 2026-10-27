@@ -2,8 +2,9 @@
 ## Title: Pathwise
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
-## Version: 0.13.0
+## Version: 0.14.0
 ## OptionalDeps: QuestieDB
+## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB
 ## SavedVariablesPerCharacter: PathwiseCharDB
 
@@ -15,6 +16,7 @@
 # (tests/run.lua checks this).
 
 # Load order matters:
+#  0. Libs        - LibStub, LibTameable-1.0 (Classic Era data only)
 #  1. Locales     - string table (Pathwise.L)
 #  2. Platform    - the only layer that calls flavor-specific WoW API
 #  3. Core/Init   - namespace, saved variables, events, callbacks, commands
@@ -23,6 +25,11 @@
 #  6. Classes     - class modules (they check the class themselves)
 #  7. Integrations- optional data from other addons (QuestieDB)
 #  8. UI          - frames, popups, slash command binding
+
+Libs\LibStub\LibStub.lua
+Libs\LibTameable-1.0\LibTameable-1.0.lua
+Libs\LibTameable-1.0\Data\Era.lua
+Libs\LibTameable-1.0\Data\EraFood.lua
 
 Locales\enUS.lua
 
@@ -57,6 +64,7 @@ Core\Professions.lua
 Core\Hearthstone.lua
 
 Classes\Hunter.lua
+Classes\PetGuide.lua
 
 Integrations\QuestieDB.lua
 

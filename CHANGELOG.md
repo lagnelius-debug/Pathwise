@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.14.0
+
+- **Pet ability guide** (hunters): Next Steps shows which ability ranks
+  your pet can learn at its level and how - `Teach Claw (Rank 3)` when
+  your hunter already knows it, otherwise `Tame a Den Mother (level
+  18-19) to learn Claw (Rank 3)` with the arrow on the nearest spawn spot
+  (normal beasts first, never elites, dungeons or beasts above your
+  level). Open Beast Training once so Pathwise knows what you've learned.
+  `/pw pet` lists everything; it can be switched off on the Features page.
+- Pathwise is now licensed under GPL-3.0-or-later. It embeds LibTameable-1.0
+  (GPL-3.0, data from CMaNGOS and Tamed) and LibStub; see the README.
+
 ## 0.13.0
 
 - Settings > Pathwise > **Features** (or `/pw features`): switch single

@@ -12,6 +12,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 - M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
+- Pet ability guide (hunter): which ranks your pet can learn at its level and which beast to tame for each, with the arrow on the nearest one. Built and passing the offline tests, not yet tested in game.
 - Window themes (docs/PATHWISE_THEMES.md): 13 themes on the To-do window (v2 painted corner art and v3 emblem themes included), an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
 
 ## Install
@@ -41,6 +42,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw talents` | Show your next talent points from the build for your path. `/pw talents check` compares the build data with the game's talent tree |
 | `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
 | `/pw theme` | List the window themes (numbered, active one marked). `/pw theme 7` or `/pw theme wildwood` sets one, `/pw theme next` cycles |
+| `/pw pet` | Pet ability guide: the ranks your pet can learn at its level and the beasts that teach them |
 | `/pw features` | Open the Features page: turn single features on or off |
 | `/pw settings` | Open the Pathwise settings (minimap button, target button, meters or yards, window theme) |
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
@@ -160,6 +162,14 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] Changing the path switches the gear verdicts, the trainer's recommended or optional spells, and the talent build at once, even with talent points already spent.
 - [ ] With points spent that the new path's build doesn't use (3 or more), Next Steps suggests unlearning them at your class trainer.
 - [ ] `/pw status` shows e.g. `Beast Mastery (your choice) - your talents look like Marksmanship (0/12/0)`.
+
+## In-game test checklist (pet ability guide)
+
+- [ ] With your pet out, `/pw pet` lists its name, family and level, and each ability it could have a higher rank of (e.g. `Claw (Rank 3): tame Den Mother (18, Darkshore), ...`), or says it already has the best ranks.
+- [ ] Open Beast Training once (spellbook). Abilities your hunter already knows then show up as `Teach Claw (Rank 3) to <pet> in Beast Training` instead of a tame step.
+- [ ] Otherwise Next Steps shows `Tame a <beast> (level ..) to learn <ability> (Rank ..)` (at most 2 of these, below quests). The arrow points to the nearest spawn spot when you click the step. Hover the step to read where it is and the stable reminder.
+- [ ] Teaching the rank or leveling the pet updates the steps. Beasts above your level, elites and beasts in dungeons are never suggested.
+- [ ] Settings > Pathwise > Features: "Hunter: pet ability guide" off removes the steps at once.
 
 ## In-game test checklist (M6 hunter module)
 
@@ -311,6 +321,7 @@ From docs/PATHWISE_THEMES_V3.md. **Fully restart WoW** first (not just `/reload`
 - Layers: `Platform/` is the only place that calls flavor-specific WoW API. `Core/` holds the logic and never calls the WoW API directly. `UI/` may use frame and tooltip APIs. `Data/` holds plain tables.
 - Offline smoke tests run against a small mock of the WoW API. Run `lua5.1 tests/run.lua` from the repo root, and set `PATHWISE_ECHO=1` to see chat output. These tests catch Lua errors and logic bugs, but they don't replace testing in game.
 - Quest locations can come from [QuestieDB](https://github.com/Questie/QuestieDB) (GPL-3.0). It's an optional dependency read at runtime through its public `LibQuestieDB` API; Pathwise ships none of its data.
+- Pet ability ranks and the beasts that teach them come from [LibTameable-1.0](https://github.com/Langmans/LibTameable-1.0) by Langmans (GPL-3.0), embedded in `Libs/` with its license. Its data is built from [CMaNGOS](https://github.com/cmangos) (GPL-3.0) and Tamed (MIT; see `Libs/LibTameable-1.0/Data/Tamed-LICENSE.txt`). [LibStub](https://www.wowace.com/projects/libstub) is public domain.
 - Hunter trainer data (`Data/Classic/ClassSpells.lua`) is based on [WhatsTraining](https://github.com/fusionpit/WhatsTraining) by fusionpit, MIT License.
 - The `tests/` and `docs/` folders aren't listed in the TOC, so WoW ignores them.
 
@@ -321,3 +332,7 @@ From docs/PATHWISE_THEMES_V3.md. **Fully restart WoW** first (not just `/reload`
 - [ ] Drag the button to move it (not in combat). Its position survives `/reload`.
 - [ ] `/pw targetbutton` and the "Show target button for quest mobs" checkbox in the settings turn it off and on.
 - [ ] When the arrow points at a mob's spawn spot it shows no distance, and `Look around here` once you get there. Objects that stay put (a moonwell, a herb, an ore vein), turn-ins and your own waypoints show the distance.
+
+## License
+
+Pathwise is released under the GNU General Public License v3.0 or later (see [LICENSE](LICENSE)), because it embeds LibTameable-1.0, which is GPL-3.0.

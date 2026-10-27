@@ -508,6 +508,15 @@ end
 -- Returns name, rankText ("Rank 2" or nil), icon for a spell ID, or nil if
 -- the client doesn't know the ID. Newer clients return a table from
 -- C_Spell.GetSpellInfo; older ones return values from GetSpellInfo.
+-- A spell's name (no rank), or nil.
+function Platform.GetSpellName(spellID)
+  if GetSpellInfo then
+    return (GetSpellInfo(spellID))
+  elseif C_Spell and C_Spell.GetSpellName then
+    return C_Spell.GetSpellName(spellID)
+  end
+end
+
 function Platform.GetSpellDisplay(spellID)
   local name, icon
   if GetSpellInfo then
@@ -866,5 +875,67 @@ function Platform.GetHunterPet()
   if GetPetFoodTypes then
     foodTypes = { GetPetFoodTypes() }
   end
-  return { name = UnitName("pet"), happiness = happiness, foodTypes = foodTypes }
+  local family, familyID = UnitCreatureFamily and UnitCreatureFamily("pet")
+  return {
+    name = UnitName("pet"),
+    happiness = happiness,
+    foodTypes = foodTypes,
+    level = UnitLevel("pet"),
+    family = family, -- localized name, e.g. "Cat"
+    familyID = type(familyID) == "number" and familyID or nil, -- only where the client gives it
+  }
+end
+
+local function RankNumber(text)
+  return tonumber(text and text:match("(%d+)"))
+end
+
+-- The pet's spells from its spellbook: list of { spellID, name, rank }.
+function Platform.GetPetSpells()
+  local spells = {}
+  local count = HasPetSpells and HasPetSpells()
+  if not count or count == 0 then
+    return spells
+  end
+  local book = BOOKTYPE_PET or "pet"
+  for i = 1, count do
+    local spellID
+    if GetSpellBookItemInfo then
+      local _, id = GetSpellBookItemInfo(i, book)
+      spellID = id
+    end
+    local name, subText
+    if GetSpellBookItemName then
+      name, subText = GetSpellBookItemName(i, book)
+    elseif GetSpellName then
+      name, subText = GetSpellName(i, book)
+    end
+    if name or spellID then
+      spells[#spells + 1] = { spellID = spellID, name = name, rank = RankNumber(subText) }
+    end
+  end
+  return spells
+end
+
+-- The abilities in the open Beast Training window (the hunter's learned pet
+-- abilities): list of { name, rank, level, cost }, or nil when no Beast
+-- Training window is open.
+function Platform.GetBeastTraining()
+  if not (GetNumCrafts and GetCraftInfo) then
+    return nil
+  end
+  if GetCraftDisplaySkillLine then
+    local skill = GetCraftDisplaySkillLine()
+    if skill and skill ~= (BEAST_TRAINING or "Beast Training") then
+      return nil -- another craft window (Enchanting)
+    end
+  end
+  local list = {}
+  for i = 1, GetNumCrafts() or 0 do
+    local name, subName, craftType, _, _, cost, level = GetCraftInfo(i)
+    if name and craftType ~= "header" then
+      list[#list + 1] = { name = name, rank = RankNumber(subName), level = level, cost = cost }
+    end
+  end
+  return list
 end

@@ -8,6 +8,11 @@
 local WoW = {}
 _G.WoW = WoW
 
+-- WoW's global aliases and the project ID (Classic Era) libraries read.
+strmatch, strfind, strsub, strlower, strupper = string.match, string.find, string.sub, string.lower, string.upper
+tinsert, tremove, wipe = table.insert, table.remove, function(t) for k in pairs(t) do t[k] = nil end return t end
+WOW_PROJECT_CLASSIC, WOW_PROJECT_ID = 2, 2
+
 WoW.chat = {}
 WoW.timers = {}
 WoW.frames = {}

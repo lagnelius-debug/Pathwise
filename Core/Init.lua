@@ -63,6 +63,8 @@ local CHAR_DEFAULTS = {
   notOffered = {},             -- [questID] = level: suggested pickup its giver didn't offer
   flightNodes = {},            -- known flight points: [name] = { mapID, x, y, npc, continent }
   bind = {},                   -- where the hearthstone is set: { name, mapID } once known
+  beastTraining = {},          -- hunter: pet ability ranks learned ([spellID] = true)
+  beastTrainingSeen = false,   -- hunter: the Beast Training window was read once
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 
