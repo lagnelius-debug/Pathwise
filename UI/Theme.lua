@@ -377,7 +377,7 @@ function WindowMixin:EnableResizing(minWidth, minContentHeight, onResized)
 
   local grip = CreateFrame("Button", nil, self)
   grip:SetSize(16, 16)
-  grip:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -5, 5)
+  -- (Placed by PlaceGrip: some themes move it off their corner art.)
   grip:SetNormalTexture(GRIP .. "Up")
   grip:SetHighlightTexture(GRIP .. "Highlight")
   grip:SetPushedTexture(GRIP .. "Down")
@@ -415,6 +415,20 @@ function WindowMixin:EnableResizing(minWidth, minContentHeight, onResized)
   -- mouse-up, so finish the resize here.
   self:HookScript("OnHide", FinishSizing)
   self.grip = grip
+  self:PlaceGrip()
+end
+
+-- The size grip sits in the bottom-right corner, or where the theme says
+-- (gripOffset: Azure moves it above its corner gem so it doesn't darken it).
+local GRIP_OFFSET = { -5, 5 }
+
+function WindowMixin:PlaceGrip()
+  if not self.grip then
+    return
+  end
+  local offset = self.theme and self.theme.gripOffset or GRIP_OFFSET
+  self.grip:ClearAllPoints()
+  self.grip:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", offset[1], offset[2])
 end
 
 function WindowMixin:SetTitleText(text)
@@ -793,6 +807,7 @@ function Theme.Apply(window, id)
   window.mutedColor = { RGB(theme.muted) }
   window:UpdateHighlight()
   window:UpdateResizeBounds()
+  window:PlaceGrip()
   window:Layout()
   if window.OnThemeApplied then
     window:OnThemeApplied(theme)

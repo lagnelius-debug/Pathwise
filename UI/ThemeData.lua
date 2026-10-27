@@ -55,6 +55,7 @@ Pathwise.Themes = {
     highlight = "fillbar",          -- fill plus a 2 px bar on the left
     highlightColor = "#6eaaf0", highlightAlpha = 0.14, highlightBar = "#a37a38",
     closeInset = 30,
+    gripOffset = { -12, 22 },       -- resize grip inside the window, above the corner gem
     azure = {
       edgeH = "azure_edge_h", edgeV = "azure_edge_v", band = 12,
       corner = "azure_corner", cornerSize = 30,

@@ -177,6 +177,7 @@ check("azure: divider gem between two lines", Shown(window.dividerGem, "azure_ge
 local labelColor, titleColor = window.label._textColor or {}, window.title._textColor or {}
 check("azure: label and title colors", Near(labelColor[1] or 0, 0x9c / 255) and Near(labelColor[3] or 0, 0xee / 255)
   and Near(titleColor[1] or 0, 0xe0 / 255))
+check("azure: resize grip above the corner gem", Point(window.grip)[4] == -12 and Point(window.grip)[5] == 22)
 check("azure: header 60, content inside the band, close clear of the corners", window.headerHeight == 60
   and Point(window.content)[4] == 26 and Point(window.close)[4] == -30)
 local stepsFrame = Pathwise:GetModule("NextStepsFrame")
@@ -195,6 +196,7 @@ for key, texture in pairs(pieces) do
   if key ~= "corners" and texture:IsShown() then leftover = true end
 end
 for _, texture in pairs(pieces.corners) do leftover = leftover or texture:IsShown() end
+check("other themes: grip back in the corner", Point(window.grip)[4] == -5 and Point(window.grip)[5] == 5)
 check("no Azure pieces left on other themes", not leftover and not window.dividerRight:IsShown()
   and window._backdrop ~= nil and window.headerHeight == 44)
 check("gilded: diamonds, divider diamond, no band", Tex(Corner("BOTTOMRIGHT").art) == "diamond"

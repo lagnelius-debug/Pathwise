@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.18.3
+
+- Azure: the window's resize grip moved inside the window, just above the
+  bottom-right corner gem, so it no longer darkens the gem. The other
+  themes keep it in the corner.
+
 ## 0.18.2
 
 - The Auberdine - Menethil Harbor boat: dock positions measured in game
