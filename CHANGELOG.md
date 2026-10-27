@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.17.0
+
+- **Class quest reminders** for every class besides the hunter (who
+  already had the taming quest): Defensive and Berserker Stance, Redemption,
+  The Tome of Valor and the paladin Warhorse, rogue Poisons, the priest
+  racial spells for your race, the four shaman totems, the warlock demons
+  and Felsteed, and the druid Bear Form, Cure Poison and Aquatic Form.
+  From the quest's level, Next Steps shows the step with the arrow on the
+  nearest quest giver for your race; once the quest is in your log, the
+  quest itself takes over, and the reminder is gone once you've learned
+  the spell. Switch them off on the Features page.
+
 ## 0.16.0
 
 - **Boats and zeppelins**: the arrow and the step order now know every

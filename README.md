@@ -174,6 +174,17 @@ Make a character of another class (any level works; a level 10+ one shows talent
 - [ ] Gear tooltips show upgrade percentages. A caster's wand counts. Below level 35, plate says "usable at level 40 - you'll have better gear by then" for warriors and paladins, and a rogue sees "not usable by your class" on axes.
 - [ ] `/pw stats` on an item with spell damage, healing or mana per 5 lists those keys (please send me the output: it tells me whether the weights match).
 
+## In-game test checklist (class quests)
+
+Needs QuestieDB for the arrow. The reminders come at the quest's level, until you've learned what it teaches.
+
+- [ ] Warrior at 10: `Learn Defensive Stance: warrior quest`, with the arrow on the nearest warrior trainer who starts it for your race, and a chat line once. At 30: Berserker Stance.
+- [ ] Paladin at 12: Redemption (The Tome of Divinity); at 20 The Tome of Valor (lower in the list); at 40 the free Warhorse.
+- [ ] Rogue at 20: Poisons. Shaman: Earth Totem at 4, Fire at 10, Water at 20, Air at 30. Warlock: Imp, Voidwalker at 10, Succubus at 20, Felhunter at 30, Felsteed at 40. Druid: Bear Form at 10, Cure Poison at 14, Aquatic Form at 16.
+- [ ] Priest at 10 and 20: only your race's priest spell (e.g. Undead: Touch of Weakness, then Devouring Plague).
+- [ ] Pick up the quest: the reminder disappears and the quest itself becomes the step, all through the chain. When you learn the spell (or get the Air Totem), it's gone for good.
+- [ ] The quest isn't suggested twice (no extra "pick up" line for it), and "Class quest reminders" on the Features page turns them off.
+
 ## In-game test checklist (pet ability guide)
 
 - [ ] With your pet out, `/pw pet` lists its name, family and level, and each ability it could have a higher rank of (e.g. `Claw (Rank 3): tame Den Mother (18, Darkshore), ...`), or says it already has the best ranks.

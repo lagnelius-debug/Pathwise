@@ -41,6 +41,7 @@ local DB_DEFAULTS = {
   rewardPicker = true,          -- best quest reward highlight
   hunterTips = true,            -- hunter: ammo, pet food and taming reminders
   petGuide = true,              -- hunter: pet ability guide
+  classQuests = true,           -- class quest reminders (other classes)
   targetMacro = true,           -- keep the "Pathwise" target macro up to date
   targetButton = { shown = true }, -- floating target button: on/off and position
   sellPrice = true,             -- show vendor sell prices in item tooltips
@@ -65,6 +66,7 @@ local CHAR_DEFAULTS = {
   bind = {},                   -- where the hearthstone is set: { name, mapID } once known
   beastTraining = {},          -- hunter: pet ability ranks learned ([spellID] = true)
   beastTrainingSeen = false,   -- hunter: the Beast Training window was read once
+  classQuestsReminded = {},    -- class quest reminders said in chat ([key] = true)
   lastSnapshot = nil,   -- last character snapshot (written by Character)
 }
 

@@ -320,16 +320,20 @@ local function DoTarget(quest)
   return best
 end
 
--- Returns a target at the nearest NPC that gives quest questID (e.g. a
--- class quest not yet in the log), labelled `label`, or nil.
+-- Returns a target at the nearest NPC that gives quest questID, or any
+-- quest of a list of IDs (e.g. a class quest not yet in the log), labelled
+-- `label`, or nil.
 function QuestieData:GetQuestGiverTarget(questID, label)
   if not Load() then
     return nil
   end
   local ok, target = pcall(function()
-    local startedBy = lib.Quest.Get(questID, "startedBy") or {}
     local points = {}
-    NpcPoints(points, startedBy[1], label .. " (%s)")
+    -- (One quest, or a list: the nearest giver of any of them.)
+    for _, id in ipairs(type(questID) == "table" and questID or { questID }) do
+      local startedBy = lib.Quest.Get(id, "startedBy") or {}
+      NpcPoints(points, startedBy[1], label .. " (%s)")
+    end
     for _, point in ipairs(points) do
       point.spawn = nil -- a destination, never skipped as visited
     end

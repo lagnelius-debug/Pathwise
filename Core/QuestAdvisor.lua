@@ -484,8 +484,10 @@ function QuestAdvisor:Update()
       end,
       -- The giver didn't offer it when the player talked to them at this
       -- level (see OnQuestGiverShown); try again after a level up.
+      -- A class quest reminder already points at the quest.
       skip = function(questID)
         return notOffered[questID] ~= nil and level <= notOffered[questID]
+          or Pathwise:GetModule("ClassQuests"):Covers(questID)
       end,
     }, QuestAdvisor.MAX_PICKUPS)
   end

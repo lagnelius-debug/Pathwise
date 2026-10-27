@@ -50,6 +50,8 @@ local FEATURES = {
         guide:Update()
       end
     end },
+  { "FEATURE_CLASS_QUESTS", function() return Pathwise.db.classQuests end,
+    function(on) Pathwise.db.classQuests = on end, function() Module("ClassQuests"):Update() end },
   { "FEATURE_CHAT", function() return Pathwise.db.chatMessages end,
     function(on) Pathwise.db.chatMessages = on end },
 }
