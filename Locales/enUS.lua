@@ -524,6 +524,8 @@ L.CMD_FEATURES = "open the Features page of the settings (turn single features o
 L.FEATURE_QUESTS = "Quest guide: your quest steps in the To-do window"
 L.FEATURE_PICKUPS = "Quests to pick up nearby (needs QuestieDB)"
 L.FEATURE_AUTO_ACCEPT = "Accept the suggested quests when talking to the giver (hold Shift to skip)"
+L.FEATURE_AUTO_TURN_IN = "Turn in finished quests (not when there's a reward to choose; hold Shift to skip)"
+L.AUTO_TURN_IN_HINT = "Pathwise turned in %s for you. It does this for finished quests unless there's a reward to choose. Hold Shift while talking to skip it, or switch it off on the Features page."
 -- Dungeon guide (Core/DungeonGuide.lua, UI/DungeonPicker.lua)
 L.DUNGEON_TITLE = "Dungeon: %s"
 L.DUNGEON_PICKER_TITLE = "Dungeons"

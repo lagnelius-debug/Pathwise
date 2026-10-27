@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.22.0
+
+- **Auto turn-in**: talking to the NPC of a finished quest, Pathwise opens
+  it from the list (before any new quest, so a follow-up can be accepted
+  right after), completes it and takes the reward - unless there are
+  rewards to choose from: then the window stays open with the best one
+  highlighted, as before. "Report to ..." quests are handed in too.
+  Never for quests that aren't in your quest log (repeatable item hand-ins
+  you may want to keep), quests that ask for gold, or while you hold
+  **Shift**. Switch it off on the Features page ("Turn in finished
+  quests").
+
 ## 0.21.2
 
 Fixes from a check of the dungeon guide:

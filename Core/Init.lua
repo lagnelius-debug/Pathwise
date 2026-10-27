@@ -34,6 +34,8 @@ local DB_DEFAULTS = {
   questPickups = true,          -- suggest quests to pick up (QuestieDB)
   autoAccept = true,            -- accept the suggested quests when talking to the giver
   autoAcceptHinted = false,     -- the auto-accept hint was said in chat
+  autoTurnIn = true,            -- hand in finished quests (reward only when there's no choice)
+  autoTurnInHinted = false,     -- the auto turn-in hint was said in chat
   hearthTips = true,            -- suggest moving the hearthstone (/pw hearth)
   -- Feature switches (settings: Pathwise > Features), all on by default:
   questGuide = true,            -- quest steps in the To-do window (and the arrow on them)

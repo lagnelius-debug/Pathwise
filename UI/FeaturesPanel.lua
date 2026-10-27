@@ -25,6 +25,8 @@ local FEATURES = {
     function(on) Pathwise.db.questPickups = on end, function() Module("QuestAdvisor"):Update() end },
   { "FEATURE_AUTO_ACCEPT", function() return Pathwise.db.autoAccept end,
     function(on) Pathwise.db.autoAccept = on end },
+  { "FEATURE_AUTO_TURN_IN", function() return Pathwise.db.autoTurnIn end,
+    function(on) Pathwise.db.autoTurnIn = on end },
   { "FEATURE_HEARTH", function() return Pathwise.db.hearthTips end,
     function(on) Pathwise.db.hearthTips = on end, function() Module("Hearthstone"):Update() end },
   { "FEATURE_TRAINER", function() return Pathwise.db.trainerTips end,

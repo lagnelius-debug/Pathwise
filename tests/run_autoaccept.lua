@@ -120,6 +120,81 @@ check("not once you have the Voidwalker", not QuestAdvisor:IsSuggested(1685))
 WoW.knownSpells[697] = nil
 snapshot.class, snapshot.raceID, snapshot.level = saved.class, saved.raceID, saved.level
 
+---------------------------------------------------------------------------
+section("Auto turn-in")
+
+local selectedActive, completed, rewards = {}, 0, {}
+local completable, money, choices = true, 0, 0
+C_GossipInfo = {
+  GetActiveQuests = function()
+    return { { title = "Not Yet", questID = 8101, isComplete = false }, { title = "All Done", questID = 8100, isComplete = true },
+      { title = "Not Mine", questID = 8102, isComplete = true } }
+  end,
+  SelectActiveQuest = function(id) selectedActive[#selectedActive + 1] = id end,
+  GetAvailableQuests = function() return { { title = "Suggested Quest", questID = 8001 } } end,
+  SelectAvailableQuest = function(id) opened[#opened + 1] = id end,
+}
+IsQuestCompletable = function() return completable end
+GetQuestMoneyToGet = function() return money end
+CompleteQuest = function() completed = completed + 1 end
+GetNumQuestChoices = function() return choices end
+GetQuestReward = function(choice) rewards[#rewards + 1] = choice end
+WoW.questLog = {
+  { title = "All Done", level = L, questID = 8100, complete = 1, objectives = { { text = "Thing: 1/1", finished = true } } },
+  { title = "Not Yet", level = L, questID = 8101, objectives = { { text = "Thing: 0/1" } } },
+}
+WoW.now = WoW.now + 10
+local openedBefore = #opened
+WoW.FireEvent("GOSSIP_SHOW")
+check("gossip: the finished quest is opened first, not a new one", table.concat(selectedActive, ",") == "8100"
+  and #opened == openedBefore)
+detail = { id = 8100, title = "All Done" }
+WoW.FireEvent("QUEST_PROGRESS")
+check("progress window: completed", completed == 1)
+WoW.ClearChat()
+WoW.FireEvent("QUEST_COMPLETE")
+check("no reward to choose: taken", table.concat(rewards, ",") == "0")
+check("explained once in chat", WoW.ChatContains("Pathwise turned in All Done for you"))
+choices = 1
+WoW.FireEvent("QUEST_COMPLETE")
+check("one reward: taken", rewards[#rewards] == 1)
+choices = 3
+WoW.FireEvent("QUEST_COMPLETE")
+check("rewards to choose from: left to you", #rewards == 2)
+choices = 0
+
+-- Never: quests not in the log (repeatable hand-ins), gold, Shift, off.
+detail = { id = 8102, title = "Not Mine" }
+WoW.FireEvent("QUEST_PROGRESS")
+WoW.FireEvent("QUEST_COMPLETE")
+check("a quest that isn't in the log (a repeatable hand-in): left alone", completed == 1 and #rewards == 2)
+detail = { id = 8100, title = "All Done" }
+money = 500
+WoW.FireEvent("QUEST_PROGRESS")
+check("asks for gold: left alone", completed == 1)
+money = 0
+completable = false
+WoW.FireEvent("QUEST_PROGRESS")
+check("not completable: left alone", completed == 1)
+completable = true
+shift = true
+WoW.FireEvent("QUEST_PROGRESS")
+check("Shift: left alone", completed == 1)
+shift = false
+Pathwise.db.autoTurnIn = false
+WoW.FireEvent("QUEST_PROGRESS")
+WoW.FireEvent("QUEST_COMPLETE")
+check("switched off: nothing", completed == 1 and #rewards == 2)
+Pathwise.db.autoTurnIn = true
+-- A breadcrumb ("Report to ...") has no objectives: finished in the log.
+WoW.questLog = { { title = "Report In", level = L, questID = 8103, objectives = {} } }
+C_GossipInfo.GetActiveQuests = function() return { { title = "Report In", questID = 8103 } } end
+WoW.now = WoW.now + 10
+WoW.FireEvent("GOSSIP_SHOW")
+check("a quest with nothing to do (Report to ...) is turned in too", selectedActive[#selectedActive] == 8103)
+C_GossipInfo, WoW.questLog = nil, {}
+IsQuestCompletable, GetQuestMoneyToGet, CompleteQuest, GetNumQuestChoices, GetQuestReward = nil, nil, nil, nil, nil
+
 -- Clean up
 AcceptQuest, GetQuestID, GetTitleText, IsShiftKeyDown, C_QuestLog = nil, nil, nil, nil, nil
 LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Quest.GetAllIds = questGet, npcGet, allIds

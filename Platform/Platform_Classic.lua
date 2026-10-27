@@ -726,6 +726,80 @@ function Platform.GetOfferedQuests(event)
   return offered
 end
 
+-- The quests the player has with the NPC in the open gossip or greeting
+-- window (to turn in or check on): list of { title, questID (nil where the
+-- client doesn't say), complete (nil when unknown), index }, or nil.
+function Platform.GetActiveQuests(event)
+  local active = {}
+  if event == "GOSSIP_SHOW" then
+    if C_GossipInfo and C_GossipInfo.GetActiveQuests then
+      for i, info in ipairs(C_GossipInfo.GetActiveQuests() or {}) do
+        active[#active + 1] = { title = info.title, questID = info.questID, complete = info.isComplete, index = i }
+      end
+    elseif GetGossipActiveQuests then
+      -- Older clients: title, level, isLowLevel, isComplete, ... per quest.
+      local values = { GetGossipActiveQuests() }
+      for i = 1, #values do
+        if type(values[i]) == "string" then
+          active[#active + 1] = { title = values[i], complete = values[i + 3] and true or nil, index = #active + 1 }
+        end
+      end
+    else
+      return nil
+    end
+  elseif event == "QUEST_GREETING" then
+    if not (GetNumActiveQuests and GetActiveTitle) then
+      return nil
+    end
+    for i = 1, GetNumActiveQuests() do
+      local title, complete = GetActiveTitle(i)
+      active[#active + 1] = { title = title, complete = complete, index = i }
+    end
+  else
+    return nil
+  end
+  return active
+end
+
+-- Opens one of the quests GetActiveQuests(event) listed.
+function Platform.SelectActiveQuest(event, entry)
+  if event == "GOSSIP_SHOW" then
+    if C_GossipInfo and C_GossipInfo.SelectActiveQuest and entry.questID then
+      C_GossipInfo.SelectActiveQuest(entry.questID)
+    elseif SelectGossipActiveQuest then
+      SelectGossipActiveQuest(entry.index)
+    end
+  elseif event == "QUEST_GREETING" and SelectActiveQuest then
+    SelectActiveQuest(entry.index)
+  end
+end
+
+-- The open quest progress window (QUEST_PROGRESS): whether it can be
+-- completed now, and the gold it asks for (copper, 0 when none).
+function Platform.GetQuestProgress()
+  local completable = IsQuestCompletable and IsQuestCompletable() and true or false
+  local money = GetQuestMoneyToGet and GetQuestMoneyToGet() or 0
+  return completable, money
+end
+
+function Platform.CompleteQuest()
+  if CompleteQuest then
+    CompleteQuest()
+  end
+end
+
+-- The quest reward window (QUEST_COMPLETE): how many rewards to choose
+-- from, and taking the reward (choice: 1 for the only one, 0 for none).
+function Platform.GetNumQuestChoices()
+  return GetNumQuestChoices and GetNumQuestChoices() or 0
+end
+
+function Platform.GetQuestReward(choice)
+  if GetQuestReward then
+    GetQuestReward(choice)
+  end
+end
+
 -- Opens one of the quests GetOfferedQuests(event) listed (an entry of it).
 function Platform.SelectOfferedQuest(event, entry)
   if event == "GOSSIP_SHOW" then

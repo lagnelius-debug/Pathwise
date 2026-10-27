@@ -13,7 +13,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 - M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
 - Dungeon guide: pick a dungeon (`/pw dungeon` or "Dungeons" in the To-do window) and the list switches to dungeon mode - its quests, the pre-quests that lead to them and the way to the entrance. Needs QuestieDB. Built and passing the offline tests, not yet tested in game.
-- Auto-accept: talking to a quest giver, the quests the guide suggests are accepted (and picked from the giver's list) without clicking; hold Shift to skip. Built and passing the offline tests, not yet tested in game.
+- Auto-accept and auto turn-in: talking to a quest giver, the quests the guide suggests are accepted and finished quests handed in (the reward taken only when there's nothing to choose) without clicking; hold Shift to skip. Built and passing the offline tests, not yet tested in game.
 - All classes: trainer spells, talent builds (three per class), stat weights, usable gear and the path choices for warriors, paladins, rogues, priests, shamans, mages, warlocks and druids too. Built and passing the offline tests, not yet tested in game.
 - Pet ability guide (hunter): which ranks your pet can learn at its level and which beast to tame for each, with the arrow on the nearest one. Built and passing the offline tests, not yet tested in game.
 - Window themes (docs/PATHWISE_THEMES.md): 14 themes on the To-do window (v2 painted corner art, v3 emblem themes and the v4 Azure theme included), an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
@@ -209,6 +209,8 @@ Needs QuestieDB (for the quests to pick up).
 - [ ] Class quests (e.g. the warlock Voidwalker chain) are accepted all the way through.
 - [ ] Hold **Shift** while right-clicking the NPC: nothing is accepted or opened. Quests shared by party members are never accepted.
 - [ ] Features page: "Accept the suggested quests..." off: nothing is accepted.
+- [ ] Auto turn-in: talk to the NPC of a finished quest - it's opened from the list (before any new quest), completed, and the reward taken when there's none or one. With rewards to choose from, the window stays open with the best one highlighted. A follow-up quest the NPC offers right after is accepted too.
+- [ ] Never handed in: quests that aren't in your log (repeatable item hand-ins, e.g. reputation turn-ins), quests that ask for gold, anything while you hold **Shift**, or with "Turn in finished quests..." off on the Features page. "Report to ..." quests (no objectives) are handed in.
 
 ## In-game test checklist (class quests)
 
