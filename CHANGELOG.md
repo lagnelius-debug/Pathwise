@@ -3,6 +3,11 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.18.2
+
+- The Auberdine - Menethil Harbor boat: dock positions measured in game
+  (Auberdine 32.4, 43.8; Menethil 4.7, 57.2).
+
 ## 0.18.1
 
 - Gear advice for healers and casters: the game names some "Equip:"

@@ -10,8 +10,10 @@ local addonName, Pathwise = ...
 -- Nessa Shadowsong 56,92 and the hippogryph master 58,93 in Rut'theran;
 -- Auberdine docks around 33-35,40-43). Zeppelin towers: where each route's
 -- zeppelin master stands (QuestieDB); Ratchet and Booty Bay: next to the
--- wharfmasters. Other boat docks are approximate: the arrow gets you to the
--- right place and the label says which boat.
+-- wharfmasters. Auberdine - Menethil: measured in game (where you board in
+-- Auberdine, where you step off in Menethil). Other boat docks are
+-- approximate: the arrow gets you to the right place and the label says
+-- which boat.
 
 Pathwise.Data.Travel = {
   -- Checked in order; the first match names the region. box = { x1, y1,
@@ -66,9 +68,9 @@ Pathwise.Data.Travel = {
     -- Between the continents. Alliance boats: Auberdine and Theramore to
     -- Menethil Harbor (Wetlands).
     { from = "KALIMDOR", to = "EASTERN_KINGDOMS", label = "TRAVEL_BOAT_AUBERDINE_TO_MENETHIL", cost = 500, sail = 1000,
-      faction = "Alliance", entry = { 1439, 0.324, 0.439 }, exit = { 1437, 0.046, 0.571 } },
+      faction = "Alliance", entry = { 1439, 0.324, 0.438 }, exit = { 1437, 0.047, 0.572 } },
     { from = "EASTERN_KINGDOMS", to = "KALIMDOR", label = "TRAVEL_BOAT_MENETHIL_TO_AUBERDINE", cost = 500, sail = 1000,
-      faction = "Alliance", entry = { 1437, 0.046, 0.571 }, exit = { 1439, 0.324, 0.439 } },
+      faction = "Alliance", entry = { 1437, 0.047, 0.572 }, exit = { 1439, 0.324, 0.438 } },
     { from = "KALIMDOR", to = "EASTERN_KINGDOMS", label = "TRAVEL_BOAT_THERAMORE_TO_MENETHIL", cost = 500, sail = 1000,
       faction = "Alliance", entry = { 1445, 0.716, 0.564 }, exit = { 1437, 0.050, 0.634 } },
     { from = "EASTERN_KINGDOMS", to = "KALIMDOR", label = "TRAVEL_BOAT_MENETHIL_TO_THERAMORE", cost = 500, sail = 1000,
