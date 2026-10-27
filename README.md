@@ -226,6 +226,18 @@ A `/reload` is enough.
 - [ ] Steps in Rut'theran now count as far away when you're up on the tree, so walkable steps come first.
 - [ ] Finish the zone before leaving: in Rut'theran with turn-ins still waiting on Teldrassil (or in Darnassus), the guide sends you back up through the portal before anything in Darkshore. "Flight to Auberdine" (turned in in Darkshore) is only suggested once Teldrassil is done; its tooltip says why.
 
+## In-game test checklist (boats and zeppelins)
+
+The dock positions are approximate (the zeppelin towers are exact): tell me if the arrow ends up far from a boat.
+
+- [ ] Alliance, in Darkshore, with a step in the Wetlands or anywhere in the Eastern Kingdoms (or `/pw way` on that map): the arrow says `Take the boat to Menethil Harbor (Auberdine docks)` and leads to the southern pier. In Menethil the way back says `Take the boat to Auberdine (Menethil Harbor docks)`.
+- [ ] From Dustwallow Marsh: `Take the boat to Menethil Harbor (Theramore docks)`, and from Menethil to Theramore the other pier.
+- [ ] From the Barrens to Stranglethorn (and back): the Ratchet - Booty Bay boat, for both factions.
+- [ ] Horde: from Durotar to Tirisfal or Stranglethorn the arrow leads to the tower outside Orgrimmar and names the zeppelin and its master (Frezza for Undercity, Snurk Bucksquick for Grom'gol). From Tirisfal to Stranglethorn: the Undercity - Grom'gol zeppelin (Hin Denburg). Alliance characters never get zeppelins, Horde ones never get the Menethil boats.
+- [ ] With flight points known on the other side, the route goes boat first, then flight (e.g. Darkshore to Elwynn: boat to Menethil, then fly to Stormwind).
+- [ ] Feralas (Alliance): steps in Feathermoon Stronghold lead to the ferry on the Forgotten Coast first.
+- [ ] Quests on the other continent are now ordered by the real way there instead of being "can't measure".
+
 ## In-game test checklist (hearthstone)
 
 A `/reload` is enough.

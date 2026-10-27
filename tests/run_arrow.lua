@@ -80,7 +80,8 @@ S.mapID = 1429
 WoW.Slash("way 50 50")
 S.mapID = 1438
 Tick()
-check("other continent: can't point", arrow.distance:GetText() == "Can't point from here" and not arrow.arrow:IsShown())
+check("other continent: the way starts with the portal and boats (" .. tostring(arrow.label:GetText()) .. ")",
+  arrow.label:GetText():find("^Take the portal to Rut'theran Village") ~= nil and arrow.arrow:IsShown())
 WoW.Slash("way clear")
 
 ---------------------------------------------------------------------------

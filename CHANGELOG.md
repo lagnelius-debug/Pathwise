@@ -3,6 +3,20 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.16.0
+
+- **Boats and zeppelins**: the arrow and the step order now know every
+  boat and zeppelin between the continents - Auberdine and Theramore to
+  Menethil Harbor (Alliance), Ratchet to Booty Bay (everyone), and the
+  zeppelins between Orgrimmar, Undercity and Grom'gol (Horde) - plus the
+  Feathermoon Stronghold ferry. Each faction only gets its own docks and
+  towers.
+- On the other side the way can go on by flight (e.g. boat to Menethil,
+  then fly to Stormwind), and the Undercity - Grom'gol zeppelin is used
+  when it beats walking across the Eastern Kingdoms.
+- A waypoint on another continent no longer shows "Can't point from here":
+  the arrow leads to the first portal, boat or zeppelin of the way.
+
 ## 0.15.0
 
 - **All classes**: warriors, paladins, rogues, priests, shamans, mages,

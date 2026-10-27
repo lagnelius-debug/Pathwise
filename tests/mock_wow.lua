@@ -533,6 +533,15 @@ WoW.mapRects = {
   -- Darnassus: Teldrassil x 0.20-0.40, y 0.25-0.55
   [1457] = { continent = 1, top = 9250, left = 11400, bottom = 8350, right = 10800 },
   [1429] = { continent = 0, top = 1000, left = 1000, bottom = 0, right = 0 },          -- Elwynn
+  -- More of a made-up Kalimdor and Eastern Kingdoms, for boats and zeppelins.
+  [1411] = { continent = 1, top = 0, left = 0, bottom = -4000, right = -3000 },        -- Durotar
+  [1413] = { continent = 1, top = 0, left = 4000, bottom = -6000, right = 0 },         -- the Barrens
+  [1444] = { continent = 1, top = -2000, left = 9000, bottom = -7000, right = 4000 },  -- Feralas
+  [1445] = { continent = 1, top = -6000, left = 2000, bottom = -9000, right = -1000 }, -- Dustwallow Marsh
+  [1415] = { continent = 0, top = 10000, left = 6000, bottom = -8000, right = -6000 }, -- Eastern Kingdoms
+  [1420] = { continent = 0, top = 9000, left = 2000, bottom = 6000, right = -1000 },   -- Tirisfal Glades
+  [1437] = { continent = 0, top = 4000, left = 2000, bottom = 1500, right = -1000 },   -- Wetlands
+  [1434] = { continent = 0, top = -1000, left = 2000, bottom = -6000, right = -1000 }, -- Stranglethorn Vale
 }
 S.mapX, S.mapY, S.facing = 0.5, 0.5, 0
 
