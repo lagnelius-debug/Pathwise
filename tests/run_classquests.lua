@@ -97,6 +97,8 @@ WoW.knownSpells[19261] = true -- rank 2 (the client may not report rank 1 any mo
 Refresh()
 check("a higher rank known: done", ClassItems() == "")
 WoW.knownSpells[19261] = nil
+Become({ "Priest", "PRIEST", 5 }, { "Troll", "Troll", 8 }, 10)
+check("Troll priest: Hex of Weakness, not Touch of Weakness (" .. ClassItems() .. ")", ClassItems() == "HEX_OF_WEAKNESS")
 
 Become({ "Shaman", "SHAMAN", 7 }, { "Orc", "Orc", 2 }, 30)
 check("level 30 shaman without totems: at most 3, by level (" .. ClassItems() .. ")",

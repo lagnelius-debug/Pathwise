@@ -111,12 +111,19 @@ local function NearestTeacher(lib, spellID)
       local beast = lib:GetBeast(npcID)
       if beast and beast.pins and not beast.elite and beast.minLevel <= level then
         for pinMap, pins in pairs(beast.pins) do
+          -- The way there is measured once per map, to its pin nearest in a
+          -- straight line (a beast can have hundreds of pins, and the way
+          -- may go through boats).
+          local px, py, straight
           for i = 1, #pins - 1, 2 do
-            local px, py = pins[i] / 100, pins[i + 1] / 100
-            local distance = Waypoints.TravelDistance(mapID, x, y, pinMap, px, py, true)
-            if distance and (not best or distance < best.distance) then
-              best = { beast = beast, npcID = npcID, mapID = pinMap, x = px, y = py, distance = distance }
+            local d = Waypoints.Vector(mapID, x, y, pinMap, pins[i] / 100, pins[i + 1] / 100)
+            if not px or (d and (not straight or d < straight)) then
+              px, py, straight = pins[i] / 100, pins[i + 1] / 100, d
             end
+          end
+          local distance = px and Waypoints.TravelDistance(mapID, x, y, pinMap, px, py, true)
+          if distance and (not best or distance < best.distance) then
+            best = { beast = beast, npcID = npcID, mapID = pinMap, x = px, y = py, distance = distance }
           end
         end
       end

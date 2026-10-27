@@ -21,7 +21,9 @@ local addonName, Pathwise = ...
 --
 -- Quest IDs, levels, races and chains are from the vmangos world database
 -- (quest_template: the class quests whose reward teaches a spell),
--- following PrevQuestId / NextQuestId back to the first quests.
+-- following PrevQuestId / NextQuestId back to the first quests. (One
+-- Touch of Weakness quest, 5659, says Undead and Troll there; the spell is
+-- Undead only, so it's Undead here.)
 
 Pathwise.Data.ClassQuests = {
   WARRIOR = {
@@ -90,7 +92,7 @@ Pathwise.Data.ClassQuests = {
     },
     -- Undead
     { key = "TOUCH_OF_WEAKNESS", level = 10, spell = 2652, name = "Touch of Weakness",
-      starts = { [5658] = 16, [5659] = 144, [5660] = 16, [5661] = 16, [5662] = 16, [5663] = 16 },
+      starts = { [5658] = 16, [5659] = 16, [5660] = 16, [5661] = 16, [5662] = 16, [5663] = 16 },
       finals = { 5658, 5659, 5660, 5661, 5662, 5663 },
       chain = { 5658, 5659, 5660, 5661, 5662, 5663 },
     },

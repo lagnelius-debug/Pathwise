@@ -3,6 +3,31 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.17.1
+
+Fixes from a check of the features since 0.14.0:
+
+- Smoother frame rate: the arrow no longer works out the whole way (with
+  boats, zeppelins and flights) 20 times a second; it does so for a new
+  target, after moving 10 yards or every 2 seconds.
+- Faster distances: the ways through portals, boats and zeppelins are
+  searched once per position and reused for every spawn, giver and
+  trainer that is measured; the pet guide measures each map once instead
+  of every spawn pin.
+- Trainer: spells that need another spell now also count a higher rank of
+  it (e.g. Greater Blessing of Might once you know Blessing of Might rank
+  7), or learning it in the same visit; and "coming soon" leaves out
+  spells that need something from a class quest you haven't done (bear
+  abilities without Bear Form).
+- Troll priests no longer get the Touch of Weakness quest reminder (the
+  quest data listed Trolls for one of its quests; the spell is Undead
+  only).
+- Pet guide: pet spell IDs with extra flag bits are read correctly.
+- Talent advisor: a talent split over two picks shows its full rank count
+  even if the client's talent can't be found.
+- The Warhorse and Felsteed reminders say the quest saves you buying a
+  mount (riding may still cost gold).
+
 ## 0.17.0
 
 - **Class quest reminders** for every class besides the hunter (who

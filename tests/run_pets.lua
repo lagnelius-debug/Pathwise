@@ -29,7 +29,8 @@ local unitLevel = UnitLevel
 UnitLevel = function(unit) if unit == "pet" then return petLevel end return S.level end
 UnitCreatureFamily = function(unit) if unit == "pet" and S.pet then return "Cat" end end
 HasPetSpells = function() return #petSpells end
-GetSpellBookItemInfo = function(i, book) return "PETACTION", petSpells[i] end
+-- (Pet actions come with a flag above the spell ID.)
+GetSpellBookItemInfo = function(i, book) return "PETACTION", petSpells[i] and petSpells[i] + 0x1000000 end
 GetSpellBookItemName = function(i) return WoW.spellNames[petSpells[i]], nil end
 for id, name in pairs({ [17253] = "Bite", [17255] = "Bite", [17256] = "Bite", [16827] = "Claw", [16828] = "Claw",
   [16829] = "Claw", [1742] = "Cower", [23099] = "Dash", [24450] = "Prowl" }) do

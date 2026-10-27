@@ -903,7 +903,8 @@ function Platform.GetPetSpells()
     local spellID
     if GetSpellBookItemInfo then
       local _, id = GetSpellBookItemInfo(i, book)
-      spellID = id
+      -- Pet actions can carry flags above the spell ID (0x1000000 and up).
+      spellID = type(id) == "number" and id % 0x1000000 or nil
     end
     local name, subText
     if GetSpellBookItemName then

@@ -25,6 +25,7 @@ local MAX_ANNOUNCED_NAMES = 6
 local chainsClass   -- class the chain info below was built for
 local chainInfo     -- [entry] = { prev = entry, base = entry, higher = { entries } }
 local trainable     -- non-talent entries sorted by level, then name, then rank
+local byId          -- [spellID] = entry
 local list = { available = {}, recommended = {}, optional = {}, upcoming = {} }
 
 local function GetSnapshot()
@@ -34,13 +35,14 @@ end
 -- Links each rank to the previous one and to the higher ranks of the same
 -- spell (by name within the class's data).
 local function BuildChains(class)
-  chainsClass, chainInfo, trainable = class, {}, {}
+  chainsClass, chainInfo, trainable, byId = class, {}, {}, {}
   local entries = Data.ClassSpells[class]
   if not entries then
     return
   end
   local byName = {}
   for _, entry in ipairs(entries) do
+    byId[entry.id] = entry
     byName[entry.name] = byName[entry.name] or {}
     table.insert(byName[entry.name], entry)
     if not entry.talent then
@@ -143,12 +145,17 @@ function Trainer:BuildList()
       if entry.level <= level then
         -- The previous rank must be known, or learnable in the same visit.
         local prevOK = not info.prev or willBeAvailable[info.prev] or IsKnown(info.prev)
+        local required = entry.requires and byId[entry.requires]
         local requiresOK = not entry.requires or Platform.IsSpellKnown(entry.requires)
+          or (required and (willBeAvailable[required] or IsKnown(required)))
         if prevOK and requiresOK then
           willBeAvailable[entry] = true
           available[#available + 1] = MakeItem(entry, IsOptional(entry, snapshot.class, spec))
         end
-      elseif entry.level <= level + UPCOMING_LEVELS then
+      elseif entry.level <= level + UPCOMING_LEVELS
+        -- (Not when it needs something from a class quest the player
+        -- hasn't done, e.g. bear abilities without Bear Form.)
+        and (not entry.requires or byId[entry.requires] or Platform.IsSpellKnown(entry.requires)) then
         upcoming[#upcoming + 1] = MakeItem(entry, IsOptional(entry, snapshot.class, spec))
       end
     end

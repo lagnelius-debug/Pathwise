@@ -60,12 +60,37 @@ function Waypoints.Vector(fromMap, fromX, fromY, toMap, toX, toY)
   return math.sqrt(dNorth * dNorth + dWest * dWest), math.atan2(dWest, dNorth)
 end
 
+local CachedRoute
+
 -- Distance (yards) along the travel route - through portals and boats when
 -- walking can't get there (Core/Travel.lua), flights when they're faster -
 -- or straight; nil if unknown. Used to order steps and pick the nearest
 -- spawn or NPC. onFoot: without flights (for picking among many points).
 function Waypoints.TravelDistance(fromMap, fromX, fromY, toMap, toX, toY, onFoot)
   return Pathwise:GetModule("Travel").Distance(fromMap, fromX, fromY, toMap, toX, toY, onFoot)
+end
+
+-- The arrow asks many times a second; the route (portals, boats, flights)
+-- is only worked out again for a new target, after moving this many yards,
+-- or after this many seconds.
+local ROUTE_MOVE_YARDS = 10
+local ROUTE_MAX_AGE = 2
+local routeCache -- { target, mapID, x, y, time, route }
+
+function CachedRoute(mapID, x, y, target)
+  local cache = routeCache
+  local now = Platform.GetTime()
+  if cache and cache.target == target and cache.toMap == target.mapID and cache.toX == target.x
+    and cache.toY == target.y and now - cache.time < ROUTE_MAX_AGE then
+    local moved = Waypoints.Vector(cache.mapID, cache.x, cache.y, mapID, x, y)
+    if moved and moved < ROUTE_MOVE_YARDS then
+      return cache.route
+    end
+  end
+  local route = Pathwise:GetModule("Travel").Route(mapID, x, y, target.mapID, target.x, target.y)
+  routeCache = { target = target, toMap = target.mapID, toX = target.x, toY = target.y,
+    mapID = mapID, x = x, y = y, time = now, route = route }
+  return route
 end
 
 -- Where the arrow should point: returns distance, angle relative to the
@@ -85,7 +110,7 @@ function Waypoints:GetDirection()
   -- (On a flight: straight at the target; the flight goes where it goes.)
   local route
   if not Platform.IsOnTaxi() then
-    route = Pathwise:GetModule("Travel").Route(mapID, x, y, target.mapID, target.x, target.y)
+    route = CachedRoute(mapID, x, y, target)
   end
   local via = route and route.legs[1]
   local aim = via and { mapID = via.entry[1], x = via.entry[2], y = via.entry[3] } or target

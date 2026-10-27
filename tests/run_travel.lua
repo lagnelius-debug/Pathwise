@@ -61,6 +61,18 @@ Arrow:Update()
 check("at the portal: take it here, waypoint kept", arrow.distance:GetText() == "Take it here"
   and Waypoints:GetTarget() ~= nil and not WoW.ChatContains("Arrived"))
 
+-- The arrow asks 20 times a second: the route isn't searched every time.
+At(1438, 0.597, 0.657)
+local routes, route = 0, Travel.Route
+Travel.Route = function(...) routes = routes + 1; return route(...) end
+for _ = 1, 10 do Waypoints:GetDirection() end
+check("route worked out once while standing still (" .. routes .. ")", routes <= 1)
+local before = routes
+At(1438, 0.597, 0.70) -- moved about 120 yd
+Waypoints:GetDirection()
+check("worked out again after moving", routes == before + 1)
+Travel.Route = route
+
 At(1438, 0.56, 0.895) -- arrived in Rut'theran
 Arrow:Update()
 check("after the portal: straight to the destination", arrow.label:GetText() == "Turn in: Nessa Shadowsong"

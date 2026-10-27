@@ -101,6 +101,28 @@ WoW.knownSpells[5487] = true
 check("druid: Bash with Bear Form", Has("DRUID", 4, "Alliance", 14, 5211))
 WoW.knownSpells[5487] = nil
 
+-- Needs a spell the player has a higher rank of (the client may stop
+-- reporting the lower one): Greater Blessing of Might needs rank 6.
+WoW.knownSpells[25291] = true -- Blessing of Might rank 7
+check("paladin: Greater Blessing with a higher Blessing of Might rank", Has("PALADIN", 1, "Alliance", 60, 25782))
+WoW.knownSpells[25291] = nil
+WoW.knownSpells[19837] = true -- rank 5: rank 6 and the Greater Blessing in the same visit
+check("paladin: Greater Blessing with rank 6 learnable in the same visit", Has("PALADIN", 1, "Alliance", 52, 25782))
+WoW.knownSpells[19837] = nil
+-- Coming soon: not the bear abilities without Bear Form (a class quest).
+local function Upcoming(class, level, id)
+  snapshot.class, snapshot.raceID, snapshot.faction, snapshot.level = class, 4, "Alliance", level
+  for _, item in ipairs(Trainer:BuildList().upcoming) do
+    if item.id == id then return true end
+  end
+  return false
+end
+check("druid: Bash not coming soon without Bear Form", not Upcoming("DRUID", 12, 5211))
+WoW.knownSpells[5487] = true
+check("druid: Bash coming soon with Bear Form", Upcoming("DRUID", 12, 5211))
+WoW.knownSpells[5487] = nil
+check("druid: cat abilities coming soon (Cat Form is a trainer spell)", Upcoming("DRUID", 18, 1082))
+
 snapshot.class, snapshot.raceID, snapshot.faction, snapshot.level = saved.class, saved.raceID, saved.faction, saved.level
 Trainer:BuildList()
 
@@ -140,3 +162,9 @@ check("split pick: no points off the build", Talents.OffBuildPoints(trees, ARMS)
 deflection.rank = 5
 upcoming = Talents.UpcomingPoints(trees, ARMS, 1)
 check("split pick: done, Mortal Strike next", upcoming[1].name == "Mortal Strike")
+-- A talent the client doesn't have (names changed?): the build's total ranks.
+table.remove(trees[1].talents, 2)
+deflection.rank = 0
+upcoming = Talents.UpcomingPoints(trees, ARMS, 5)
+check("split pick: unknown talent shows the build's total ranks", upcoming[1].name == "Deflection"
+  and upcoming[1].maxRank == 5)

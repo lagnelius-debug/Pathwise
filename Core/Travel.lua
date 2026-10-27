@@ -75,6 +75,83 @@ local function Crossing(connector)
 end
 Travel.Crossing = Crossing
 
+-- Every way from a start position into another region: list of { mapID,
+-- x, y, cost, legs } (where you come out and what it cost to get there).
+-- Depth-first over the (small) connector graph: each region once, except
+-- through a connector within one region (Undercity - Grom'gol); once in the
+-- goal region, one such connector more. Cached per start position, so
+-- measuring many points from where the player stands (the nearest spawn,
+-- giver or trainer) searches only once per region. The lists are shared:
+-- read them, never change them.
+local arrivalCache, arrivalCount = {}, 0
+local ARRIVAL_CACHE_MAX = 64
+
+local function Arrivals(start, goal, fromMap, fromX, fromY)
+  local key = table.concat({ fromMap, fromX, fromY, start, goal, PlayerFaction() or "" }, ":")
+  local cached = arrivalCache[key]
+  if cached then
+    return cached
+  end
+  local list = {}
+  local legs, used, visited = {}, {}, { [start] = true }
+  local function Record(at, cost)
+    local copy = {}
+    for i, leg in ipairs(legs) do
+      copy[i] = leg
+    end
+    list[#list + 1] = { mapID = at[1], x = at[2], y = at[3], cost = cost, legs = copy }
+  end
+  local function Take(connector, mapID, x, y, cost)
+    local entry = connector.entry
+    local walk = Vector(mapID, x, y, entry[1], entry[2], entry[3])
+    return walk and cost + walk + (connector.cost or 0) + Crossing(connector)
+  end
+  local function Walk(region, mapID, x, y, cost)
+    for _, connector in ipairs(Data.Travel.CONNECTORS) do
+      if connector.from == region and not used[connector] and Usable(connector)
+        and (connector.to == region or not visited[connector.to]) then
+        local total = Take(connector, mapID, x, y, cost)
+        if total then
+          local exit = connector.exit
+          used[connector] = true
+          legs[#legs + 1] = connector
+          if connector.to == goal then
+            Record(exit, total)
+            for _, shortcut in ipairs(Data.Travel.CONNECTORS) do
+              if shortcut.from == goal and shortcut.to == goal and not used[shortcut] and Usable(shortcut) then
+                local further = Take(shortcut, exit[1], exit[2], exit[3], total)
+                if further then
+                  legs[#legs + 1] = shortcut
+                  Record(shortcut.exit, further)
+                  legs[#legs] = nil
+                end
+              end
+            end
+          else
+            local wasVisited = visited[connector.to]
+            visited[connector.to] = true
+            Walk(connector.to, exit[1], exit[2], exit[3], total)
+            visited[connector.to] = wasVisited
+          end
+          legs[#legs] = nil
+          used[connector] = nil
+        end
+      end
+    end
+  end
+  Walk(start, fromMap, fromX, fromY, 0)
+  if arrivalCount >= ARRIVAL_CACHE_MAX then
+    arrivalCache, arrivalCount = {}, 0
+  end
+  arrivalCache[key], arrivalCount = list, arrivalCount + 1
+  return list
+end
+
+-- Forgets the cached searches (tests change the connectors or the faction).
+function Travel.ClearCache()
+  arrivalCache, arrivalCount = {}, 0
+end
+
 -- The way on foot (with portals, boats and zeppelins) from one map position
 -- to another: { legs = { connector, ... }, distance }, or nil when walking
 -- straight is the way (or a region is unknown, or no connectors lead there).
@@ -86,48 +163,32 @@ local function StaticRoute(fromMap, fromX, fromY, toMap, toX, toY)
   end
   local best
   if start == goal then
+    -- Within a region: only a connector inside it (Undercity - Grom'gol)
+    -- can beat walking, and only on a long way.
     local direct = Vector(fromMap, fromX, fromY, toMap, toX, toY)
     if not direct or direct < Travel.SHORTCUT_MIN then
       return nil
     end
-    best = { legs = {}, distance = direct }
-  end
-  local legs, used = {}, {}
-  -- Depth-first over the (small) connector graph, each connector at most
-  -- once, keeping the cheapest.
-  local function Walk(region, mapID, x, y, cost)
-    if best and cost >= best.distance then
-      return
-    end
-    if region == goal and #legs > 0 then
-      local last = Vector(mapID, x, y, toMap, toX, toY)
-      if last and (not best or cost + last < best.distance) then
-        local copy = {}
-        for i, leg in ipairs(legs) do
-          copy[i] = leg
-        end
-        best = { legs = copy, distance = cost + last }
-      end
-    end
     for _, connector in ipairs(Data.Travel.CONNECTORS) do
-      if connector.from == region and not used[connector] and Usable(connector) then
+      if connector.from == start and connector.to == start and Usable(connector) then
         local entry, exit = connector.entry, connector.exit
-        local walk = Vector(mapID, x, y, entry[1], entry[2], entry[3])
-        if walk then
-          used[connector] = true
-          legs[#legs + 1] = connector
-          Walk(connector.to, exit[1], exit[2], exit[3], cost + walk + (connector.cost or 0) + Crossing(connector))
-          legs[#legs] = nil
-          used[connector] = nil
+        local before = Vector(fromMap, fromX, fromY, entry[1], entry[2], entry[3])
+        local after = Vector(exit[1], exit[2], exit[3], toMap, toX, toY)
+        local distance = before and after and before + (connector.cost or 0) + Crossing(connector) + after
+        if distance and distance < direct and (not best or distance < best.distance) then
+          best = { legs = { connector }, distance = distance }
         end
       end
     end
-  end
-  Walk(start, fromMap, fromX, fromY, 0)
-  if best and #best.legs > 0 then
     return best
   end
-  return nil
+  for _, arrival in ipairs(Arrivals(start, goal, fromMap, fromX, fromY)) do
+    local last = Vector(arrival.mapID, arrival.x, arrival.y, toMap, toX, toY)
+    if last and (not best or arrival.cost + last < best.distance) then
+      best = { legs = arrival.legs, distance = arrival.cost + last }
+    end
+  end
+  return best
 end
 
 -- Yards on foot (with portals and boats) between two positions, or nil.
