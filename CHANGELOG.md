@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.18.0
+
+- **Azure theme** (docs/PATHWISE_THEMES_V4.md), matching the Pathwise logo:
+  deep blue enamel with a shine at the top, antique-gold rune bands that
+  repeat along all four edges, gold corner plates with blue gems, a compass
+  crest on the top edge, a gem in the header divider and a new current-step
+  highlight (fill with a gold bar on the left). Azure is first in the theme
+  list, so the theme numbers moved up by one; your saved theme stays.
+- **Fully restart WoW** (not just /reload) so the 7 new textures load.
+
 ## 0.17.1
 
 Fixes from a check of the features since 0.14.0:

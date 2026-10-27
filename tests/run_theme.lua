@@ -40,8 +40,9 @@ end
 ---------------------------------------------------------------------------
 section("Themes: data and registry")
 
-check("13 themes in order", #Pathwise.ThemeOrder == 13 and Pathwise.ThemeOrder[5] == "dragonflight"
-  and Pathwise.ThemeOrder[11] == "phoenixcrest" and Pathwise.ThemeOrder[13] == "ember")
+check("14 themes in order, Azure first", #Pathwise.ThemeOrder == 14 and Pathwise.ThemeOrder[1] == "azure"
+  and Pathwise.ThemeOrder[6] == "dragonflight" and Pathwise.ThemeOrder[12] == "phoenixcrest"
+  and Pathwise.ThemeOrder[14] == "ember")
 for _, id in ipairs(Pathwise.ThemeOrder) do
   check("theme has a name and colors: " .. id, Pathwise.Themes[id].name and Pathwise.Themes[id].bg and Pathwise.Themes[id].text)
 end
@@ -52,7 +53,7 @@ Pathwise.db.theme = "nope"
 check("unknown saved id falls back to the default", Theme.GetActiveId() == "dragonflight"
   and Theme.Get("nope") == Pathwise.Themes.dragonflight)
 Pathwise.db.theme = "dragonflight"
-check("Get by number", Theme.Get(12) == Pathwise.Themes.wildwood)
+check("Get by number", Theme.Get(13) == Pathwise.Themes.wildwood)
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 section("Themes: Dragonflight on the To-do window")
@@ -89,9 +90,9 @@ section("Themes: /pw theme")
 
 WoW.ClearChat()
 WoW.Slash("theme")
-check("list with numbers and the active one", WoW.ChatContains("Pathwise themes: 1 Gilded Hairline, 2 Classic Tooltip, "
-  .. "3 Moonlit, 4 Corner Brackets, 5 Dragonflight (active), 6 Skyhawk, 7 Ironhorn, 8 Frostfang, 9 Lionheart, "
-  .. "10 Moonwatch, 11 Phoenix Crest, 12 Wildwood, 13 Phoenix Ember"))
+check("list with numbers and the active one", WoW.ChatContains("Pathwise themes: 1 Azure, 2 Gilded Hairline, 3 Classic Tooltip, "
+  .. "4 Moonlit, 5 Corner Brackets, 6 Dragonflight (active), 7 Skyhawk, 8 Ironhorn, 9 Frostfang, 10 Lionheart, "
+  .. "11 Moonwatch, 12 Phoenix Crest, 13 Wildwood, 14 Phoenix Ember"))
 
 -- Every emblem theme: its head on top, its gem at the bottom, same anchors.
 local emblems = {
@@ -112,12 +113,12 @@ for id, files in pairs(emblems) do
     and window.headerHeight == 48 and Point(window.close)[4] == -36)
 end
 WoW.ClearChat()
-WoW.Slash("theme 11")
-check("/pw theme 11 -> Phoenix Crest", WoW.ChatContains("Theme: Phoenix Crest") and Pathwise.db.theme == "phoenixcrest")
+WoW.Slash("theme 12")
+check("/pw theme 12 -> Phoenix Crest", WoW.ChatContains("Theme: Phoenix Crest") and Pathwise.db.theme == "phoenixcrest")
 
 WoW.ClearChat()
-WoW.Slash("theme 12")
-check("/pw theme 12", WoW.ChatContains("Theme: Wildwood") and Pathwise.db.theme == "wildwood" and window.themeId == "wildwood")
+WoW.Slash("theme 13")
+check("/pw theme 13", WoW.ChatContains("Theme: Wildwood") and Pathwise.db.theme == "wildwood" and window.themeId == "wildwood")
 check("wildwood keeps the 52 px header", window.headerHeight == 52)
 check("wildwood: summer branches by default",
   Art(Corner("TOPLEFT").art, "wildwood_top_summer", 110, "TOPLEFT", -27.5, 27.5, "0,1,0,1")
@@ -136,7 +137,66 @@ for i, name in ipairs(corners) do
 end
 
 WoW.Slash("theme next")
-check("cycles around to Gilded Hairline", Pathwise.db.theme == "gilded")
+check("cycles around to Azure", Pathwise.db.theme == "azure")
+
+-- Azure (docs/PATHWISE_THEMES_V4.md): the tiled frame.
+local pieces = window.tiledPieces
+local function Shown(texture, file) return texture:IsShown() and Tex(texture) == file end
+check("azure: no backdrop, trim or corner art", window._backdrop == nil and not window.trim:IsShown()
+  and not AnyCornerShown())
+check("azure: background and shine", Shown(pieces.bg, "azure_bg") and Shown(pieces.gloss, "azure_gloss")
+  and pieces.gloss._height == 84 and Point(pieces.gloss)[4] == 12 and Point(pieces.gloss)[5] == -12)
+check("azure: four bands, 12 thick", Shown(pieces.top, "azure_edge_h") and Shown(pieces.bottom, "azure_edge_h")
+  and Shown(pieces.left, "azure_edge_v") and Shown(pieces.right, "azure_edge_v")
+  and pieces.top._height == 12 and pieces.left._width == 12)
+local function Tiled(texture, horizontal, length)
+  local c = texture._texcoord or {}
+  if horizontal then return c[1] == 0 and Near(c[2], length / 384) and c[3] == 0 and c[4] == 1 end
+  return c[1] == 0 and c[2] == 1 and c[3] == 0 and Near(c[4], length / 384)
+end
+check("azure: bands repeat along the window (" .. Coords(pieces.top) .. ")",
+  Tiled(pieces.top, true, window:GetWidth()) and Tiled(pieces.bottom, true, window:GetWidth())
+  and Tiled(pieces.left, false, window:GetHeight()) and Tiled(pieces.right, false, window:GetHeight()))
+local contentHeight = window.contentHeight
+window:SetContentHeight(600)
+check("azure: a taller window re-tiles the side bands", Tiled(pieces.left, false, window:GetHeight())
+  and window:GetHeight() > 600)
+window:SetContentHeight(contentHeight)
+local cornersOK = true
+for corner, offset in pairs({ TOPLEFT = { 6, -6 }, TOPRIGHT = { -6, -6 }, BOTTOMLEFT = { 6, 6 }, BOTTOMRIGHT = { -6, 6 } }) do
+  local p = Point(pieces.corners[corner])
+  cornersOK = cornersOK and Shown(pieces.corners[corner], "azure_corner") and pieces.corners[corner]._width == 30
+    and p[1] == "CENTER" and p[3] == corner and p[4] == offset[1] and p[5] == offset[2]
+    and Coords(pieces.corners[corner]) == "0,1,0,1"
+end
+check("azure: gem corners centered on the corners, not mirrored", cornersOK)
+check("azure: crest on the top band", Shown(pieces.crest, "azure_crest") and pieces.crest._width == 36
+  and Point(pieces.crest)[3] == "TOP" and Point(pieces.crest)[5] == -3)
+check("azure: divider gem between two lines", Shown(window.dividerGem, "azure_gem") and window.dividerGem._width == 14
+  and window.divider:IsShown() and window.dividerRight:IsShown())
+local labelColor, titleColor = window.label._textColor or {}, window.title._textColor or {}
+check("azure: label and title colors", Near(labelColor[1] or 0, 0x9c / 255) and Near(labelColor[3] or 0, 0xee / 255)
+  and Near(titleColor[1] or 0, 0xe0 / 255))
+check("azure: header 60, content inside the band, close clear of the corners", window.headerHeight == 60
+  and Point(window.content)[4] == 26 and Point(window.close)[4] == -30)
+local stepsFrame = Pathwise:GetModule("NextStepsFrame")
+stepsFrame:SetShown(false)
+local row = CreateFrame("Frame", nil, window.content)
+window:SetHighlightRow(row)
+check("azure: fill with a 2 px bar on the left", window.highlightFill:IsShown() and window.highlightBar:IsShown()
+  and window.highlightBar._width == 2)
+window:SetHighlightRow(nil)
+stepsFrame:SetShown(true)
+
+WoW.Slash("theme next")
+check("then Gilded Hairline", Pathwise.db.theme == "gilded")
+local leftover = false
+for key, texture in pairs(pieces) do
+  if key ~= "corners" and texture:IsShown() then leftover = true end
+end
+for _, texture in pairs(pieces.corners) do leftover = leftover or texture:IsShown() end
+check("no Azure pieces left on other themes", not leftover and not window.dividerRight:IsShown()
+  and window._backdrop ~= nil and window.headerHeight == 44)
 check("gilded: diamonds, divider diamond, no band", Tex(Corner("BOTTOMRIGHT").art) == "diamond"
   and Corner("BOTTOMRIGHT").art._width == 10 and window.dividerGem:IsShown() and not window.header:IsShown()
   and window.headerHeight == 44)
@@ -153,7 +213,7 @@ WoW.Slash("theme moonlit")
 check("moonlit: crescent left of the title", window.headerIcon:IsShown() and Tex(window.headerIcon) == "crescent"
   and window.header:IsShown())
 
-WoW.Slash("theme 4")
+WoW.Slash("theme 5")
 check("brackets: L-lines in the corners, no border", Corner("TOPLEFT").lineH:IsShown() and Corner("TOPLEFT").lineV:IsShown()
   and Corner("TOPLEFT").lineH._width == 16 and Corner("TOPLEFT").lineV._height == 16
   and window._backdrop.edgeFile == nil and not window.divider:IsShown() and not Corner("TOPLEFT").art:IsShown())
@@ -190,7 +250,7 @@ WoW.Slash("season spring")
 check("unknown season: usage", WoW.ChatContains("Usage: /pw season") and Pathwise.db.wildwoodSeason == "winter")
 WoW.Slash("season summer")
 check("/pw season summer", Pathwise.db.wildwoodSeason == "summer" and Tex(Corner("TOPLEFT").art) == "wildwood_top_summer")
-WoW.Slash("theme 4") -- the highlight tests below use Corner Brackets
+WoW.Slash("theme 5") -- the highlight tests below use Corner Brackets
 
 ---------------------------------------------------------------------------
 section("Themes: current step highlight")
@@ -212,10 +272,10 @@ NextStepsFrame:SetShown(true)
 section("Themes: switching creates no textures")
 
 local before = WoW.textureCount
-for _ = 1, 26 do
+for _ = 1, 28 do
   WoW.Slash("theme next")
 end
-check("cycling 26 times creates no new textures", WoW.textureCount == before)
+check("cycling 28 times creates no new textures", WoW.textureCount == before)
 check("back on the same theme after 2 full cycles", Pathwise.db.theme == "dragonflight")
 
 ---------------------------------------------------------------------------
@@ -236,7 +296,8 @@ local buttons = {}
 for _, f in ipairs(WoW.frames) do
   if f.themeId and f._parent == panel then buttons[#buttons + 1] = f end
 end
-check("Appearance: 13 theme buttons", #buttons == 13 and buttons[1].themeId == "gilded" and buttons[13].themeId == "ember")
+check("Appearance: 14 theme buttons, Azure first", #buttons == 14 and buttons[1].themeId == "azure"
+  and buttons[14].themeId == "ember")
 local function Offset(button) return button._points[1][4], button._points[1][5] end
 local x1, y1 = Offset(buttons[1])
 local x3, y3 = Offset(buttons[3])
@@ -244,14 +305,14 @@ local x4, y4 = Offset(buttons[4])
 local x13, y13 = Offset(buttons[13])
 check("grid: 3 per row, 5 rows", y3 == y1 and x3 > x1 and x4 == x1 and y4 < y1 and x13 == x1
   and y13 == y1 - 4 * (y1 - y4))
-check("button shows number and name", buttons[3].name:GetText() == "3  Moonlit")
-buttons[3]:Click()
+check("button shows number and name", buttons[4].name:GetText() == "4  Moonlit")
+buttons[4]:Click()
 check("clicking a button applies the theme", Pathwise.db.theme == "moonlit" and window.themeId == "moonlit")
 local gold = { Pathwise.HexToRGB("#ffd100") }
-check("active theme outlined in gold", Near(buttons[3]._borderColor[1], gold[1]) and Near(buttons[3]._borderColor[2], gold[2])
-  and not Near(buttons[5]._borderColor[1], gold[1]))
-WoW.Slash("theme 5")
-check("outline follows /pw theme", Near(buttons[5]._borderColor[1], gold[1]) and not Near(buttons[3]._borderColor[1], gold[1]))
+check("active theme outlined in gold", Near(buttons[4]._borderColor[1], gold[1]) and Near(buttons[4]._borderColor[2], gold[2])
+  and not Near(buttons[6]._borderColor[1], gold[1]))
+WoW.Slash("theme 6")
+check("outline follows /pw theme", Near(buttons[6]._borderColor[1], gold[1]) and not Near(buttons[4]._borderColor[1], gold[1]))
 
 local seasonButtons = {}
 for _, f in ipairs(WoW.frames) do

@@ -10,6 +10,9 @@ local addonName, Pathwise = ...
 -- they draw over the border (and partly outside the window).
 -- Ornaments are either simple tinted shapes (diamonds, brackets) or, since
 -- docs/PATHWISE_THEMES_V2.md, painted full-color corner art (cornerArt).
+-- Since docs/PATHWISE_THEMES_V4.md a theme can instead have a "tiled frame"
+-- (theme.tiled, Azure): a textured background with a shine, border bands
+-- that repeat along the edges, corner plates and a crest on the top edge.
 --
 -- All ornament textures are created once per window in CreateWindow; Apply
 -- only shows/hides, tints and re-anchors them.
@@ -29,6 +32,7 @@ Theme.DEFAULT_WIDTH = WIDTH
 local HEADER_CREATURE = 52 -- title centered, corner art on the top corners
 local HEADER_EMBLEM = 48   -- v3 emblem themes: same layout, smaller art
 local HEADER_PLAIN = 44    -- title left-aligned
+local HEADER_TILED = 60    -- v4 tiled frame: band, 22 px padding, label, title
 local SIDE_PADDING = 14
 local CREATURE_PADDING = 40 -- keeps the centered title clear of the corner art
 local CONTENT_GAP = 8
@@ -42,6 +46,14 @@ local CLOSE_INSET_ART = 30
 local CLOSE_INSET_PLAIN = 6
 
 local CORNER_ORDER = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
+-- Tiled frame corner plates: centered this far inside each window corner.
+local TILED_CORNER_OFFSETS = {
+  TOPLEFT = { 6, -6 }, TOPRIGHT = { -6, -6 }, BOTTOMLEFT = { 6, 6 }, BOTTOMRIGHT = { -6, 6 },
+}
+-- Divider with a gem (dividerGem): gem size, and how far the lines stay
+-- from the border band.
+local DIVIDER_GEM_SIZE = 14
+local DIVIDER_GEM_INSET = 14
 
 local windows = {}
 local ReapplyAll -- defined below
@@ -234,7 +246,21 @@ function WindowMixin:UpdateHighlight()
   if not theme or not first then
     return
   end
-  if theme.highlight == "bar" then
+  if theme.highlight == "fillbar" then
+    -- v4: the row fill, plus a 2 px bar on its left edge.
+    local fill, bar = self.highlightFill, self.highlightBar
+    fill:ClearAllPoints()
+    fill:SetPoint("TOPLEFT", first, "TOPLEFT", -6, 1)
+    fill:SetPoint("BOTTOMRIGHT", last, "BOTTOMRIGHT", 6, -1)
+    SetSolid(fill, theme.highlightColor, theme.highlightAlpha)
+    fill:Show()
+    bar:ClearAllPoints()
+    bar:SetPoint("TOPLEFT", fill, "TOPLEFT", 0, 0)
+    bar:SetPoint("BOTTOMLEFT", fill, "BOTTOMLEFT", 0, 0)
+    bar:SetWidth(2)
+    SetSolid(bar, theme.highlightBar or theme.ornament, 1)
+    bar:Show()
+  elseif theme.highlight == "bar" then
     local bar = self.highlightBar
     bar:ClearAllPoints()
     bar:SetPoint("TOPLEFT", first, "TOPLEFT", -8, 0)
@@ -261,6 +287,7 @@ end
 -- Height of everything except the content (header, gaps, footer).
 function WindowMixin:ChromeHeight()
   return (self.headerHeight or HEADER_PLAIN) + CONTENT_GAP + 4 + FOOTER_HEIGHT + BOTTOM_PADDING
+    + (self.bottomBand or 0)
 end
 
 -- With a player-chosen height (see EnableResizing) the window keeps that
@@ -274,6 +301,26 @@ function WindowMixin:Layout()
     self.content:SetHeight(math.max(self.contentHeight or 1, 1))
     self:SetHeight(self:ChromeHeight() + (self.contentHeight or 0))
   end
+  self:UpdateTiling()
+end
+
+-- Tiled frame: one texture repeat along a band is the texture's length at
+-- the band's thickness (1024 x 32 -> 384 at 12). The repeat count follows
+-- the window size, so this runs after every layout and on resize.
+-- (Repeating uses the texture's wrap modes, SetTexture(file, "REPEAT",
+-- "CLAMP"), with texture coordinates past 1; Classic Era has them.)
+function WindowMixin:UpdateTiling()
+  local theme = self.theme
+  if not (theme and theme.tiled and self.tiledPieces) then
+    return
+  end
+  local art, pieces = theme.azure, self.tiledPieces
+  local tile = 1024 * (art.band / 32)
+  local width, height = self:GetWidth(), self:GetHeight()
+  pieces.top:SetTexCoord(0, width / tile, 0, 1)
+  pieces.bottom:SetTexCoord(0, width / tile, 0, 1)
+  pieces.left:SetTexCoord(0, 1, 0, height / tile)
+  pieces.right:SetTexCoord(0, 1, 0, height / tile)
 end
 
 -- Content height available with a player-chosen height, or nil (auto).
@@ -358,7 +405,7 @@ function WindowMixin:EnableResizing(minWidth, minContentHeight, onResized)
   grip:SetScript("OnLeave", function()
     GameTooltip:Hide()
   end)
-  self:SetScript("OnSizeChanged", function()
+  self:HookScript("OnSizeChanged", function()
     if self.sizing then
       self.fixedHeight = self:GetHeight()
       onResized(self:GetWidth(), self.fixedHeight, true)
@@ -394,6 +441,7 @@ function Theme.CreateWindow(name, parent, titleText)
   window.trim = CreateFrame("Frame", nil, window, template)
   window.header = window:CreateTexture(nil, "BACKGROUND", nil, 1) -- header band
   window.divider = window:CreateTexture(nil, "ARTWORK")
+  window.dividerRight = window:CreateTexture(nil, "ARTWORK") -- right half when there's a gem
   window.dividerGem = window:CreateTexture(nil, "OVERLAY")
   window.label = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
   window.title = window:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -430,6 +478,25 @@ function Theme.CreateWindow(name, parent, titleText)
       lineV = window.ornaments:CreateTexture(nil, "OVERLAY"),
     }
   end
+
+  -- Tiled frame pieces (v4): made once, shown only for tiled themes.
+  local ornaments = window.ornaments
+  window.tiledPieces = {
+    bg = window:CreateTexture(nil, "BACKGROUND", nil, -8),
+    gloss = window:CreateTexture(nil, "BORDER"),
+    top = ornaments:CreateTexture(nil, "ARTWORK"),
+    bottom = ornaments:CreateTexture(nil, "ARTWORK"),
+    left = ornaments:CreateTexture(nil, "ARTWORK"),
+    right = ornaments:CreateTexture(nil, "ARTWORK"),
+    crest = ornaments:CreateTexture(nil, "OVERLAY", nil, 2), -- above the corners
+    corners = {},
+  }
+  for _, corner in ipairs(CORNER_ORDER) do
+    window.tiledPieces.corners[corner] = ornaments:CreateTexture(nil, "OVERLAY", nil, 1)
+  end
+  window:HookScript("OnSizeChanged", function()
+    window:UpdateTiling()
+  end)
 
   Theme.Register(window)
   Theme.Apply(window)
@@ -478,6 +545,14 @@ local function ApplyCorners(window, theme)
 end
 
 local function ApplyBackdrop(window, theme)
+  if theme.tiled then
+    -- The tiled frame draws its own background and border.
+    if window.SetBackdrop then
+      window:SetBackdrop(nil)
+    end
+    window.trim:Hide()
+    return
+  end
   if not window.SetBackdrop then
     return
   end
@@ -517,12 +592,82 @@ local function ApplyBackdrop(window, theme)
   end
 end
 
+-- Shows and places the tiled frame (docs/PATHWISE_THEMES_V4.md §2), or
+-- hides every piece of it for the other themes. Full color: never tinted.
+local function ApplyTiled(window, theme)
+  local pieces = window.tiledPieces
+  local art = theme.tiled and theme.azure
+  for _, texture in pairs(pieces) do
+    if type(texture) == "table" and texture.Hide then
+      texture:Hide()
+    end
+  end
+  for _, texture in pairs(pieces.corners) do
+    texture:Hide()
+  end
+  if not art then
+    return
+  end
+  local function Art(texture, file, wrapH, wrapV)
+    texture:SetTexture(MEDIA .. file, wrapH, wrapV)
+    texture:SetVertexColor(1, 1, 1)
+    texture:ClearAllPoints()
+    texture:Show()
+  end
+
+  Art(pieces.bg, art.bgTex)
+  pieces.bg:SetTexCoord(0, 1, 0, 1)
+  pieces.bg:SetAllPoints(window)
+
+  Art(pieces.gloss, art.gloss)
+  pieces.gloss:SetTexCoord(0, 1, 0, 1)
+  pieces.gloss:SetPoint("TOPLEFT", window, "TOPLEFT", art.glossInset, -art.glossInset)
+  pieces.gloss:SetPoint("TOPRIGHT", window, "TOPRIGHT", -art.glossInset, -art.glossInset)
+  pieces.gloss:SetHeight(art.glossHeight)
+
+  Art(pieces.top, art.edgeH, "REPEAT", "CLAMP")
+  pieces.top:SetPoint("TOPLEFT", window, "TOPLEFT", 0, 0)
+  pieces.top:SetPoint("TOPRIGHT", window, "TOPRIGHT", 0, 0)
+  pieces.top:SetHeight(art.band)
+  Art(pieces.bottom, art.edgeH, "REPEAT", "CLAMP")
+  pieces.bottom:SetPoint("BOTTOMLEFT", window, "BOTTOMLEFT", 0, 0)
+  pieces.bottom:SetPoint("BOTTOMRIGHT", window, "BOTTOMRIGHT", 0, 0)
+  pieces.bottom:SetHeight(art.band)
+  Art(pieces.left, art.edgeV, "CLAMP", "REPEAT")
+  pieces.left:SetPoint("TOPLEFT", window, "TOPLEFT", 0, 0)
+  pieces.left:SetPoint("BOTTOMLEFT", window, "BOTTOMLEFT", 0, 0)
+  pieces.left:SetWidth(art.band)
+  Art(pieces.right, art.edgeV, "CLAMP", "REPEAT")
+  pieces.right:SetPoint("TOPRIGHT", window, "TOPRIGHT", 0, 0)
+  pieces.right:SetPoint("BOTTOMRIGHT", window, "BOTTOMRIGHT", 0, 0)
+  pieces.right:SetWidth(art.band)
+
+  -- Corner plates: the same texture on every corner, no mirroring.
+  for corner, texture in pairs(pieces.corners) do
+    Art(texture, art.corner)
+    texture:SetTexCoord(0, 1, 0, 1)
+    texture:SetSize(art.cornerSize, art.cornerSize)
+    local offset = TILED_CORNER_OFFSETS[corner]
+    texture:SetPoint("CENTER", window, corner, offset[1], offset[2])
+  end
+
+  Art(pieces.crest, art.crest)
+  pieces.crest:SetTexCoord(0, 1, 0, 1)
+  pieces.crest:SetSize(art.crestSize, art.crestSize)
+  pieces.crest:SetPoint("CENTER", window, "TOP", 0, art.crestOffsetY)
+  window:UpdateTiling()
+end
+
 local function ApplyHeader(window, theme)
   local creature = theme.cornerArt ~= nil
+  local tiled = theme.tiled and theme.azure
   local emblem = creature and theme.cornerArt.top and theme.cornerArt.top.emblem
-  local headerHeight = emblem and HEADER_EMBLEM or creature and HEADER_CREATURE or HEADER_PLAIN
-  local inset = theme.useTooltipArt and 4 or (theme.frame and theme.frameWidth or 0)
+  local headerHeight = tiled and HEADER_TILED or emblem and HEADER_EMBLEM or creature and HEADER_CREATURE
+    or HEADER_PLAIN
+  local inset = tiled and tiled.band or theme.useTooltipArt and 4 or (theme.frame and theme.frameWidth or 0)
+  local sidePadding = SIDE_PADDING + (tiled and tiled.band or 0)
   window.headerHeight = headerHeight
+  window.bottomBand = tiled and tiled.band or 0
 
   -- Header band
   local band = window.header
@@ -549,8 +694,27 @@ local function ApplyHeader(window, theme)
   else
     divider:Hide()
   end
-  local gem = window.dividerGem
-  if theme.dividerStyle == "diamond" then
+  local gem, right = window.dividerGem, window.dividerRight
+  right:Hide()
+  if theme.dividerGem then
+    -- v4: a full-color gem centered under the title, a line on each side.
+    gem:SetTexture(MEDIA .. theme.dividerGem)
+    gem:SetVertexColor(1, 1, 1)
+    gem:SetTexCoord(0, 1, 0, 1)
+    gem:SetSize(DIVIDER_GEM_SIZE, DIVIDER_GEM_SIZE)
+    gem:ClearAllPoints()
+    gem:SetPoint("CENTER", window, "TOP", 0, -headerHeight)
+    gem:Show()
+    divider:ClearAllPoints()
+    divider:SetPoint("TOPLEFT", window, "TOPLEFT", inset + DIVIDER_GEM_INSET, -headerHeight)
+    divider:SetPoint("TOPRIGHT", gem, "LEFT", -2, 0)
+    right:ClearAllPoints()
+    right:SetPoint("TOPLEFT", gem, "RIGHT", 2, 0)
+    right:SetPoint("TOPRIGHT", window, "TOPRIGHT", -(inset + DIVIDER_GEM_INSET), -headerHeight)
+    SetPixelHeight(right, 1)
+    SetSolid(right, theme.divider, theme.dividerAlpha)
+    right:Show()
+  elseif theme.dividerStyle == "diamond" then
     Ornament(gem, "diamond", 6, 6, theme.ornament)
     gem:SetPoint("CENTER", divider, "CENTER", 0, 0)
   else
@@ -563,7 +727,7 @@ local function ApplyHeader(window, theme)
   title:ClearAllPoints()
   icon:Hide()
   label:SetText(L.WINDOW_LABEL)
-  label:SetTextColor(RGB(theme.muted))
+  label:SetTextColor(RGB(theme.label or theme.muted))
   title:SetTextColor(RGB(theme.title))
   -- Left-aligned by default; the centered layout below overrides this.
   -- (Width 0 = size to the text, so no leftover width from a centered theme.)
@@ -576,13 +740,15 @@ local function ApplyHeader(window, theme)
     label:Hide()
     title:SetText(string.format(L.WINDOW_SINGLE_TITLE, window.titleText))
     title:SetPoint("LEFT", window, "TOPLEFT", SIDE_PADDING, -headerHeight / 2)
-  elseif creature then
+  elseif creature or tiled then
     label:Show()
     title:SetText(window.titleText)
-    label:SetPoint("TOP", window, "TOP", 0, -12)
+    -- (Tiled frame: 22 px from the top, under the crest and the band.)
+    local top = tiled and 22 or 12
+    label:SetPoint("TOP", window, "TOP", 0, -top)
     -- Between the ornaments; follows the window width when resized.
-    title:SetPoint("TOPLEFT", window, "TOPLEFT", CREATURE_PADDING, -24)
-    title:SetPoint("TOPRIGHT", window, "TOPRIGHT", -CREATURE_PADDING, -24)
+    title:SetPoint("TOPLEFT", window, "TOPLEFT", CREATURE_PADDING, -(top + 12))
+    title:SetPoint("TOPRIGHT", window, "TOPRIGHT", -CREATURE_PADDING, -(top + 12))
     title:SetJustifyH("CENTER")
     label:SetJustifyH("CENTER")
   else
@@ -608,8 +774,8 @@ local function ApplyHeader(window, theme)
 
   -- Content below the header
   window.content:ClearAllPoints()
-  window.content:SetPoint("TOPLEFT", window, "TOPLEFT", SIDE_PADDING, -(headerHeight + CONTENT_GAP))
-  window.content:SetPoint("RIGHT", window, "RIGHT", -SIDE_PADDING, 0)
+  window.content:SetPoint("TOPLEFT", window, "TOPLEFT", sidePadding, -(headerHeight + CONTENT_GAP))
+  window.content:SetPoint("RIGHT", window, "RIGHT", -sidePadding, 0)
 end
 
 -- (Re)applies a theme to one window. Called on creation and on every switch.
@@ -621,6 +787,7 @@ function Theme.Apply(window, id)
   ApplyBackdrop(window, theme)
   ApplyHeader(window, theme)
   ApplyCorners(window, theme)
+  ApplyTiled(window, theme)
   window.footer.text:SetTextColor(RGB(theme.muted))
   window.textColor = { RGB(theme.text) }
   window.mutedColor = { RGB(theme.muted) }

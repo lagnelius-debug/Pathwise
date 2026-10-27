@@ -1,8 +1,8 @@
 local _, Pathwise = ...
 
 -- Window themes (docs/PATHWISE_THEMES.md §3, updated by
--- docs/PATHWISE_THEMES_V2.md and docs/PATHWISE_THEMES_V3.md). Plain data,
--- flavor-independent.
+-- docs/PATHWISE_THEMES_V2.md, docs/PATHWISE_THEMES_V3.md and
+-- docs/PATHWISE_THEMES_V4.md). Plain data, flavor-independent.
 -- Colors are hex strings; UI/Theme.lua turns them into r, g, b with
 -- Pathwise.HexToRGB.
 
@@ -15,7 +15,9 @@ function Pathwise.HexToRGB(hex, alpha)
   return r, g, b, alpha or 1
 end
 
+-- Azure first: it matches the Pathwise logo.
 Pathwise.ThemeOrder = {
+  "azure",
   "gilded", "tooltip", "moonlit", "brackets",
   "dragonflight", "skyhawk", "ironhorn", "frostfang", "lionheart", "moonwatch", "phoenixcrest",
   "wildwood", "ember",
@@ -36,6 +38,31 @@ local function Emblem(file) return { file = file, w = EMBLEM.w, h = EMBLEM.h, ax
 local function Gem(file)    return { file = file, w = GEM.w,    h = GEM.h,    ax = GEM.ax,    ay = GEM.ay    } end
 
 Pathwise.Themes = {
+  -- v4: deep blue enamel, rune bands of antique gold, gem corners and a
+  -- compass crest. tiled = true: the border is built from tiled textures
+  -- (UI/Theme.lua, "tiled frame") instead of a backdrop and corner art.
+  -- (Adjust the numbers in azure if something sits off, never the textures.)
+  azure = {
+    name = "Azure",
+    tiled = true,
+    bg = "#0a2a56", bgAlpha = 1,    -- only the settings swatch; the window uses azure_bg
+    frame = "#a37a38", frameWidth = 0,
+    trim = nil, band = nil,
+    divider = "#a37a38", dividerAlpha = 1, dividerGem = "azure_gem",
+    label = "#9cc4ee",              -- the small "PATHWISE" text
+    title = "#e0bf74", muted = "#9cb4d4", text = "#c6d6ea",
+    ornament = "#2a6cc0",
+    highlight = "fillbar",          -- fill plus a 2 px bar on the left
+    highlightColor = "#6eaaf0", highlightAlpha = 0.14, highlightBar = "#a37a38",
+    closeInset = 30,
+    azure = {
+      edgeH = "azure_edge_h", edgeV = "azure_edge_v", band = 12,
+      corner = "azure_corner", cornerSize = 30,
+      crest = "azure_crest", crestSize = 36, crestOffsetY = -3,
+      bgTex = "azure_bg",
+      gloss = "azure_gloss", glossHeight = 84, glossInset = 12,
+    },
+  },
   gilded = {
     name = "Gilded Hairline",
     bg = "#120f0b", bgAlpha = 0.95,
