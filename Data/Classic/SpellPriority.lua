@@ -45,4 +45,102 @@ Pathwise.Data.SpellPriority = {
     -- Survival uses its melee abilities, so nothing extra is optional.
     SURVIVAL = {},
   },
+  WARRIOR = {
+    common = {
+      ["Mocking Blow"] = true,
+      ["Challenging Shout"] = true,
+    },
+    -- Two-hander or two weapons: the shield abilities can wait.
+    LEVELING = {
+      ["Shield Bash"] = true,
+      ["Shield Block"] = true,
+      ["Shield Wall"] = true,
+      ["Revenge"] = true,
+      ["Disarm"] = true,
+    },
+    FURY = {
+      ["Shield Bash"] = true,
+      ["Shield Block"] = true,
+      ["Shield Wall"] = true,
+      ["Revenge"] = true,
+      ["Disarm"] = true,
+    },
+    PROTECTION = {},
+  },
+  PALADIN = {
+    common = {
+      ["Turn Undead"] = true,
+    },
+  },
+  ROGUE = {
+    common = {
+      ["Distract"] = true,
+      ["Detect Traps"] = true,
+      ["Disarm Trap"] = true,
+    },
+  },
+  PRIEST = {
+    common = {
+      ["Mind Vision"] = true,
+      ["Mind Soothe"] = true,
+    },
+    -- Shadow: Mind Blast and Shadow Word: Pain do the damage.
+    LEVELING = {
+      ["Smite"] = true,
+      ["Holy Fire"] = true,
+    },
+  },
+  SHAMAN = {
+    common = {
+      ["Far Sight"] = true,
+      ["Sentry Totem"] = true,
+      ["Water Breathing"] = true,
+    },
+  },
+  MAGE = {
+    common = {
+      ["Slow Fall"] = true,
+      ["Detect Magic"] = true,
+      ["Amplify Magic"] = true,
+      ["Dampen Magic"] = true,
+    },
+    -- Frost: Frostbolt does the damage, Fire Blast stays for finishing.
+    LEVELING = {
+      ["Fireball"] = true,
+      ["Scorch"] = true,
+      ["Flamestrike"] = true,
+    },
+  },
+  WARLOCK = {
+    common = {
+      ["Eye of Kilrogg"] = true,
+      ["Sense Demons"] = true,
+      ["Detect Lesser Invisibility"] = true,
+      ["Detect Invisibility"] = true,
+      ["Detect Greater Invisibility"] = true,
+      ["Unending Breath"] = true,
+    },
+    LEVELING = {
+      ["Searing Pain"] = true,
+    },
+  },
+  DRUID = {
+    common = {
+      ["Soothe Animal"] = true,
+      ["Hibernate"] = true,
+    },
+    -- Feral: the caster spells beyond healing and roots can wait.
+    LEVELING = {
+      ["Hurricane"] = true,
+      ["Starfire"] = true,
+    },
+  },
 }
+
+-- Specs that skip the same spells as their class's leveling path.
+local priority = Pathwise.Data.SpellPriority
+priority.WARRIOR.ARMS = priority.WARRIOR.LEVELING
+priority.PRIEST.SHADOW = priority.PRIEST.LEVELING
+priority.MAGE.FROST = priority.MAGE.LEVELING
+priority.WARLOCK.AFFLICTION = priority.WARLOCK.LEVELING
+priority.DRUID.FERAL = priority.DRUID.LEVELING

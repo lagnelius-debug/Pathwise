@@ -3,6 +3,23 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.15.0
+
+- **All classes**: warriors, paladins, rogues, priests, shamans, mages,
+  warlocks and druids now get the same help as hunters:
+  - the trainer reminder and Training list with every class spell (racial
+    priest spells and faction teleports only for those who can learn them;
+    bear and cat abilities once you have the form);
+  - three talent builds each (a leveling build and one per other tree),
+    picked by your path or your talents;
+  - gear advice with stat weights per path (spell damage, healing and mana
+    per 5 for casters, avoidance for tanks, wands for priests, mages and
+    warlocks) and what the class can wear or wield.
+- The path prompt offers each class's own trees, with a description for
+  each, and `/pw spec` takes short names like `prot`, `resto` or `destro`.
+- Talent builds can now spread a talent over two picks (e.g. 2 points now,
+  3 later).
+
 ## 0.14.0
 
 - **Pet ability guide** (hunters): Next Steps shows which ability ranks

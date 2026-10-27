@@ -307,10 +307,16 @@ function Talents.UpcomingPoints(trees, build, limit)
   for i, tree in ipairs(trees) do
     spentInTree[i] = tree.points
   end
+  -- A talent can come in more than one pick (e.g. 2 ranks now, 3 later):
+  -- each pick continues from the ranks the earlier ones planned.
+  local plannedBefore = {}
   for _, pick in ipairs(build.picks) do
     local talent = FindTalent(trees, pick)
     local have = talent and talent.rank or 0
-    for rank = 1, pick[4] do
+    local key = pick[1] .. ":" .. pick[2] .. ":" .. pick[3]
+    local before = plannedBefore[key] or 0
+    plannedBefore[key] = before + pick[4]
+    for rank = before + 1, before + pick[4] do
       if rank > have then
         local tierOpen = (spentInTree[pick[1]] or 0) >= (pick[2] - 1) * 5
         local point = {

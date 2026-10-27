@@ -12,6 +12,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 - M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
+- All classes: trainer spells, talent builds (three per class), stat weights, usable gear and the path choices for warriors, paladins, rogues, priests, shamans, mages, warlocks and druids too. Built and passing the offline tests, not yet tested in game.
 - Pet ability guide (hunter): which ranks your pet can learn at its level and which beast to tame for each, with the arrow on the nearest one. Built and passing the offline tests, not yet tested in game.
 - Window themes (docs/PATHWISE_THEMES.md): 13 themes on the To-do window (v2 painted corner art and v3 emblem themes included), an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
 
@@ -163,6 +164,16 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] With points spent that the new path's build doesn't use (3 or more), Next Steps suggests unlearning them at your class trainer.
 - [ ] `/pw status` shows e.g. `Beast Mastery (your choice) - your talents look like Marksmanship (0/12/0)`.
 
+## In-game test checklist (other classes)
+
+Make a character of another class (any level works; a level 10+ one shows talents).
+
+- [ ] The path prompt (or `/pw spec`) offers Leveling and the three trees of the class, with a tooltip for each. `/pw spec prot`, `/pw spec resto`, `/pw spec destro` and the like work.
+- [ ] `/pw talents check` reports no problems (it compares the build with the client's talent names), and `/pw talents` lists sensible next points.
+- [ ] `/pw training` at a new level lists the class's spells. A priest only sees the racial spells of its own race, a mage only its own faction's teleports. Druid bear and cat abilities appear once you have the form.
+- [ ] Gear tooltips show upgrade percentages. A caster's wand counts. Below level 35, plate says "usable at level 40 - you'll have better gear by then" for warriors and paladins, and a rogue sees "not usable by your class" on axes.
+- [ ] `/pw stats` on an item with spell damage, healing or mana per 5 lists those keys (please send me the output: it tells me whether the weights match).
+
 ## In-game test checklist (pet ability guide)
 
 - [ ] With your pet out, `/pw pet` lists its name, family and level, and each ability it could have a higher rank of (e.g. `Claw (Rank 3): tame Den Mother (18, Darkshore), ...`), or says it already has the best ranks.
@@ -298,7 +309,8 @@ From docs/PATHWISE_THEMES_V3.md. **Fully restart WoW** first (not just `/reload`
 ## Things to verify in game (marked `TODO verify` in code)
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
-- The talent tab order for each non-hunter class in `Data/Classic/ClassSpecs.lua`. The hunter order is verified.
+- The talent tab order for each non-hunter class in `Data/Classic/ClassSpecs.lua` (`/pw talents check` on each class). The hunter order is verified.
+- The "Equip:" stat keys for casters and tanks (spell damage, healing, mana per 5, defense, block): `/pw stats` on such an item shows which keys the client reports (`Data/Classic/StatWeights.lua`).
 - Weapon DPS is reported by `GetItemStats` as `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`. Use `/pw stats` on a weapon to check. Armor (`RESISTANCE0_NAME`) is verified in game.
 - Which tooltip hook Classic Era uses. `/pw debug` prints `Tooltip hook: ...` at login.
 - The weapon types hunters can use, and that dual wield starts at level 20 (`Data/Classic/ClassGear.lua`).
@@ -322,7 +334,8 @@ From docs/PATHWISE_THEMES_V3.md. **Fully restart WoW** first (not just `/reload`
 - Offline smoke tests run against a small mock of the WoW API. Run `lua5.1 tests/run.lua` from the repo root, and set `PATHWISE_ECHO=1` to see chat output. These tests catch Lua errors and logic bugs, but they don't replace testing in game.
 - Quest locations can come from [QuestieDB](https://github.com/Questie/QuestieDB) (GPL-3.0). It's an optional dependency read at runtime through its public `LibQuestieDB` API; Pathwise ships none of its data.
 - Pet ability ranks and the beasts that teach them come from [LibTameable-1.0](https://github.com/Langmans/LibTameable-1.0) by Langmans (GPL-3.0), embedded in `Libs/` with its license. Its data is built from [CMaNGOS](https://github.com/cmangos) (GPL-3.0) and Tamed (MIT; see `Libs/LibTameable-1.0/Data/Tamed-LICENSE.txt`). [LibStub](https://www.wowace.com/projects/libstub) is public domain.
-- Hunter trainer data (`Data/Classic/ClassSpells.lua`) is based on [WhatsTraining](https://github.com/fusionpit/WhatsTraining) by fusionpit, MIT License.
+- Class trainer data (`Data/Classic/ClassSpells.lua`) is based on [WhatsTraining](https://github.com/fusionpit/WhatsTraining) by fusionpit, MIT License. English spell names for the other classes come from the [vmangos](https://github.com/vmangos/core) world database.
+- Talent positions in the builds were checked against the Classic talent data of [wowsims](https://github.com/wowsims/sod) (MIT).
 - The `tests/` and `docs/` folders aren't listed in the TOC, so WoW ignores them.
 
 ## In-game test checklist (target button, spawn spots)

@@ -84,6 +84,22 @@ local function IsKnown(entry)
   return false
 end
 
+-- False for spells only another faction's or race's trainers teach.
+local function ForPlayer(entry, snapshot)
+  if entry.faction and snapshot.faction and entry.faction ~= snapshot.faction then
+    return false
+  end
+  if entry.races and snapshot.raceID then
+    for _, raceID in ipairs(entry.races) do
+      if raceID == snapshot.raceID then
+        return true
+      end
+    end
+    return false
+  end
+  return true
+end
+
 -- True if the spell can be skipped on the player's current path (active
 -- spec or goal, see Data/Classic/SpellPriority.lua).
 local function IsOptional(entry, class, spec)
@@ -123,7 +139,7 @@ function Trainer:BuildList()
     local info = chainInfo[entry]
     -- Ranks of a talent spell only matter if the player has the talent.
     local talentOK = not info.base.talent or IsKnown(info.base)
-    if talentOK and not IsKnown(entry) then
+    if talentOK and ForPlayer(entry, snapshot) and not IsKnown(entry) then
       if entry.level <= level then
         -- The previous rank must be known, or learnable in the same visit.
         local prevOK = not info.prev or willBeAvailable[info.prev] or IsKnown(info.prev)

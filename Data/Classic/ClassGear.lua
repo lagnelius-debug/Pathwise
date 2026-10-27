@@ -5,14 +5,16 @@ local addonName, Pathwise = ...
 -- it (e.g. hunters learn Mail at 40).
 --
 -- Armor subclasses:  0 Misc (rings, necks, trinkets, ...), 1 Cloth,
---                    2 Leather, 3 Mail, 4 Plate, 6 Shield
+--                    2 Leather, 3 Mail, 4 Plate, 6 Shield, 7 Libram,
+--                    8 Idol, 9 Totem
 -- Weapon subclasses: 0 1H Axe, 1 2H Axe, 2 Bow, 3 Gun, 4 1H Mace, 5 2H Mace,
 --                    6 Polearm, 7 1H Sword, 8 2H Sword, 10 Staff, 13 Fist,
 --                    14 Misc, 15 Dagger, 16 Thrown, 18 Crossbow, 19 Wand,
 --                    20 Fishing Pole
 --
--- dualWieldLevel: level from which one-handers can go in the off hand.
--- Classes without an entry are treated as able to use everything.
+-- dualWieldLevel: level from which one-handers can go in the off hand
+-- (nil: never). Classes without an entry are treated as able to use
+-- everything.
 
 Pathwise.Data.ClassGear = {
   HUNTER = {
@@ -22,6 +24,45 @@ Pathwise.Data.ClassGear = {
       [10] = 1, [13] = 1, [14] = 1, [15] = 1, [16] = 1, [18] = 1, [20] = 1,
     }, -- TODO verify (fist weapons, polearms, thrown)
     dualWieldLevel = 20, -- TODO verify
+  },
+  WARRIOR = {
+    armor = { [0] = 1, [1] = 1, [2] = 1, [3] = 1, [4] = 40, [6] = 1 },
+    weapons = {
+      [0] = 1, [1] = 1, [2] = 1, [3] = 1, [4] = 1, [5] = 1, [6] = 1, [7] = 1, [8] = 1,
+      [10] = 1, [13] = 1, [14] = 1, [15] = 1, [16] = 1, [18] = 1, [20] = 1,
+    },
+    dualWieldLevel = 20,
+  },
+  PALADIN = {
+    armor = { [0] = 1, [1] = 1, [2] = 1, [3] = 1, [4] = 40, [6] = 1, [7] = 1 },
+    weapons = { [0] = 1, [1] = 1, [4] = 1, [5] = 1, [6] = 1, [7] = 1, [8] = 1, [14] = 1, [20] = 1 },
+  },
+  ROGUE = {
+    armor = { [0] = 1, [1] = 1, [2] = 1 },
+    weapons = { [2] = 1, [3] = 1, [4] = 1, [7] = 1, [13] = 1, [14] = 1, [15] = 1, [16] = 1, [18] = 1, [20] = 1 },
+    dualWieldLevel = 10,
+  },
+  PRIEST = {
+    armor = { [0] = 1, [1] = 1 },
+    weapons = { [4] = 1, [10] = 1, [14] = 1, [15] = 1, [19] = 1, [20] = 1 },
+  },
+  SHAMAN = {
+    armor = { [0] = 1, [1] = 1, [2] = 1, [3] = 40, [6] = 1, [9] = 1 },
+    -- Two-handed axes and maces need the Enhancement talent (the skill
+    -- check then says "learn ... first").
+    weapons = { [0] = 1, [1] = 1, [4] = 1, [5] = 1, [10] = 1, [13] = 1, [14] = 1, [15] = 1, [20] = 1 },
+  },
+  MAGE = {
+    armor = { [0] = 1, [1] = 1 },
+    weapons = { [7] = 1, [10] = 1, [14] = 1, [15] = 1, [19] = 1, [20] = 1 },
+  },
+  WARLOCK = {
+    armor = { [0] = 1, [1] = 1 },
+    weapons = { [7] = 1, [10] = 1, [14] = 1, [15] = 1, [19] = 1, [20] = 1 },
+  },
+  DRUID = {
+    armor = { [0] = 1, [1] = 1, [2] = 1, [8] = 1 },
+    weapons = { [4] = 1, [5] = 1, [10] = 1, [13] = 1, [14] = 1, [15] = 1, [20] = 1 },
   },
 }
 

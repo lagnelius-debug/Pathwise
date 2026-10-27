@@ -84,7 +84,7 @@ WoW.knownSpells[1978] = nil
 check("lower rank counts as known via higher rank", not Has(Trainer:BuildList().available, "Serpent Sting (Rank 1)"))
 
 -- Skipped ranks: both learnable in one visit.
-WoW.knownSpells = { [3044] = true, [1515] = true }
+WoW.knownSpells = { [3044] = true, [1515] = true, [2973] = true }
 SetLevel(20)
 list = Trainer:GetList()
 check("skipped ranks all available", Has(list.recommended, "Arcane Shot (Rank 2)") and Has(list.recommended, "Arcane Shot (Rank 3)"))

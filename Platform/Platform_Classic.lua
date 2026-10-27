@@ -402,6 +402,7 @@ local EQUIP_LOC_SLOTS = {
   INVTYPE_RANGED = { 18 },
   INVTYPE_RANGEDRIGHT = { 18 },
   INVTYPE_THROWN = { 18 },
+  INVTYPE_RELIC = { 18 }, -- libram, idol, totem
 }
 
 local RANGED_EQUIP_LOCS = {

@@ -20,39 +20,68 @@ Pathwise.Data.GoalAliases = {
   SV = "SURVIVAL",
   LVL = "LEVELING",
   DPS = "DAMAGE",
+  PROT = "PROTECTION",
+  RET = "RETRIBUTION",
+  ASSA = "ASSASSINATION",
+  ASSASS = "ASSASSINATION",
+  SUB = "SUBTLETY",
+  DISC = "DISCIPLINE",
+  SP = "SHADOW",
+  ELE = "ELEMENTAL",
+  ENH = "ENHANCEMENT",
+  RESTO = "RESTORATION",
+  AFF = "AFFLICTION",
+  AFFLI = "AFFLICTION",
+  DEMO = "DEMONOLOGY",
+  DESTRO = "DESTRUCTION",
+  BOOMKIN = "BALANCE",
+  MOONKIN = "BALANCE",
+  CAT = "FERAL",
+  BEAR = "FERAL",
 }
 
 -- Two trees whose point totals are this close (and both non-zero) count as a
 -- hybrid; Pathwise then uses the player's chosen goal instead.
 Pathwise.Data.HybridMargin = 3
 
+-- Tree order is the client's (GetTalentTabInfo 1-3); the hunter's is
+-- verified in game, the others match the talent data the builds were
+-- checked against (Data/Classic/TalentBuilds.lua).
 Pathwise.Data.ClassSpecs = {
   HUNTER = {
     trees = { "BEAST_MASTERY", "MARKSMANSHIP", "SURVIVAL" }, -- verified in game (1.15.9)
     goals = { "LEVELING", "BEAST_MASTERY", "MARKSMANSHIP", "SURVIVAL" },
   },
   WARRIOR = {
-    trees = { "ARMS", "FURY", "PROTECTION" }, -- TODO verify tab order
+    trees = { "ARMS", "FURY", "PROTECTION" },
+    goals = { "LEVELING", "ARMS", "FURY", "PROTECTION" },
   },
   PALADIN = {
-    trees = { "HOLY", "PROTECTION", "RETRIBUTION" }, -- TODO verify tab order
+    trees = { "HOLY", "PROTECTION", "RETRIBUTION" },
+    goals = { "LEVELING", "HOLY", "PROTECTION", "RETRIBUTION" },
   },
   ROGUE = {
-    trees = { "ASSASSINATION", "COMBAT", "SUBTLETY" }, -- TODO verify tab order
+    trees = { "ASSASSINATION", "COMBAT", "SUBTLETY" },
+    goals = { "LEVELING", "ASSASSINATION", "COMBAT", "SUBTLETY" },
   },
   PRIEST = {
-    trees = { "DISCIPLINE", "HOLY", "SHADOW" }, -- TODO verify tab order
+    trees = { "DISCIPLINE", "HOLY", "SHADOW" },
+    goals = { "LEVELING", "DISCIPLINE", "HOLY", "SHADOW" },
   },
   SHAMAN = {
-    trees = { "ELEMENTAL", "ENHANCEMENT", "RESTORATION" }, -- TODO verify tab order
+    trees = { "ELEMENTAL", "ENHANCEMENT", "RESTORATION" },
+    goals = { "LEVELING", "ELEMENTAL", "ENHANCEMENT", "RESTORATION" },
   },
   MAGE = {
-    trees = { "ARCANE", "FIRE", "FROST" }, -- TODO verify tab order
+    trees = { "ARCANE", "FIRE", "FROST" },
+    goals = { "LEVELING", "ARCANE", "FIRE", "FROST" },
   },
   WARLOCK = {
-    trees = { "AFFLICTION", "DEMONOLOGY", "DESTRUCTION" }, -- TODO verify tab order
+    trees = { "AFFLICTION", "DEMONOLOGY", "DESTRUCTION" },
+    goals = { "LEVELING", "AFFLICTION", "DEMONOLOGY", "DESTRUCTION" },
   },
   DRUID = {
-    trees = { "BALANCE", "FERAL", "RESTORATION" }, -- TODO verify tab order
+    trees = { "BALANCE", "FERAL", "RESTORATION" },
+    goals = { "LEVELING", "BALANCE", "FERAL", "RESTORATION" },
   },
 }

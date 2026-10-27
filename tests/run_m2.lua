@@ -146,7 +146,7 @@ check("missing spec falls back to LEVELING", select(2, GearScore:GetWeights()) =
 Pathwise.Data.StatWeights.HUNTER.SURVIVAL = survival
 WoW.Slash("spec leveling")
 
-snapshot.class = "WARRIOR"
+snapshot.class = "DEATHKNIGHT" -- a class without data
 check("no weights for other classes: no line", WoW.HoverItem(9001) == nil)
 WoW.ClearChat()
 WoW.Slash("score")

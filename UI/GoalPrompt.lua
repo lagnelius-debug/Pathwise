@@ -27,8 +27,11 @@ local function OnButtonClick(button)
 end
 
 local function OnButtonEnter(button)
-  local description = L["SPEC_DESC_" .. button.goalKey]
-  if description == "SPEC_DESC_" .. button.goalKey then
+  -- The class's own description first (e.g. SPEC_DESC_PALADIN_HOLY).
+  local class = Pathwise:GetModule("Character"):GetSnapshot().class or ""
+  local description = rawget(L, "SPEC_DESC_" .. class .. "_" .. button.goalKey)
+    or rawget(L, "SPEC_DESC_" .. button.goalKey)
+  if not description then
     return -- no description for this goal
   end
   GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
