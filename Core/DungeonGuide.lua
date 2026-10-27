@@ -241,7 +241,8 @@ function DungeonGuide:ExtraItems(dungeon, log)
   end
   local quests = self:GetQuests(dungeon)
   if not quests then
-    return { { id = "dungeon:loading", priority = P.QUEST_ELSEWHERE, text = L.DUNGEON_LOADING } }
+    return { { id = "dungeon:loading", priority = P.QUEST_ELSEWHERE,
+      text = QuestieData:PickupsUnavailable() and L.DUNGEON_OLD_QUESTIE or L.DUNGEON_LOADING } }
   end
 
   local level = GetSnapshot().level or 1
@@ -309,7 +310,10 @@ function DungeonGuide:ExtraItems(dungeon, log)
         or string.format(L.DUNGEON_LATER, #later, later[1].level) }
   end
   items[#items + 1] = entranceItem
-  if open == 0 then
+  if #quests.list == 0 then
+    items[#items + 1] = { id = "dungeon:done", priority = P.QUEST_ELSEWHERE,
+      text = string.format(L.DUNGEON_NO_QUESTS, dungeon.name) }
+  elseif open == 0 then
     items[#items + 1] = { id = "dungeon:done", priority = P.QUEST_ELSEWHERE,
       text = string.format(L.DUNGEON_NONE_LEFT, dungeon.name) }
   end

@@ -628,12 +628,6 @@ local function ScanQuest(id, scan)
     or not MaskAllows(Get(id, "requiredClasses"), scan.classBit) then
     return nil
   end
-  -- Dungeon quests (tagged with the dungeon's area) for the dungeon guide.
-  local dungeon = scan.dungeonAreas[Get(id, "zoneOrSort") or 0]
-  if dungeon then
-    scan.dungeons[dungeon] = scan.dungeons[dungeon] or {}
-    table.insert(scan.dungeons[dungeon], id)
-  end
   if NonEmpty(Get(id, "requiredSkill")) or NonEmpty(Get(id, "requiredMinRep")) then
     return nil
   end
@@ -644,6 +638,14 @@ local function ScanQuest(id, scan)
     or (type(special) == "number" and HasBit(special, REPEATABLE_FLAG))
     or (type(sort) == "number" and sort < 0 and not CLASS_SORTS[sort]) then
     return nil
+  end
+  -- Dungeon quests (tagged with the dungeon's area) for the dungeon guide -
+  -- also the ones an item starts. (Not repeatable ones like Dire Maul's
+  -- tributes: they never count as done.)
+  local dungeon = scan.dungeonAreas[sort or 0]
+  if dungeon then
+    scan.dungeons[dungeon] = scan.dungeons[dungeon] or {}
+    table.insert(scan.dungeons[dungeon], id)
   end
   local startedBy = Get(id, "startedBy") or {}
   if not NonEmpty(startedBy[1]) and not NonEmpty(startedBy[2]) then
@@ -868,6 +870,12 @@ function QuestieData:GiverInfo(questID)
   return name, mapID
 end
 
+-- True when QuestieDB can't list its quests (an older version): no
+-- pickups, no dungeon guide.
+function QuestieData:PickupsUnavailable()
+  return pickupCandidates == false
+end
+
 -- The quests of a dungeon (Data/Classic/Dungeons.lua) the player's race and
 -- class can do, or nil while the quest list isn't scanned.
 function QuestieData:GetDungeonQuests(dungeonID)
@@ -913,8 +921,9 @@ function QuestieData:WouldSuggest(questID, title, ctx)
   end
   local list = questID and { candidateIndex.byId[questID] } or candidateIndex.byTitle[title or ""] or {}
   for _, candidate in ipairs(list) do
+    -- (ctx.only: just these quests, as in GetPickups.)
     local ok, eligible = pcall(Eligible, candidate, ctx)
-    if ok and eligible then
+    if ok and eligible and (not ctx.only or ctx.only[candidate.id]) then
       return true
     end
   end

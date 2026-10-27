@@ -513,12 +513,26 @@ function QuestAdvisor:IsSuggested(questID, title)
   if questID and Pathwise:GetModule("ClassQuests"):Suggests(questID) then
     return true
   end
+  local level = Pathwise:GetModule("Character"):GetSnapshot().level or 1
+  local ctx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  -- Dungeon mode: the dungeon's quests and pre-quests, whatever their
+  -- level (as the dungeon plan suggests them).
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local dungeon = DungeonGuide:GetActive()
+  local belongs = dungeon and DungeonGuide:GetQuests(dungeon)
+  if belongs and (not questID or belongs.quests[questID]) then
+    local dungeonCtx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
+    dungeonCtx.outOfRange = function() return false end
+    dungeonCtx.only = belongs.quests
+    if QuestieData:WouldSuggest(questID, title, dungeonCtx) then
+      return true
+    end
+  end
   if not (Pathwise.db.questGuide and Pathwise.db.questPickups) then
     return false
   end
-  local level = Pathwise:GetModule("Character"):GetSnapshot().level or 1
-  local ctx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
-  return Pathwise:GetModule("QuestieData"):WouldSuggest(questID, title, ctx) == true
+  return QuestieData:WouldSuggest(questID, title, ctx) == true
 end
 
 -- Dungeon mode (Core/DungeonGuide.lua): only the dungeon's quests and the
@@ -552,8 +566,10 @@ local function InsidePlan(dungeon, quests, level, greenRange)
         local line = string.format(L.INSIDE_KILL, task.npcs[1] or "?")
         table.insert(bossIndex and forBoss or forOther, { index = bossIndex, text = line })
       elseif task.kind == "loot" then
-        local line = #task.npcs > 0 and string.format(L.INSIDE_LOOT_FROM, task.item, table.concat(task.npcs, ", ", 1,
-          math.min(#task.npcs, 2))) or string.format(L.INSIDE_LOOT, task.item)
+        -- From the boss when a boss drops it; else up to two of the mobs.
+        local from = bossIndex and dungeon.bosses[bossIndex][1]
+          or #task.npcs > 0 and table.concat(task.npcs, ", ", 1, math.min(#task.npcs, 2))
+        local line = from and string.format(L.INSIDE_LOOT_FROM, task.item, from) or string.format(L.INSIDE_LOOT, task.item)
         table.insert(bossIndex and forBoss or forOther, { index = bossIndex, text = line })
       else
         table.insert(forOther, { text = string.format(L.INSIDE_USE, task.object or "?") })
@@ -567,11 +583,19 @@ local function InsidePlan(dungeon, quests, level, greenRange)
         bosses[task.index] = bosses[task.index] or {}
         table.insert(bosses[task.index], { text = string.format(L.INSIDE_FOR, task.text, name), level = 1, task = true })
       end
-      if #forOther > 0 then
-        local lines = {}
-        for _, task in ipairs(forOther) do
-          lines[#lines + 1] = { text = task.text, level = 1, task = true }
+      local lines = {}
+      for _, task in ipairs(forOther) do
+        lines[#lines + 1] = { text = task.text, level = 1, task = true }
+      end
+      -- A dungeon quest QuestieDB has no objectives for: the game's own.
+      if #tasks == 0 then
+        for _, objective in ipairs(quest.objectives or {}) do
+          if not objective.finished and objective.text then
+            lines[#lines + 1] = { text = objective.text, level = 1, task = true }
+          end
         end
+      end
+      if #lines > 0 or (#forBoss == 0 and #tasks == 0) then
         along[#along + 1] = { quest = quest, name = name, lines = lines }
       end
     end
@@ -630,6 +654,7 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
       end
     end
     items = QuestAdvisor.Plan(mine, level, greenRange, location, DungeonLocate, pickups, true)
+    lastPickups = pickups -- (so "not offered" is learned here too)
   end
   for _, item in ipairs(DungeonGuide:ExtraItems(dungeon, quests)) do
     items[#items + 1] = item

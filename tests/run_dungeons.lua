@@ -33,13 +33,23 @@ local quests = {
   [9601] = { name = "Into the Mines", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, preQuestSingle = { 9600 },
     startedBy = { { 9702 } } },
   [9602] = { name = "Mine Quest", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, startedBy = { { 9702 } },
-    objectives = { { { 9801 } }, nil, { { 9901 } } } }, -- kill Mine Boss, loot a Mine Key from Mine Rats
+    -- kill Mine Boss, loot a Mine Key from Mine Rats, a Boss Key that Mine
+    -- Boss drops (listed third of its droppers)
+    objectives = { { { 9801 } }, nil, { { 9901 }, { 9902 } } } },
   [9603] = { name = "Deep Mine Quest", requiredLevel = L + 5, questLevel = L + 6, zoneOrSort = 9500,
     startedBy = { { 9702 } } },
   [9604] = { name = "Normal Quest", requiredLevel = 1, questLevel = L, zoneOrSort = 141, startedBy = { { 9701 } } },
   -- A chain that starts at a higher level (like The Defias Brotherhood in
   -- Westfall for The Deadmines).
   [9605] = { name = "Chain Start", requiredLevel = L + 3, questLevel = L + 3, zoneOrSort = 141, startedBy = { { 9701 } } },
+  -- Repeatable (like Dire Maul's tributes): never "done", so not counted.
+  [9607] = { name = "Tribute", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, specialFlags = 1,
+    startedBy = { { 9702 } } },
+  -- A grey pre-quest: still needed for the chain.
+  [9608] = { name = "Old Errand", requiredLevel = 1, questLevel = 1, zoneOrSort = 141, startedBy = { { 9701 } } },
+  [9609] = { name = "After The Errand", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, preQuestSingle = { 9608 },
+    startedBy = { { 9702 } } },
+  [9610] = { name = "Unrelated Grey", requiredLevel = 1, questLevel = 1, zoneOrSort = 141, startedBy = { { 9701 } } },
   [9606] = { name = "Chain End", requiredLevel = L + 3, questLevel = L + 4, zoneOrSort = 9500, preQuestSingle = { 9605 },
     startedBy = { { 9702 } } },
 }
@@ -49,7 +59,8 @@ local npcs = {
   [9801] = { name = "Mine Boss" },
   [9802] = { name = "Mine Rat" },
 }
-local items = { [9901] = { name = "Mine Key", npcDrops = { 9802 } } }
+local items = { [9901] = { name = "Mine Key", npcDrops = { 9802 } },
+  [9902] = { name = "Boss Key", npcDrops = { 9802, 9803, 9801 } } }
 local questGet, npcGet, allIds = LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Quest.GetAllIds
 local itemGet = LibQuestieDB.Item.Get
 LibQuestieDB.Item.Get = function(id, key)
@@ -64,7 +75,7 @@ LibQuestieDB.Npc.Get = function(id, key)
   if npcs[id] then return npcs[id][key] end
   return npcGet(id, key)
 end
-LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606 } end
+LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610 } end
 QuestieData:ResetPickups()
 QuestieData:PickupsReady()
 WoW.RunTimers()
@@ -78,7 +89,7 @@ local names = {}
 for _, d in ipairs(DungeonGuide.List()) do names[d.name] = true end
 check("Alliance: no Ragefire Chasm, but The Stockade and The Deadmines", not names["Ragefire Chasm"]
   and names["The Stockade"] and names["The Deadmines"] and names["The Test Mines"])
-check("its quests (for this race and class)", #QuestieData:GetDungeonQuests(9500) == 4)
+check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 5)
 check("normal mode: the normal quest is suggested", Item("pickup:9604") ~= nil)
 
 ---------------------------------------------------------------------------
@@ -186,7 +197,7 @@ section("Dungeons: inside")
 IsInInstance = function() return true, "party" end
 GetInstanceInfo = function() return "The Test Mines", "party", 1, "Normal", 5, 0, false, 9550 end
 local log = { { title = "Mine Quest", level = L, questID = 9602, zone = "The Test Mines",
-  objectives = { { text = "Mine Boss slain: 0/1" }, { text = "Mine Key: 0/1" } } } }
+  objectives = { { text = "Mine Boss slain: 0/1" }, { text = "Mine Key: 0/1" }, { text = "Boss Key: 0/1" } } } }
 UpdateLog(log)
 check("inside: the dungeon is known by its instance", DungeonGuide:GetInside() == dungeon
   and window.title:GetText() == "Dungeon: The Test Mines")
@@ -200,7 +211,24 @@ check("no boss step for bosses no quest needs", Item("inside:boss:2") == nil)
 local order = {}
 for index, it in ipairs(NextSteps:GetItems()) do order[it.id] = index end
 check("the next boss before the rest", order["inside:boss:1"] < order["inside:along:9602"])
+check("loot from a boss names the boss, wherever it is among the droppers",
+  boss.subLines[2] and boss.subLines[2].text:find("^Loot Boss Key from Mine Boss %(") ~= nil)
+-- A dungeon quest QuestieDB has no objectives for: the game's own wording.
+table.insert(log, { title = "Chain End", level = L, questID = 9606, zone = "The Test Mines",
+  objectives = { { text = "Find the foreman: 0/1" } } })
+UpdateLog(log)
+local noTasks = Item("inside:along:9606")
+check("a quest without known objectives: the game's objectives", noTasks
+  and noTasks.subLines[1].text == "Find the foreman: 0/1")
+table.remove(log)
+IsInInstance = function() return true, "raid" end
+UpdateLog(log)
+check("a raid-sized instance (Blackrock Spire) counts too", DungeonGuide:GetInside() == dungeon)
+IsInInstance = function() return true, "party" end
 log[1].objectives[1].finished = true
+UpdateLog(log)
+check("boss killed but its key not looted yet: the step stays", Item("inside:boss:1") ~= nil)
+log[1].objectives[3].finished = true
 UpdateLog(log)
 check("boss done: its step is gone", Item("inside:boss:1") == nil and Item("inside:along:9602") ~= nil)
 log[1].complete = 1
@@ -211,6 +239,29 @@ check("no quests for it: says so", Item("inside:none") and Item("inside:none").t
 IsInInstance, GetInstanceInfo = nil, nil
 UpdateLog({})
 check("outside again: the usual list", DungeonGuide:GetInside() == nil and Item("inside:none") == nil)
+
+---------------------------------------------------------------------------
+section("Dungeons: auto-accept, empty dungeons, older QuestieDB")
+
+local QuestAdvisor = Pathwise:GetModule("QuestAdvisor")
+check("normal mode: a grey quest isn't suggested", not QuestAdvisor:IsSuggested(9608))
+DungeonGuide:SetDungeon(9500)
+check("dungeon mode: its grey pre-quest is (auto-accepted)", QuestAdvisor:IsSuggested(9608))
+check("but not a grey quest that doesn't belong to it", not QuestAdvisor:IsSuggested(9610)
+  and not QuestAdvisor:IsSuggested(nil, "Unrelated Grey"))
+local empty = { id = 9501, name = "The Empty Halls", min = 1, max = 60, instance = 9551, entrances = { { 141, 10, 10 } },
+  bosses = {} }
+table.insert(Pathwise.Data.Dungeons, empty)
+DungeonGuide:SetDungeon(9501)
+check("a dungeon with no quests for you says so", Item("dungeon:done")
+  and Item("dungeon:done").text == "The Empty Halls has no quests for your race and class.")
+LibQuestieDB.Quest.GetAllIds = nil
+QuestieData:ResetPickups()
+DungeonGuide:SetDungeon(9501)
+check("an older QuestieDB (no quest list): says so instead of loading forever", Item("dungeon:loading")
+  and Item("dungeon:loading").text:find("newer QuestieDB", 1, true))
+DungeonGuide:SetDungeon(nil)
+table.remove(Pathwise.Data.Dungeons)
 
 -- Clean up
 LibQuestieDB.Item.Get = itemGet

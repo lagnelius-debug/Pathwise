@@ -763,7 +763,9 @@ function Platform.GetDungeonInstanceID()
     return nil
   end
   local inside, kind = IsInInstance()
-  if not inside or kind ~= "party" then
+  -- (Blackrock Spire can count as a raid instance; the dungeon list only
+  -- has 5-player dungeons, so other raids never match.)
+  if not inside or (kind ~= "party" and kind ~= "raid") then
     return nil
   end
   local instanceID = select(8, GetInstanceInfo())

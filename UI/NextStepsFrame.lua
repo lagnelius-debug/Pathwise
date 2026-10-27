@@ -89,10 +89,7 @@ local function GetRow(index)
   return row
 end
 
-local UpdateTitle
-
 local function UpdateFooter(stepCount)
-  UpdateTitle()
   local active = Pathwise:GetModule("Talents"):GetSpecInfo().active
   local path = frame.path
   path.text:SetText(string.format(L.NS_PATH, L["SPEC_" .. active]))
@@ -114,8 +111,9 @@ local function UpdateFooter(stepCount)
 end
 
 -- "To-do", or "Dungeon: The Deadmines" inside a dungeon or in dungeon
--- mode. (Re-skins only when it changes.)
-function UpdateTitle()
+-- mode. (Re-skins only when it changes; not while drawing the list, since
+-- a new title re-skins and redraws the window.)
+local function UpdateTitle()
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
   local dungeon = DungeonGuide:GetInside() or DungeonGuide:GetActive()
   local title = dungeon and string.format(L.DUNGEON_TITLE, dungeon.name) or L.NS_TITLE
@@ -338,6 +336,8 @@ function NextStepsFrame:Toggle()
 end
 
 function NextStepsFrame:OnUpdated()
+  -- (Entering or leaving a dungeon re-plans the steps: the title follows.)
+  UpdateTitle()
   self:Render()
 end
 

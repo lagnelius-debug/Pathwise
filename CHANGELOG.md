@@ -3,6 +3,30 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.21.2
+
+Fixes from a check of the dungeon guide:
+
+- Repeatable quests (like Dire Maul's tributes) no longer count as
+  dungeon quests: they never count as done, so the dungeon could never
+  say "You've done every quest" and the quest counts in the list were too
+  high.
+- A dungeon with no quests for your race and class says so, instead of
+  "You've done every quest".
+- Inside: a boss loot objective names the boss even when other mobs drop
+  the item too; a dungeon quest QuestieDB has no objectives for still
+  shows, with the game's own objective text; Blackrock Spire counts even
+  if the game calls it a raid instance.
+- Auto-accept in dungeon mode takes the dungeon's quests and pre-quests
+  whatever their level (as the dungeon list suggests them), and never
+  another quest by mistake.
+- Dungeon mode learns "the giver doesn't offer it" like the normal guide,
+  so a pre-quest that isn't really there stops being suggested.
+- With an older QuestieDB that can't list its quests, dungeon mode says so
+  instead of "Reading the quest data..." forever.
+- The window title no longer redraws the To-do window twice when it
+  changes.
+
 ## 0.21.1
 
 - Dungeon mode is a toggle now: the footer button in the To-do window says
