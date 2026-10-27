@@ -1,10 +1,10 @@
 local addonName, Pathwise = ...
 
 -- Settings panel (Esc > Options > AddOns > Pathwise, or /pw settings).
--- For now: General (minimap and target buttons, meters or yards) and Appearance (one button per window
+-- General (minimap and target buttons, meters or yards; feature switches
+-- are on their own page, UI/FeaturesPanel.lua) and Appearance (one button per window
 -- theme with a two-color swatch; the active theme has a gold outline, and
--- the Wildwood season choice while Wildwood is active). More
--- settings (module toggles, ammo thresholds, chat messages) come with M7.
+-- the Wildwood season choice while Wildwood is active).
 --
 -- Registration: the modern Settings API when the client has it, otherwise
 -- the legacy Interface Options (checked at runtime).
@@ -165,9 +165,13 @@ local function CreatePanel()
     unitButtons[index] = button
   end
 
+  local featuresHint = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  featuresHint:SetPoint("TOPLEFT", units, "BOTTOMLEFT", 0, -16)
+  featuresHint:SetText(L.SETTINGS_FEATURES_HINT)
+
   -- Appearance
   local header = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  header:SetPoint("TOPLEFT", units, "BOTTOMLEFT", 0, -22)
+  header:SetPoint("TOPLEFT", featuresHint, "BOTTOMLEFT", 0, -16)
   header:SetText(L.SETTINGS_APPEARANCE)
   panel.themeHeader = header
 

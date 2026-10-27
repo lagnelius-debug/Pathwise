@@ -82,7 +82,7 @@ end
 
 -- Adds the Pathwise line; returns true if a line was added.
 local function AddPathwiseLine(tooltip)
-  if not Tooltip.enabled then
+  if not Tooltip.enabled or not Pathwise.db.gearTooltips then
     return false
   end
   -- Only the main and chat-link tooltips; the comparison tooltips show the

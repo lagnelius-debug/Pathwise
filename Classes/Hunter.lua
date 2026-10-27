@@ -165,6 +165,10 @@ function Hunter:Update()
   if not IsHunter() then
     return
   end
+  if not Pathwise.db.hunterTips then
+    Pathwise:GetModule("NextSteps"):SetItems("hunter", {})
+    return
+  end
   local items = {}
   for _, list in ipairs({ AmmoItems(), PetItems(), TamingItems() }) do
     for _, item in ipairs(list) do

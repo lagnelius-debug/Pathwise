@@ -197,7 +197,7 @@ end
 local function UpdateNextSteps()
   local NextSteps = Pathwise:GetModule("NextSteps")
   local items = {}
-  if #list.recommended > 0 then
+  if #list.recommended > 0 and Pathwise.db.trainerTips then
     local detail = {}
     for i, item in ipairs(list.recommended) do
       detail[i] = Trainer.FormatName(item)
@@ -221,7 +221,7 @@ function Trainer:Refresh(allowAnnounce)
   local charDB = Pathwise.charDB
   if allowAnnounce and #list.recommended > 0 and charDB.trainerAnnouncedLevel ~= level then
     charDB.trainerAnnouncedLevel = level
-    if Pathwise.db.chatMessages then
+    if Pathwise.db.chatMessages and Pathwise.db.trainerTips then
       Announce()
     end
   end

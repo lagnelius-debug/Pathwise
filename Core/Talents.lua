@@ -377,7 +377,7 @@ end
 -- talent window: { tab, index, name, rank, maxRank }, or nil when there's no
 -- unspent point, no build, or the next build point can't be taken yet.
 function Talents:GetNextPoint()
-  if (GetSnapshot().talents.unspent or 0) <= 0 then
+  if not Pathwise.db.talentAdvice or (GetSnapshot().talents.unspent or 0) <= 0 then
     return nil
   end
   local point = self:GetUpcoming(1)[1]
@@ -397,6 +397,11 @@ end
 -- Fires TALENT_ADVICE_UPDATED (for the talent window highlight).
 function Talents:UpdateAdvice(allowAnnounce)
   local NextSteps = Pathwise:GetModule("NextSteps")
+  if not Pathwise.db.talentAdvice then
+    NextSteps:SetItems("talents", {})
+    Pathwise:FireCallback("TALENT_ADVICE_UPDATED")
+    return
+  end
   local snapshot = GetSnapshot()
   local unspent = snapshot.talents.unspent or 0
   local upcoming, build = self:GetUpcoming(PREVIEW_PICKS)

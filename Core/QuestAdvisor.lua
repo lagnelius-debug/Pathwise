@@ -441,6 +441,12 @@ end
 ---------------------------------------------------------------------------
 
 function QuestAdvisor:Update()
+  if not Pathwise.db.questGuide then
+    lastPickups = {}
+    Pathwise:GetModule("NextSteps"):SetItems("quests", {})
+    Pathwise:FireCallback("QUESTS_PLANNED", {})
+    return
+  end
   local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
   local level = snapshot.level or 1
   local quests, collapsed = Platform.GetQuestLog()

@@ -88,7 +88,7 @@ end
 
 function QuestRewards:Evaluate()
   local choices = Platform.GetQuestRewardChoices()
-  if #choices < 2 then
+  if #choices < 2 or not Pathwise.db.rewardPicker then
     Pathwise:FireCallback("QUEST_REWARD_CLEARED")
     return
   end

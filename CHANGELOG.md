@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.13.0
+
+- Settings > Pathwise > **Features** (or `/pw features`): switch single
+  features on or off, right away, without /reload - quest guide, quest
+  pickups, hearthstone tips, trainer reminder, the Training list, talent
+  advice, gear tooltips, the quest reward highlight, sell prices,
+  profession advice, the target macro, hunter reminders, the pet guide and
+  chat messages.
+
 ## 0.12.1
 
 Fixes from a full check of the addon:

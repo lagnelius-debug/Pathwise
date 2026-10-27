@@ -33,6 +33,14 @@ local DB_DEFAULTS = {
   distanceUnit = "meters",      -- "meters" or "yards" (/pw units)
   questPickups = true,          -- suggest quests to pick up (QuestieDB)
   hearthTips = true,            -- suggest moving the hearthstone (/pw hearth)
+  -- Feature switches (settings: Pathwise > Features), all on by default:
+  questGuide = true,            -- quest steps in the To-do window (and the arrow on them)
+  trainerTips = true,           -- trainer reminder: To-do line and chat
+  talentAdvice = true,          -- talent advice: To-do line, chat, talent window glow
+  gearTooltips = true,          -- upgrade/downgrade line in item tooltips
+  rewardPicker = true,          -- best quest reward highlight
+  hunterTips = true,            -- hunter: ammo, pet food and taming reminders
+  petGuide = true,              -- hunter: pet ability guide
   targetMacro = true,           -- keep the "Pathwise" target macro up to date
   targetButton = { shown = true }, -- floating target button: on/off and position
   sellPrice = true,             -- show vendor sell prices in item tooltips
