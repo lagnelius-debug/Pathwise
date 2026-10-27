@@ -346,7 +346,7 @@ From docs/PATHWISE_THEMES_V4.md. **Fully restart WoW** first (not just `/reload`
 
 - `UnitCharacterPoints("player")` returns unspent talent points. This can only be checked from level 10.
 - The talent tab order for each non-hunter class in `Data/Classic/ClassSpecs.lua` (`/pw talents check` on each class). The hunter order is verified.
-- The "Equip:" stat keys for casters and tanks (spell damage, healing, mana per 5, defense, block): `/pw stats` on such an item shows which keys the client reports (`Data/Classic/StatWeights.lua`).
+- The "Equip:" stat keys for casters and tanks: +healing is verified (`ITEM_MOD_SPELL_HEALING_DONE`, matched with or without `_SHORT`). Still open: spell damage, mana per 5, defense, block - `/pw stats` on such an item shows which keys the client reports (`Data/Classic/StatWeights.lua`).
 - Weapon DPS is reported by `GetItemStats` as `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`. Use `/pw stats` on a weapon to check. Armor (`RESISTANCE0_NAME`) is verified in game.
 - Which tooltip hook Classic Era uses. `/pw debug` prints `Tooltip hook: ...` at login.
 - The weapon types hunters can use, and that dual wield starts at level 20 (`Data/Classic/ClassGear.lua`).

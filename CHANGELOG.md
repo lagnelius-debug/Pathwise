@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.18.1
+
+- Gear advice for healers and casters: the game names some "Equip:"
+  bonuses without the `_SHORT` ending Pathwise expected (seen in game:
+  `ITEM_MOD_SPELL_HEALING_DONE` on Pagan Belt of Healing), so +healing
+  counted for nothing. Both spellings are matched now.
+
 ## 0.18.0
 
 - **Azure theme** (docs/PATHWISE_THEMES_V4.md), matching the Pathwise logo:

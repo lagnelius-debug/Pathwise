@@ -11,9 +11,11 @@ local addonName, Pathwise = ...
 -- so scores can be compared between items but not between specs. Armor
 -- follows the hunter rule, 1 Stamina ~ 40 armor, except for tanks.
 -- Wands are ranged weapons: RANGED_WEAPON_DPS is the wand for casters.
--- TODO verify with /pw stats: the keys for "Equip:" bonuses (spell damage
--- and healing, mana per 5, hit, crit, defense, dodge, parry, block). Keys
--- the client doesn't report simply score nothing.
+-- "Equip:" bonuses: verified in game, the client reports +healing as
+-- ITEM_MOD_SPELL_HEALING_DONE (no _SHORT; Pagan Belt of Healing), so
+-- GearScore matches a key with or without _SHORT. TODO verify with
+-- /pw stats: spell damage, mana per 5, hit, crit, defense, dodge, parry,
+-- block. Keys the client doesn't report simply score nothing.
 
 Pathwise.Data.StatWeights = {
   HUNTER = {

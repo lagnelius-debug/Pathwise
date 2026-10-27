@@ -43,6 +43,21 @@ function GearScore:GetWeights()
   return classWeights[Data.DefaultGoal], Data.DefaultGoal
 end
 
+-- The weight for a stat key. The client names the base stats with _SHORT
+-- (ITEM_MOD_STAMINA_SHORT) but some "Equip:" bonuses without it
+-- (ITEM_MOD_SPELL_HEALING_DONE, seen in game): either spelling matches.
+local function Weight(weights, key)
+  local weight = weights[key]
+  if weight == nil then
+    if key:sub(-6) == "_SHORT" then
+      weight = weights[key:sub(1, -7)]
+    else
+      weight = weights[key .. "_SHORT"]
+    end
+  end
+  return weight or 0
+end
+
 -- Pure function: score of a stats table with a weights table.
 function GearScore.ScoreStats(stats, weights, isRanged)
   local score = 0
@@ -51,7 +66,7 @@ function GearScore.ScoreStats(stats, weights, isRanged)
       local weight = isRanged and weights.RANGED_WEAPON_DPS or weights.MELEE_WEAPON_DPS
       score = score + value * (weight or 0)
     else
-      score = score + value * (weights[key] or 0)
+      score = score + value * Weight(weights, key)
     end
   end
   return score

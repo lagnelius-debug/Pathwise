@@ -43,6 +43,12 @@ check("ScoreStats armor", math.abs(GearScore.ScoreStats({ RESISTANCE0_NAME = 16 
 check("ScoreStats ranged dps", GearScore.ScoreStats({ ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2 }, weights, true) == 6)
 check("ScoreStats melee dps", math.abs(GearScore.ScoreStats({ ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2 }, weights, false) - 0.4) < 1e-9)
 check("ScoreStats ignores unknown stats", GearScore.ScoreStats({ ITEM_MOD_FOO = 50 }, weights, false) == 0)
+-- Seen in game (Pagan Belt of Healing): +healing comes without _SHORT.
+local holy = Pathwise.Data.StatWeights.PRIEST.HOLY
+check("ScoreStats: a key without _SHORT matches the weight", math.abs(GearScore.ScoreStats(
+  { ITEM_MOD_SPELL_HEALING_DONE = 8 }, holy, false) - 8 * holy.ITEM_MOD_SPELL_HEALING_DONE_SHORT) < 1e-9)
+check("ScoreStats: and the other way round", GearScore.ScoreStats({ ITEM_MOD_STAMINA = 2 }, weights, false)
+  == GearScore.ScoreStats({ ITEM_MOD_STAMINA_SHORT = 2 }, weights, false))
 -- Reported in game: Sleeping Robes (19 armor, +1 Stamina) showed as a
 -- downgrade from Woodland Tunic (33 armor). +1 Stamina (+10 health) is worth
 -- more than 14 armor on every hunter path.
