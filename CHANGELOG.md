@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.20.1
+
+- Dungeon guide: the entrance is no longer the first step when you're far
+  below the dungeon (reported with The Deadmines at a low level). It waits
+  at the bottom ("from level 17") until you're within 2 levels of the
+  dungeon's range, and even then comes after the quests and pre-quests.
+- "Later" now shows where each quest chain starts once you're high enough
+  - quest, level, giver and zone (e.g. The Defias Brotherhood from level
+  14, Gryan Stoutmantle in Westfall) - instead of only the dungeon's own
+  quests at the end of the chains.
+
 ## 0.20.0
 
 - **Dungeon guide**: "Dungeons" in the To-do window footer (or

@@ -184,7 +184,8 @@ Needs QuestieDB. Try it with a dungeon of your level, e.g. The Deadmines or Wail
 - [ ] "Dungeons" in the To-do window footer (or `/pw dungeon`) opens a list of the dungeons for your faction, in level order: the level range colored (green fits, orange still high, grey too low), and how many of each dungeon's quests you haven't done. Escape or X closes it.
 - [ ] Click one: the title says `Dungeon: The Deadmines`, the footer `... steps · dungeon mode`, and chat explains it once.
 - [ ] The list shows only that dungeon: its quests to pick up, the pre-quests that unlock them (their tooltip says "A pre-quest..."; e.g. the Westfall chain for The Defias Brotherhood), pre-quests in your log with their objectives, and `Go to The Deadmines (entrance in Westfall)` with the arrow on the entrance.
-- [ ] Dungeon quests you have point the arrow at the entrance. Quests you're too low for are listed as `Later: N more quests from level X` (names in the tooltip).
+- [ ] Dungeon quests you have point the arrow at the entrance. Chains you're too low for are listed as `Later: N quest chains, the first from level X`; the tooltip says where each one starts (quest, level, giver and zone - e.g. The Defias Brotherhood from level 14 in Westfall for The Deadmines).
+- [ ] Far below the dungeon's level, the entrance waits at the bottom (`... - from level 17`) and doesn't take the arrow; within 2 levels of the range it becomes a step, after the quests and pre-quests.
 - [ ] Finish a pre-quest: the next quest of the chain appears to pick up. Auto-accept takes them when you talk to the giver.
 - [ ] "Leave dungeon mode" at the top of the list (or `/pw dungeon off`): the usual guide is back. Dungeon mode stays on over a /reload until you leave it.
 - [ ] Check whether a quest you know belongs to the dungeon is missing, or one that doesn't shows up, and tell me.

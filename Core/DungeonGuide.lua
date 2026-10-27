@@ -21,6 +21,9 @@ local DungeonGuide = Pathwise:NewModule("DungeonGuide")
 
 -- How deep pre-quest chains are followed back.
 local MAX_CHAIN_DEPTH = 20
+-- The entrance is a step to go to from this many levels below the
+-- dungeon's range; before that it waits at the bottom of the list.
+local ENTRANCE_LEVELS_BELOW = 2
 
 local questCache -- { dungeonID, list, quests } for the active dungeon
 
@@ -126,6 +129,45 @@ function DungeonGuide:EntranceTarget(dungeon)
   return best, bestDistance
 end
 
+-- The quests that come next in a dungeon quest's chain: not done, every
+-- pre-quest done (preQuestGroup: all of them; preQuestSingle: one of them,
+-- among the ones the player's race and class can take). Adds them to
+-- `next` ([questID] = true).
+local function ChainNext(questID, nextSet, seen, depth)
+  if seen[questID] or depth > MAX_CHAIN_DEPTH or Platform.IsQuestCompleted(questID) then
+    return
+  end
+  seen[questID] = true
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local blocked = false
+  local group = QuestieData:QuestInfo(questID, "preQuestGroup")
+  for _, before in ipairs(type(group) == "table" and group or {}) do
+    if not Platform.IsQuestCompleted(before) then
+      blocked = true
+      ChainNext(before, nextSet, seen, depth + 1)
+    end
+  end
+  local single = QuestieData:QuestInfo(questID, "preQuestSingle")
+  if type(single) == "table" and #single > 0 then
+    local options, done = {}, false
+    for _, before in ipairs(single) do
+      done = done or Platform.IsQuestCompleted(before)
+      if QuestieData:IsForPlayer(before) then
+        options[#options + 1] = before
+      end
+    end
+    if not done and #options > 0 then
+      blocked = true
+      for _, before in ipairs(options) do
+        ChainNext(before, nextSet, seen, depth + 1)
+      end
+    end
+  end
+  if not blocked then
+    nextSet[questID] = true
+  end
+end
+
 -- How many of a dungeon's quests the player hasn't done yet, or nil while
 -- the quest list isn't scanned.
 function DungeonGuide:CountOpen(dungeon)
@@ -156,41 +198,71 @@ function DungeonGuide:ExtraItems(dungeon, log)
     return { { id = "dungeon:loading", priority = P.QUEST_ELSEWHERE, text = L.DUNGEON_LOADING } }
   end
 
+  local level = GetSnapshot().level or 1
+  -- The entrance: a step once the player is about the dungeon's level
+  -- (after the quests and pre-quests); before that it waits at the bottom
+  -- and doesn't take the arrow.
   local entrance, distance = self:EntranceTarget(dungeon)
+  local entranceItem
   if entrance then
     local zone = Platform.GetMapName(entrance.mapID) or "?"
     local text = string.format(L.DUNGEON_ENTRANCE, dungeon.name, zone)
-    if distance then
+    local ready = level >= dungeon.min - ENTRANCE_LEVELS_BELOW
+    if not ready then
+      text = text .. string.format(L.DUNGEON_FROM_LEVEL, dungeon.min)
+    elseif distance then
       text = text .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(distance))
     end
-    items[#items + 1] = { id = "dungeon:entrance", priority = P.QUEST_ELSEWHERE, text = text, target = entrance,
-      distance = distance }
+    -- (Added last: below "Later" when both wait.)
+    entranceItem = { id = "dungeon:entrance", priority = ready and P.QUEST_ELSEWHERE or P.QUEST_LATER,
+      text = text, target = entrance, distance = distance }
   end
 
-  -- The dungeon's quests the player is too low for: one line, the names in
-  -- the tooltip.
+  -- What comes later: where each chain goes on (its next quest) when the
+  -- player is too low for it - e.g. The Defias Brotherhood in Westfall at
+  -- 14 for The Deadmines. One line, the quests in the tooltip.
   local inLog = {}
   for _, quest in ipairs(log) do
     if quest.questID then
       inLog[quest.questID] = true
     end
   end
-  local level = GetSnapshot().level or 1
-  local later, lowest, open = {}, nil, 0
+  local nextSet, seen, open = {}, {}, 0
   for _, questID in ipairs(quests.list) do
     if not Platform.IsQuestCompleted(questID) then
       open = open + 1
-      local required = QuestieData:QuestInfo(questID, "requiredLevel") or 1
-      if required > level and not inLog[questID] then
-        later[#later + 1] = string.format(L.DUNGEON_LATER_LINE, QuestieData:QuestInfo(questID, "name") or "?", required)
-        lowest = math.min(lowest or required, required)
-      end
+      ChainNext(questID, nextSet, seen, 0)
     end
   end
-  if #later > 0 then
-    items[#items + 1] = { id = "dungeon:later", priority = P.QUEST_LATER, detail = later,
-      text = string.format(L.DUNGEON_LATER, #later, lowest) }
+  local later = {}
+  for questID in pairs(nextSet) do
+    local required = QuestieData:QuestInfo(questID, "requiredLevel") or 1
+    if required > level and not inLog[questID] then
+      later[#later + 1] = { id = questID, level = required, name = QuestieData:QuestInfo(questID, "name") or "?" }
+    end
   end
+  table.sort(later, function(a, b)
+    if a.level ~= b.level then
+      return a.level < b.level
+    end
+    return a.name < b.name
+  end)
+  if #later > 0 then
+    local lines = {}
+    for _, quest in ipairs(later) do
+      local giver, giverMap = QuestieData:GiverInfo(quest.id)
+      if giver then
+        lines[#lines + 1] = string.format(L.DUNGEON_LATER_GIVER, quest.name, quest.level, giver,
+          giverMap and Platform.GetMapName(giverMap) or "?")
+      else
+        lines[#lines + 1] = string.format(L.DUNGEON_LATER_LINE, quest.name, quest.level)
+      end
+    end
+    items[#items + 1] = { id = "dungeon:later", priority = P.QUEST_LATER, detail = lines,
+      text = #later == 1 and string.format(L.DUNGEON_LATER_ONE, later[1].name, later[1].level)
+        or string.format(L.DUNGEON_LATER, #later, later[1].level) }
+  end
+  items[#items + 1] = entranceItem
   if open == 0 then
     items[#items + 1] = { id = "dungeon:done", priority = P.QUEST_ELSEWHERE,
       text = string.format(L.DUNGEON_NONE_LEFT, dungeon.name) }

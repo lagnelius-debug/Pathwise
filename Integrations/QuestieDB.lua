@@ -782,6 +782,47 @@ end
 -- ctx: { level, inLog = { [questID] = true }, outOfRange(questLevel) - true
 --        for quests too easy or too hard to suggest,
 --        skip(questID) - true for quests to leave out (e.g. not offered) }
+-- Whether the player's race and class can take a quest at all.
+function QuestieData:IsForPlayer(questID)
+  if not Load() then
+    return false
+  end
+  local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
+  local ok, allowed = pcall(function()
+    local Get = lib.Quest.Get
+    return MaskAllows(Get(questID, "requiredRaces"), snapshot.raceID and 2 ^ (snapshot.raceID - 1))
+      and MaskAllows(Get(questID, "requiredClasses"), snapshot.classID and 2 ^ (snapshot.classID - 1))
+  end)
+  return ok and allowed
+end
+
+-- Who starts a quest: the first giver's name and the map it stands on
+-- (nil, nil when unknown, e.g. started by an item).
+function QuestieData:GiverInfo(questID)
+  if not Load() then
+    return nil
+  end
+  local ok, name, mapID = pcall(function()
+    local startedBy = lib.Quest.Get(questID, "startedBy") or {}
+    local npcId = startedBy[1] and startedBy[1][1]
+    local objectId = startedBy[2] and startedBy[2][1]
+    local entity = npcId and lib.Npc or objectId and lib.Object
+    local id = npcId or objectId
+    if not entity then
+      return nil
+    end
+    local map
+    for areaId in pairs(entity.Get(id, "spawns") or {}) do
+      map = map or areaToUiMap[areaId]
+    end
+    return entity.Get(id, "name"), map ~= 0 and map or nil
+  end)
+  if not ok then
+    return nil
+  end
+  return name, mapID
+end
+
 -- The quests of a dungeon (Data/Classic/Dungeons.lua) the player's race and
 -- class can do, or nil while the quest list isn't scanned.
 function QuestieData:GetDungeonQuests(dungeonID)
