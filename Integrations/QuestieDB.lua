@@ -542,6 +542,7 @@ local CLASS_SORTS = {
 
 local pickupCandidates -- list once scanned; false: can't scan (old QuestieDB)
 local pickupScan       -- in progress: { ids, next, list, raceBit, classBit }
+local candidateIndex   -- the candidates by ID and by title (WouldSuggest)
 
 -- bit: a power of two. Works without the bit library (and in tests).
 local function HasBit(mask, bit)
@@ -611,7 +612,7 @@ local function ScanPickupChunk()
     return
   end
   pickupCandidates = ok and scan.list or false
-  pickupScan = nil
+  pickupScan, candidateIndex = nil, nil
   Pathwise:FireCallback("QUESTIE_PICKUPS_READY")
 end
 
@@ -646,7 +647,7 @@ end
 
 -- Forgets the scanned quest list (tests; another character's data).
 function QuestieData:ResetPickups()
-  pickupCandidates, pickupScan = nil, nil
+  pickupCandidates, pickupScan, candidateIndex = nil, nil, nil
 end
 
 -- Where a candidate is started: points with .giver (NPC or object name),
@@ -747,6 +748,50 @@ end
 -- ctx: { level, inLog = { [questID] = true }, outOfRange(questLevel) - true
 --        for quests too easy or too hard to suggest,
 --        skip(questID) - true for quests to leave out (e.g. not offered) }
+-- Whether a scanned quest can be suggested now (ctx as for GetPickups).
+local function Eligible(candidate, ctx)
+  local isCompleted = Platform.IsQuestCompleted
+  local level = candidate.level == -1 and ctx.level or candidate.level
+  return candidate.requiredLevel <= ctx.level and not ctx.inLog[candidate.id] and not ctx.outOfRange(level)
+    and not isCompleted(candidate.id)
+    and (not NonEmpty(candidate.preGroup) or AllCompleted(candidate.preGroup, isCompleted))
+    and (not NonEmpty(candidate.preSingle) or AnyCompleted(candidate.preSingle, isCompleted))
+    and not (NonEmpty(candidate.exclusive) and (AnyCompleted(candidate.exclusive, isCompleted)
+      or AnyCompleted(candidate.exclusive, function(id) return ctx.inLog[id] end)))
+    -- A later quest of the chain (or the quest a breadcrumb leads to) is
+    -- already done or in the log: this one is no longer offered.
+    and not DoneOrInLog(candidate.nextInChain, isCompleted, ctx.inLog)
+    and not DoneOrInLog(candidate.breadcrumbFor, isCompleted, ctx.inLog)
+    and not (ctx.skip and ctx.skip(candidate.id))
+    and QuestieIsDoable(candidate.id) ~= false
+end
+
+-- Whether the guide would suggest picking up a quest now (by its ID, or by
+-- its title when the client gives no ID): the same rules as GetPickups,
+-- wherever the giver is. nil while the quest list isn't scanned.
+function QuestieData:WouldSuggest(questID, title, ctx)
+  if not self:PickupsReady() then
+    return nil
+  end
+  if not candidateIndex then
+    candidateIndex = { byId = {}, byTitle = {} }
+    for _, candidate in ipairs(pickupCandidates) do
+      candidateIndex.byId[candidate.id] = candidate
+      local list = candidateIndex.byTitle[candidate.name] or {}
+      list[#list + 1] = candidate
+      candidateIndex.byTitle[candidate.name] = list
+    end
+  end
+  local list = questID and { candidateIndex.byId[questID] } or candidateIndex.byTitle[title or ""] or {}
+  for _, candidate in ipairs(list) do
+    local ok, eligible = pcall(Eligible, candidate, ctx)
+    if ok and eligible then
+      return true
+    end
+  end
+  return false
+end
+
 function QuestieData:GetPickups(ctx, limit)
   if not self:PickupsReady() then
     return nil
@@ -756,22 +801,10 @@ function QuestieData:GetPickups(ctx, limit)
     return {}
   end
   local Waypoints = Pathwise:GetModule("Waypoints")
-  local isCompleted = Platform.IsQuestCompleted
   local found = {}
   for _, candidate in ipairs(pickupCandidates) do
     local level = candidate.level == -1 and ctx.level or candidate.level
-    if candidate.requiredLevel <= ctx.level and not ctx.inLog[candidate.id] and not ctx.outOfRange(level)
-      and not isCompleted(candidate.id)
-      and (not NonEmpty(candidate.preGroup) or AllCompleted(candidate.preGroup, isCompleted))
-      and (not NonEmpty(candidate.preSingle) or AnyCompleted(candidate.preSingle, isCompleted))
-      and not (NonEmpty(candidate.exclusive) and (AnyCompleted(candidate.exclusive, isCompleted)
-        or AnyCompleted(candidate.exclusive, function(id) return ctx.inLog[id] end)))
-      -- A later quest of the chain (or the quest a breadcrumb leads to) is
-      -- already done or in the log: this one is no longer offered.
-      and not DoneOrInLog(candidate.nextInChain, isCompleted, ctx.inLog)
-      and not DoneOrInLog(candidate.breadcrumbFor, isCompleted, ctx.inLog)
-      and not (ctx.skip and ctx.skip(candidate.id))
-      and QuestieIsDoable(candidate.id) ~= false then
+    if Eligible(candidate, ctx) then
       local ok, points = pcall(GiverPoints, candidate)
       local best, bestDistance
       for _, point in ipairs(ok and points or {}) do

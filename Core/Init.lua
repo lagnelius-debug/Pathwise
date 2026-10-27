@@ -32,6 +32,8 @@ local DB_DEFAULTS = {
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
   distanceUnit = "meters",      -- "meters" or "yards" (/pw units)
   questPickups = true,          -- suggest quests to pick up (QuestieDB)
+  autoAccept = true,            -- accept the suggested quests when talking to the giver
+  autoAcceptHinted = false,     -- the auto-accept hint was said in chat
   hearthTips = true,            -- suggest moving the hearthstone (/pw hearth)
   -- Feature switches (settings: Pathwise > Features), all on by default:
   questGuide = true,            -- quest steps in the To-do window (and the arrow on them)

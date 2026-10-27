@@ -700,14 +700,14 @@ function Platform.GetOfferedQuests(event)
   local offered = {}
   if event == "GOSSIP_SHOW" then
     if C_GossipInfo and C_GossipInfo.GetAvailableQuests then
-      for _, info in ipairs(C_GossipInfo.GetAvailableQuests() or {}) do
-        offered[#offered + 1] = { title = info.title, questID = info.questID }
+      for i, info in ipairs(C_GossipInfo.GetAvailableQuests() or {}) do
+        offered[#offered + 1] = { title = info.title, questID = info.questID, index = i }
       end
     elseif GetGossipAvailableQuests then
       -- Older clients: title, level, flags... per quest; only titles are strings.
       for _, value in ipairs({ GetGossipAvailableQuests() }) do
         if type(value) == "string" then
-          offered[#offered + 1] = { title = value }
+          offered[#offered + 1] = { title = value, index = #offered + 1 }
         end
       end
     else
@@ -718,12 +718,46 @@ function Platform.GetOfferedQuests(event)
       return nil
     end
     for i = 1, GetNumAvailableQuests() do
-      offered[#offered + 1] = { title = GetAvailableTitle(i) }
+      offered[#offered + 1] = { title = GetAvailableTitle(i), index = i }
     end
   else
     return nil
   end
   return offered
+end
+
+-- Opens one of the quests GetOfferedQuests(event) listed (an entry of it).
+function Platform.SelectOfferedQuest(event, entry)
+  if event == "GOSSIP_SHOW" then
+    if C_GossipInfo and C_GossipInfo.SelectAvailableQuest and entry.questID then
+      C_GossipInfo.SelectAvailableQuest(entry.questID)
+    elseif SelectGossipAvailableQuest then
+      SelectGossipAvailableQuest(entry.index)
+    end
+  elseif event == "QUEST_GREETING" and SelectAvailableQuest then
+    SelectAvailableQuest(entry.index)
+  end
+end
+
+-- The quest in the open quest window (QUEST_DETAIL): questID (nil where
+-- the client doesn't say) and title.
+function Platform.GetQuestDetail()
+  return GetQuestID and GetQuestID() or nil, GetTitleText and GetTitleText() or nil
+end
+
+function Platform.AcceptQuest()
+  if AcceptQuest then
+    AcceptQuest()
+  end
+end
+
+-- True when the quest window comes from another player (a shared quest).
+function Platform.QuestFromPlayer()
+  return UnitIsPlayer and UnitExists and UnitExists("npc") and UnitIsPlayer("npc") and true or false
+end
+
+function Platform.IsShiftKeyDown()
+  return IsShiftKeyDown and IsShiftKeyDown() and true or false
 end
 
 -- The flight points on the open flight map (TAXIMAP_OPENED): list of

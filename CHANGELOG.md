@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.19.0
+
+- **Auto-accept**: talking to a quest giver, the quests the guide suggests
+  are accepted without clicking - the quests to pick up (the same rules as
+  the "Pick up" steps, wherever the giver is, so the next part of a chain
+  counts too) and your class quests. With several quests in the giver's
+  list, the suggested one is opened. Hold **Shift** while talking to skip
+  it; switch it off on the Features page. Quests shared by other players
+  are never accepted.
+
 ## 0.18.4
 
 - Class quest reminders no longer jump ahead of everything: with the

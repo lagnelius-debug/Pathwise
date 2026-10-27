@@ -132,6 +132,26 @@ function ClassQuests:GetOpen()
   return open
 end
 
+-- True when a quest belongs to a class quest the player should do now:
+-- the reminder's level reached, not done yet, for the player's race (any
+-- quest of the chain, so the next ones are suggested too).
+function ClassQuests:Suggests(questID)
+  if not Pathwise.db.classQuests then
+    return false
+  end
+  local snapshot = GetSnapshot()
+  for _, reminder in ipairs(Data.ClassQuests[snapshot.class or ""] or {}) do
+    if (snapshot.level or 1) >= reminder.level and #StartsFor(reminder, snapshot.raceID) > 0 then
+      for _, id in ipairs(reminder.chain) do
+        if id == questID then
+          return not ClassQuests.IsDone(reminder, snapshot.class, snapshot)
+        end
+      end
+    end
+  end
+  return false
+end
+
 -- True when a quest is the start of a reminder shown now (the quest
 -- pickups leave it out: the reminder already says it).
 function ClassQuests:Covers(questID)

@@ -2,7 +2,7 @@
 ## Title: Pathwise
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
-## Version: 0.18.4
+## Version: 0.19.0
 ## OptionalDeps: QuestieDB
 ## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB
@@ -57,6 +57,7 @@ Core\NextSteps.lua
 Core\Trainer.lua
 Core\QuestLocations.lua
 Core\QuestAdvisor.lua
+Core\AutoAccept.lua
 Core\Flights.lua
 Core\Travel.lua
 Core\Waypoints.lua

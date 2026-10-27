@@ -12,6 +12,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 - M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
+- Auto-accept: talking to a quest giver, the quests the guide suggests are accepted (and picked from the giver's list) without clicking; hold Shift to skip. Built and passing the offline tests, not yet tested in game.
 - All classes: trainer spells, talent builds (three per class), stat weights, usable gear and the path choices for warriors, paladins, rogues, priests, shamans, mages, warlocks and druids too. Built and passing the offline tests, not yet tested in game.
 - Pet ability guide (hunter): which ranks your pet can learn at its level and which beast to tame for each, with the arrow on the nearest one. Built and passing the offline tests, not yet tested in game.
 - Window themes (docs/PATHWISE_THEMES.md): 14 themes on the To-do window (v2 painted corner art, v3 emblem themes and the v4 Azure theme included), an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
@@ -173,6 +174,17 @@ Make a character of another class (any level works; a level 10+ one shows talent
 - [ ] `/pw training` at a new level lists the class's spells. A priest only sees the racial spells of its own race, a mage only its own faction's teleports. Druid bear and cat abilities appear once you have the form.
 - [ ] Gear tooltips show upgrade percentages. A caster's wand counts. Below level 35, plate says "usable at level 40 - you'll have better gear by then" for warriors and paladins, and a rogue sees "not usable by your class" on axes.
 - [ ] `/pw stats` on an item with spell damage, healing or mana per 5 lists those keys (please send me the output: it tells me whether the weights match).
+
+## In-game test checklist (auto-accept)
+
+Needs QuestieDB (for the quests to pick up).
+
+- [ ] Talk to a quest giver whose quest is in your To-do list as "Pick up": the quest is accepted without clicking. The first time, chat explains it once.
+- [ ] A giver with several quests (a list): the suggested one opens and is accepted; quests the guide doesn't suggest (grey ones, far too hard ones) stay in the list for you.
+- [ ] Hand in a quest whose next part the same NPC offers: the next part is accepted too.
+- [ ] Class quests (e.g. the warlock Voidwalker chain) are accepted all the way through.
+- [ ] Hold **Shift** while right-clicking the NPC: nothing is accepted or opened. Quests shared by party members are never accepted.
+- [ ] Features page: "Accept the suggested quests..." off: nothing is accepted.
 
 ## In-game test checklist (class quests)
 

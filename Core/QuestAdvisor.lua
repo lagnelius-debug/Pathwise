@@ -472,6 +472,50 @@ end
 -- Live updates
 ---------------------------------------------------------------------------
 
+-- What the quest pickups are chosen with (QuestieData:GetPickups).
+local function PickupContext(quests, level, greenRange)
+  local inLog = {}
+  for _, quest in ipairs(quests) do
+    if quest.questID then
+      inLog[quest.questID] = true
+    end
+  end
+  local notOffered = Pathwise.charDB.notOffered
+  return {
+    level = level,
+    inLog = inLog,
+    -- Too easy (grey) or far too hard (red, e.g. the level 60 cloth
+    -- donations that can be picked up at 12): not worth suggesting.
+    outOfRange = function(questLevel)
+      local difficulty = QuestAdvisor.Difficulty(questLevel, level, greenRange)
+      return difficulty == "GREY" or difficulty == "RED"
+    end,
+    -- The giver didn't offer it when the player talked to them at this
+    -- level (see OnQuestGiverShown); try again after a level up.
+    -- A class quest reminder already points at the quest.
+    skip = function(questID)
+      return notOffered[questID] ~= nil and level <= notOffered[questID]
+        or Pathwise:GetModule("ClassQuests"):Covers(questID)
+    end,
+  }
+end
+
+-- Whether the guide suggests a quest (Core/AutoAccept.lua): a quest of an
+-- open class quest, or one it would suggest picking up - with the same
+-- rules as the pickups, wherever its giver is (so the next quest of a chain
+-- counts too). By ID, or by title when the client gives no ID.
+function QuestAdvisor:IsSuggested(questID, title)
+  if questID and Pathwise:GetModule("ClassQuests"):Suggests(questID) then
+    return true
+  end
+  if not (Pathwise.db.questGuide and Pathwise.db.questPickups) then
+    return false
+  end
+  local level = Pathwise:GetModule("Character"):GetSnapshot().level or 1
+  local ctx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
+  return Pathwise:GetModule("QuestieData"):WouldSuggest(questID, title, ctx) == true
+end
+
 function QuestAdvisor:Update()
   if not Pathwise.db.questGuide then
     lastPickups = {}
@@ -501,30 +545,7 @@ function QuestAdvisor:Update()
   -- or without QuestieDB).
   local pickups
   if Pathwise.db.questPickups then
-    local inLog = {}
-    for _, quest in ipairs(quests) do
-      if quest.questID then
-        inLog[quest.questID] = true
-      end
-    end
-    local notOffered = Pathwise.charDB.notOffered
-    pickups = QuestieData:GetPickups({
-      level = level,
-      inLog = inLog,
-      -- Too easy (grey) or far too hard (red, e.g. the level 60 cloth
-      -- donations that can be picked up at 12): not worth suggesting.
-      outOfRange = function(questLevel)
-        local difficulty = QuestAdvisor.Difficulty(questLevel, level, greenRange)
-        return difficulty == "GREY" or difficulty == "RED"
-      end,
-      -- The giver didn't offer it when the player talked to them at this
-      -- level (see OnQuestGiverShown); try again after a level up.
-      -- A class quest reminder already points at the quest.
-      skip = function(questID)
-        return notOffered[questID] ~= nil and level <= notOffered[questID]
-          or Pathwise:GetModule("ClassQuests"):Covers(questID)
-      end,
-    }, QuestAdvisor.MAX_PICKUPS)
+    pickups = QuestieData:GetPickups(PickupContext(quests, level, greenRange), QuestAdvisor.MAX_PICKUPS)
   end
   lastPickups = pickups or {}
   -- Class quest steps with a known giver join the plan like pickups.
