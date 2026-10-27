@@ -8,4 +8,7 @@
   <Binding name="PATHWISE_NEXT" header="PATHWISE" category="ADDONS">
     PathwiseBinding_Next()
   </Binding>
+  <Binding name="PATHWISE_DUNGEON" header="PATHWISE" category="ADDONS">
+    PathwiseBinding_Dungeon()
+  </Binding>
 </Bindings>

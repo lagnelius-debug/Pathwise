@@ -89,7 +89,7 @@ WoW.Slash("dungeon test mines")
 check("/pw dungeon <name> turns it on", DungeonGuide:GetActive() == dungeon
   and WoW.ChatContains("Dungeon mode: The Test Mines."))
 check("title: Dungeon: The Test Mines", window.title:GetText() == "Dungeon: The Test Mines")
-check("footer says dungeon mode", window.footer.text:GetText():find("dungeon mode", 1, true) ~= nil)
+check("the mode button offers the normal guide", window.dungeons.text:GetText() == "Normal mode")
 local pre, own = Item("pickup:9600"), Item("pickup:9602")
 check("the pre-quest to pick up, marked as one", pre ~= nil and pre.detail[#pre.detail]:find("pre-quest", 1, true) ~= nil)
 check("the dungeon's own quest to pick up", own ~= nil)
@@ -149,11 +149,30 @@ check("the active dungeon is marked, with its level range and quest count", acti
 WoW.ClearChat()
 rows[1]:Click()
 check("leaving: back to the usual guide", DungeonGuide:GetActive() == nil and window.title:GetText() == "To-do"
-  and WoW.ChatContains("Dungeon mode off"))
+  and WoW.ChatContains("Normal mode"))
 UpdateLog({})
 check("normal quests are back", Item("pickup:9604") ~= nil and Item("dungeon:entrance") == nil)
 Picker:Toggle()
 check("the picker closes", not picker:IsShown())
+
+-- One click switches between the modes (the last dungeon is remembered);
+-- right-click picks another dungeon.
+NextSteps:SetItems("test", {})
+check("normal mode: the button offers dungeon mode", window.dungeons.text:GetText() == "Dungeon mode")
+WoW.ClearChat()
+window.dungeons:Click()
+check("click: back in dungeon mode for the same dungeon, a short chat line", DungeonGuide:GetActive() == dungeon
+  and window.dungeons.text:GetText() == "Normal mode" and WoW.ChatContains("Dungeon mode: The Test Mines.")
+  and not WoW.ChatContains("switches back"))
+window.dungeons:Click()
+check("click again: normal mode", DungeonGuide:GetActive() == nil and window.title:GetText() == "To-do")
+window.dungeons:GetScript("OnClick")(window.dungeons, "RightButton")
+check("right-click: the dungeon list", picker:IsShown() and DungeonGuide:GetActive() == nil)
+Picker:Toggle()
+PathwiseBinding_Dungeon()
+check("the key binding switches too", DungeonGuide:GetActive() == dungeon)
+WoW.Slash("dungeon toggle")
+check("/pw dungeon toggle", DungeonGuide:GetActive() == nil)
 
 WoW.ClearChat()
 WoW.Slash("dungeon atlantis")

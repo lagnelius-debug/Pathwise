@@ -97,10 +97,12 @@ local function UpdateFooter(stepCount)
   local path = frame.path
   path.text:SetText(string.format(L.NS_PATH, L["SPEC_" .. active]))
   path:SetWidth(path.text:GetStringWidth() + 4)
-  local dungeons = frame.dungeons
-  dungeons.text:SetText(L.NS_DUNGEONS)
-  dungeons:SetWidth(dungeons.text:GetStringWidth() + 4)
+  -- The mode button says what a click switches to.
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local dungeons = frame.dungeons
+  dungeons.text:SetText(DungeonGuide:GetActive() and L.NS_NORMAL_MODE
+    or DungeonGuide:GetLast() and L.NS_DUNGEON_MODE or L.NS_DUNGEONS)
+  dungeons:SetWidth(dungeons.text:GetStringWidth() + 4)
   if DungeonGuide:GetInside() then
     frame.footer.text:SetText(string.format(L.NS_FOOTER_INSIDE, stepCount))
   elseif DungeonGuide:GetActive() then
@@ -283,20 +285,30 @@ local function CreateWindow()
   end)
   frame.path = path
 
-  -- "Dungeons" left of it: opens the dungeon picker (dungeon mode).
+  -- The mode button left of it: a click switches between dungeon mode (the
+  -- last dungeon picked) and the normal guide; right-click picks another
+  -- dungeon. ("Dungeons" before any was picked: opens the list.)
   local dungeons = CreateFrame("Button", nil, frame.footer)
   dungeons:SetHeight(16)
   dungeons:SetPoint("RIGHT", path, "LEFT", -10, 0)
   dungeons.text = dungeons:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   dungeons.text:SetPoint("RIGHT", dungeons, "RIGHT", 0, 0)
   dungeons:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
-  dungeons:SetScript("OnClick", function()
-    Pathwise:GetModule("DungeonPicker"):Toggle()
+  if dungeons.RegisterForClicks then
+    dungeons:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  end
+  dungeons:SetScript("OnClick", function(_, button)
+    if button == "RightButton" then
+      Pathwise:GetModule("DungeonPicker"):Toggle()
+    else
+      Pathwise:GetModule("DungeonGuide"):Toggle()
+    end
   end)
   dungeons:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-    GameTooltip:SetText(L.NS_DUNGEONS)
-    GameTooltip:AddLine(L.NS_DUNGEONS_TOOLTIP, 1, 1, 1, true)
+    GameTooltip:SetText(self.text:GetText())
+    GameTooltip:AddLine(Pathwise:GetModule("DungeonGuide"):GetLast() and L.NS_MODE_TOOLTIP or L.NS_DUNGEONS_TOOLTIP,
+      1, 1, 1, true)
     GameTooltip:Show()
   end)
   dungeons:SetScript("OnLeave", function()

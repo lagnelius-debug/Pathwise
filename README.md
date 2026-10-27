@@ -46,7 +46,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
 | `/pw theme` | List the window themes (numbered, active one marked). `/pw theme 7` or `/pw theme wildwood` sets one, `/pw theme next` cycles |
 | `/pw pet` | Pet ability guide: the ranks your pet can learn at its level and the beasts that teach them |
-| `/pw dungeon` | Dungeon guide: open the dungeon list. `/pw dungeon deadmines` turns on dungeon mode for one, `/pw dungeon off` leaves it |
+| `/pw dungeon` | Dungeon guide: open the dungeon list. `/pw dungeon deadmines` turns on dungeon mode for one, `/pw dungeon toggle` switches between it and the normal guide, `/pw dungeon off` leaves it |
 | `/pw features` | Open the Features page: turn single features on or off |
 | `/pw settings` | Open the Pathwise settings (minimap button, target button, meters or yards, window theme) |
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
@@ -188,6 +188,7 @@ Needs QuestieDB. Try it with a dungeon of your level, e.g. The Deadmines or Wail
 - [ ] Far below the dungeon's level, the entrance waits at the bottom (`... - from level 17`) and doesn't take the arrow; within 2 levels of the range it becomes a step, after the quests and pre-quests.
 - [ ] Finish a pre-quest: the next quest of the chain appears to pick up. Auto-accept takes them when you talk to the giver.
 - [ ] "Leave dungeon mode" at the top of the list (or `/pw dungeon off`): the usual guide is back. Dungeon mode stays on over a /reload until you leave it.
+- [ ] Switching: the footer button says what a click switches to - "Normal mode" in dungeon mode, "Dungeon mode" in the normal guide (for the last dungeon you picked). One click switches; right-click opens the dungeon list to pick another. Chat explains it once, then only says the mode. There's also a key binding (Key Bindings > AddOns > Pathwise) and `/pw dungeon toggle`.
 - [ ] Check whether a quest you know belongs to the dungeon is missing, or one that doesn't shows up, and tell me.
 
 Inside a dungeon (works in any of them, with or without dungeon mode):

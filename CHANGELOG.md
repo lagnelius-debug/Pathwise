@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.21.1
+
+- Dungeon mode is a toggle now: the footer button in the To-do window says
+  what a click switches to - "Dungeon mode" (the last dungeon you picked)
+  or "Normal mode" - and one click switches. Right-click it to pick another
+  dungeon. Also a key binding (Key Bindings > AddOns > Pathwise) and
+  `/pw dungeon toggle`. Chat explains dungeon mode once, then just says the
+  mode.
+- The arrow's "Next" button is now a small, dim "Next »" text link under
+  the distance - brighter and underlined on hover, with a tooltip - instead
+  of the big red button.
+
 ## 0.21.0
 
 - **Inside dungeons**: the To-do list guides you through the dungeon

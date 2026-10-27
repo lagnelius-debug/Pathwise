@@ -79,18 +79,42 @@ function DungeonGuide:GetActive()
   return DungeonGuide.Get(Pathwise.charDB.dungeon)
 end
 
--- Turns dungeon mode on for a dungeon (or off with nil).
+-- Turns dungeon mode on for a dungeon (or off with nil). The dungeon is
+-- remembered, so Toggle can switch back to it. (Chat explains it once,
+-- then just says the mode.)
 function DungeonGuide:SetDungeon(id)
   local dungeon = id and DungeonGuide.Get(id)
-  Pathwise.charDB.dungeon = dungeon and dungeon.id or nil
+  local charDB = Pathwise.charDB
+  charDB.dungeon = dungeon and dungeon.id or nil
+  if dungeon then
+    charDB.lastDungeon = dungeon.id
+  end
   questCache = nil
   if dungeon then
-    Pathwise:Printf(L.DUNGEON_SET, dungeon.name)
+    Pathwise:Printf(charDB.dungeonExplained and L.DUNGEON_SET_SHORT or L.DUNGEON_SET, dungeon.name)
+    charDB.dungeonExplained = true
   else
     Pathwise:Print(L.DUNGEON_LEFT)
   end
   Pathwise:FireCallback("DUNGEON_MODE_CHANGED", dungeon)
   Pathwise:GetModule("QuestAdvisor"):Update()
+end
+
+-- The dungeon Toggle switches to: the last one picked, or nil.
+function DungeonGuide:GetLast()
+  return DungeonGuide.Get(Pathwise.charDB.lastDungeon)
+end
+
+-- Switches between dungeon mode (the last dungeon picked) and the normal
+-- guide; opens the dungeon list when none was picked yet.
+function DungeonGuide:Toggle()
+  if self:GetActive() then
+    self:SetDungeon(nil)
+  elseif self:GetLast() then
+    self:SetDungeon(self:GetLast().id)
+  else
+    Pathwise:GetModule("DungeonPicker"):Toggle()
+  end
 end
 
 -- What belongs to a dungeon: { list = its quest IDs, quests = set of them
@@ -308,6 +332,7 @@ local function Normalize(text)
 end
 
 -- /pw dungeon          open the list
+-- /pw dungeon toggle   switch between dungeon mode and the normal guide
 -- /pw dungeon off      leave dungeon mode
 -- /pw dungeon <name>   e.g. deadmines, sfk-like prefixes ("shadow")
 Pathwise:RegisterCommand("dungeon", function(args)
@@ -318,6 +343,10 @@ Pathwise:RegisterCommand("dungeon", function(args)
   end
   if args:lower() == "off" then
     DungeonGuide:SetDungeon(nil)
+    return
+  end
+  if args:lower() == "toggle" then
+    DungeonGuide:Toggle()
     return
   end
   local wanted = Normalize(args)

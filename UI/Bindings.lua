@@ -8,6 +8,10 @@ function PathwiseBinding_Next()
   Pathwise:GetModule("Waypoints"):Next()
 end
 
+function PathwiseBinding_Dungeon()
+  Pathwise:GetModule("DungeonGuide"):Toggle()
+end
+
 function PathwiseBinding_Toggle()
   Pathwise:GetModule("NextStepsFrame"):Toggle()
 end

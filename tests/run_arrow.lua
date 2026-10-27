@@ -192,3 +192,13 @@ S.mapX, S.mapY = 0.5, 0.5
 WoW.questLog = {}
 WoW.FireEvent("QUEST_LOG_UPDATE")
 WoW.RunTimers()
+
+-- The "Next" link under the distance: small and dim, brighter and
+-- underlined on hover, with a tooltip.
+local next = arrow.next
+check("next: a small text link, not a big button", next.text:GetText() == "Next »" and next._height == 16
+  and not next.underline:IsShown())
+next:GetScript("OnEnter")(next)
+check("next: hover underlines it and explains", next.underline:IsShown() and next.text._textColor[1] == 1)
+next:GetScript("OnLeave")(next)
+check("next: back to dim", not next.underline:IsShown() and next.text._textColor[1] < 1)

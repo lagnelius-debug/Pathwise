@@ -26,6 +26,8 @@ local ARROW_SIZE = 64
 -- beyond it the color goes through yellow (to the side) to red (behind).
 local ON_COURSE = 0.25
 local GREEN, YELLOW, RED = { 0.2, 1, 0.2 }, { 1, 0.85, 0.2 }, { 1, 0.25, 0.2 }
+-- The "Next" link: soft gold, brighter on hover.
+local NEXT_DIM, NEXT_BRIGHT = { 0.85, 0.75, 0.5, 0.75 }, { 1, 0.85, 0.4 }
 
 local frame, elapsedSinceUpdate = nil, 0
 
@@ -169,15 +171,39 @@ local function CreateArrow()
   frame.distance = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   frame.distance:SetPoint("TOP", frame.label, "BOTTOM", 0, -2)
 
-  -- "Next": the mob/node isn't there, or the player wants another step.
-  -- Same as right-clicking the arrow, /pw next or the key binding.
-  frame.next = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-  frame.next:SetSize(64, 20)
-  frame.next:SetPoint("TOP", frame.distance, "BOTTOM", 0, -4)
-  frame.next:SetText(L.ARROW_NEXT_BUTTON)
-  frame.next:SetScript("OnClick", function()
+  -- "Next »": the mob/node isn't there, or the player wants another step.
+  -- Same as right-clicking the arrow, /pw next or the key binding. Just a
+  -- small, dim text link under the distance; brighter and underlined on
+  -- hover.
+  local next = CreateFrame("Button", nil, frame)
+  next.text = next:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  next.text:SetPoint("CENTER", next, "CENTER", 0, 1)
+  next.text:SetText(L.ARROW_NEXT_BUTTON)
+  next.text:SetTextColor(NEXT_DIM[1], NEXT_DIM[2], NEXT_DIM[3], NEXT_DIM[4])
+  next:SetSize(next.text:GetStringWidth() + 12, 16)
+  next:SetPoint("TOP", frame.distance, "BOTTOM", 0, -3)
+  next.underline = next:CreateTexture(nil, "ARTWORK")
+  next.underline:SetColorTexture(NEXT_BRIGHT[1], NEXT_BRIGHT[2], NEXT_BRIGHT[3], 0.6)
+  next.underline:SetHeight(1)
+  next.underline:SetPoint("BOTTOMLEFT", next, "BOTTOMLEFT", 5, 1)
+  next.underline:SetPoint("BOTTOMRIGHT", next, "BOTTOMRIGHT", -5, 1)
+  next.underline:Hide()
+  next:SetScript("OnClick", function()
     GetWaypoints():Next()
   end)
+  next:SetScript("OnEnter", function(self)
+    self.text:SetTextColor(NEXT_BRIGHT[1], NEXT_BRIGHT[2], NEXT_BRIGHT[3], 1)
+    self.underline:Show()
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText(L.ARROW_NEXT_TOOLTIP, 1, 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  next:SetScript("OnLeave", function(self)
+    self.text:SetTextColor(NEXT_DIM[1], NEXT_DIM[2], NEXT_DIM[3], NEXT_DIM[4])
+    self.underline:Hide()
+    GameTooltip:Hide()
+  end)
+  frame.next = next
 
   RestorePosition()
   frame:Hide()
