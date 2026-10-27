@@ -12,6 +12,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Optional QuestieDB integration is working in game. With the QuestieDB addon installed, the arrow points to turn-in NPCs and the nearest quest mobs or objects. The "Next" controls are built but not yet tested in game.
 - Target macro and sell price in tooltips are built and pass the offline tests. They have not been tested in game yet.
 - M5 (talent advisor) and M6 (hunter module: ammo, pet, taming quest) are built and pass the offline tests. They have not been tested in game yet.
+- Dungeon guide: pick a dungeon (`/pw dungeon` or "Dungeons" in the To-do window) and the list switches to dungeon mode - its quests, the pre-quests that lead to them and the way to the entrance. Needs QuestieDB. Built and passing the offline tests, not yet tested in game.
 - Auto-accept: talking to a quest giver, the quests the guide suggests are accepted (and picked from the giver's list) without clicking; hold Shift to skip. Built and passing the offline tests, not yet tested in game.
 - All classes: trainer spells, talent builds (three per class), stat weights, usable gear and the path choices for warriors, paladins, rogues, priests, shamans, mages, warlocks and druids too. Built and passing the offline tests, not yet tested in game.
 - Pet ability guide (hunter): which ranks your pet can learn at its level and which beast to tame for each, with the arrow on the nearest one. Built and passing the offline tests, not yet tested in game.
@@ -45,6 +46,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw ammo [warn] [critical]` | Show your ammo count and warning levels. `/pw ammo 200 50` sets them |
 | `/pw theme` | List the window themes (numbered, active one marked). `/pw theme 7` or `/pw theme wildwood` sets one, `/pw theme next` cycles |
 | `/pw pet` | Pet ability guide: the ranks your pet can learn at its level and the beasts that teach them |
+| `/pw dungeon` | Dungeon guide: open the dungeon list. `/pw dungeon deadmines` turns on dungeon mode for one, `/pw dungeon off` leaves it |
 | `/pw features` | Open the Features page: turn single features on or off |
 | `/pw settings` | Open the Pathwise settings (minimap button, target button, meters or yards, window theme) |
 | `/pw season summer\|autumn\|auto` | Wildwood theme leaves (auto = autumn in September to November) |
@@ -174,6 +176,18 @@ Make a character of another class (any level works; a level 10+ one shows talent
 - [ ] `/pw training` at a new level lists the class's spells. A priest only sees the racial spells of its own race, a mage only its own faction's teleports. Druid bear and cat abilities appear once you have the form.
 - [ ] Gear tooltips show upgrade percentages. A caster's wand counts. Below level 35, plate says "usable at level 40 - you'll have better gear by then" for warriors and paladins, and a rogue sees "not usable by your class" on axes.
 - [ ] `/pw stats` on an item with spell damage, healing or mana per 5 lists those keys (please send me the output: it tells me whether the weights match).
+
+## In-game test checklist (dungeon guide)
+
+Needs QuestieDB. Try it with a dungeon of your level, e.g. The Deadmines or Wailing Caverns around level 18-22.
+
+- [ ] "Dungeons" in the To-do window footer (or `/pw dungeon`) opens a list of the dungeons for your faction, in level order: the level range colored (green fits, orange still high, grey too low), and how many of each dungeon's quests you haven't done. Escape or X closes it.
+- [ ] Click one: the title says `Dungeon: The Deadmines`, the footer `... steps · dungeon mode`, and chat explains it once.
+- [ ] The list shows only that dungeon: its quests to pick up, the pre-quests that unlock them (their tooltip says "A pre-quest..."; e.g. the Westfall chain for The Defias Brotherhood), pre-quests in your log with their objectives, and `Go to The Deadmines (entrance in Westfall)` with the arrow on the entrance.
+- [ ] Dungeon quests you have point the arrow at the entrance. Quests you're too low for are listed as `Later: N more quests from level X` (names in the tooltip).
+- [ ] Finish a pre-quest: the next quest of the chain appears to pick up. Auto-accept takes them when you talk to the giver.
+- [ ] "Leave dungeon mode" at the top of the list (or `/pw dungeon off`): the usual guide is back. Dungeon mode stays on over a /reload until you leave it.
+- [ ] Check whether a quest you know belongs to the dungeon is missing, or one that doesn't shows up, and tell me.
 
 ## In-game test checklist (auto-accept)
 

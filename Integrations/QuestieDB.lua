@@ -70,6 +70,24 @@ function QuestieData:IsAvailable()
   return Load() ~= nil
 end
 
+-- The UiMap ID of a QuestieDB area ID (zone), or nil.
+function QuestieData:AreaToUiMap(areaId)
+  if not Load() then
+    return nil
+  end
+  local uiMapId = areaToUiMap[areaId]
+  return uiMapId ~= 0 and uiMapId or nil
+end
+
+-- A field of a quest (Get(id, key)), or nil.
+function QuestieData:QuestInfo(questID, key)
+  if not Load() then
+    return nil
+  end
+  local ok, value = pcall(lib.Quest.Get, questID, key)
+  return ok and value or nil
+end
+
 ---------------------------------------------------------------------------
 -- Spawns
 ---------------------------------------------------------------------------
@@ -543,6 +561,7 @@ local CLASS_SORTS = {
 local pickupCandidates -- list once scanned; false: can't scan (old QuestieDB)
 local pickupScan       -- in progress: { ids, next, list, raceBit, classBit }
 local candidateIndex   -- the candidates by ID and by title (WouldSuggest)
+local dungeonQuests = {} -- [dungeon ID] = { questIDs } (for the player's race and class)
 
 -- bit: a power of two. Works without the bit library (and in tests).
 local function HasBit(mask, bit)
@@ -563,6 +582,12 @@ local function ScanQuest(id, scan)
   if not MaskAllows(Get(id, "requiredRaces"), scan.raceBit)
     or not MaskAllows(Get(id, "requiredClasses"), scan.classBit) then
     return nil
+  end
+  -- Dungeon quests (tagged with the dungeon's area) for the dungeon guide.
+  local dungeon = scan.dungeonAreas[Get(id, "zoneOrSort") or 0]
+  if dungeon then
+    scan.dungeons[dungeon] = scan.dungeons[dungeon] or {}
+    table.insert(scan.dungeons[dungeon], id)
   end
   if NonEmpty(Get(id, "requiredSkill")) or NonEmpty(Get(id, "requiredMinRep")) then
     return nil
@@ -612,6 +637,7 @@ local function ScanPickupChunk()
     return
   end
   pickupCandidates = ok and scan.list or false
+  dungeonQuests = ok and scan.dungeons or {}
   pickupScan, candidateIndex = nil, nil
   Pathwise:FireCallback("QUESTIE_PICKUPS_READY")
 end
@@ -632,8 +658,16 @@ function QuestieData:PickupsReady()
       if enum and type(enum.raceMaskById) == "table" and enum.raceMaskById[snapshot.raceID] then
         raceBit = enum.raceMaskById[snapshot.raceID]
       end
+      -- Area ID -> dungeon ID, for the dungeon quests (Data/Classic/Dungeons.lua).
+      local dungeonAreas = {}
+      for _, dungeon in ipairs(Pathwise.Data.Dungeons) do
+        dungeonAreas[dungeon.id] = dungeon.id
+        for _, area in ipairs(dungeon.alt or {}) do
+          dungeonAreas[area] = dungeon.id
+        end
+      end
       pickupScan = {
-        ids = ids, next = 1, list = {},
+        ids = ids, next = 1, list = {}, dungeonAreas = dungeonAreas, dungeons = {},
         raceBit = raceBit,
         classBit = snapshot.classID and 2 ^ (snapshot.classID - 1),
       }
@@ -647,7 +681,7 @@ end
 
 -- Forgets the scanned quest list (tests; another character's data).
 function QuestieData:ResetPickups()
-  pickupCandidates, pickupScan, candidateIndex = nil, nil, nil
+  pickupCandidates, pickupScan, candidateIndex, dungeonQuests = nil, nil, nil, {}
 end
 
 -- Where a candidate is started: points with .giver (NPC or object name),
@@ -748,6 +782,15 @@ end
 -- ctx: { level, inLog = { [questID] = true }, outOfRange(questLevel) - true
 --        for quests too easy or too hard to suggest,
 --        skip(questID) - true for quests to leave out (e.g. not offered) }
+-- The quests of a dungeon (Data/Classic/Dungeons.lua) the player's race and
+-- class can do, or nil while the quest list isn't scanned.
+function QuestieData:GetDungeonQuests(dungeonID)
+  if not self:PickupsReady() then
+    return nil
+  end
+  return dungeonQuests[dungeonID] or {}
+end
+
 -- Whether a scanned quest can be suggested now (ctx as for GetPickups).
 local function Eligible(candidate, ctx)
   local isCompleted = Platform.IsQuestCompleted
@@ -804,7 +847,8 @@ function QuestieData:GetPickups(ctx, limit)
   local found = {}
   for _, candidate in ipairs(pickupCandidates) do
     local level = candidate.level == -1 and ctx.level or candidate.level
-    if Eligible(candidate, ctx) then
+    -- (ctx.only: just these quests, e.g. a dungeon's.)
+    if (not ctx.only or ctx.only[candidate.id]) and Eligible(candidate, ctx) then
       local ok, points = pcall(GiverPoints, candidate)
       local best, bestDistance
       for _, point in ipairs(ok and points or {}) do

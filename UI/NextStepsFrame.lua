@@ -94,8 +94,21 @@ local function UpdateFooter(stepCount)
   local path = frame.path
   path.text:SetText(string.format(L.NS_PATH, L["SPEC_" .. active]))
   path:SetWidth(path.text:GetStringWidth() + 4)
-  local zone = Pathwise:GetModule("Character"):GetSnapshot().zone
-  frame.footer.text:SetText(string.format(L.NS_FOOTER, stepCount, zone and zone.zone or ""))
+  local dungeons = frame.dungeons
+  dungeons.text:SetText(L.NS_DUNGEONS)
+  dungeons:SetWidth(dungeons.text:GetStringWidth() + 4)
+  if Pathwise:GetModule("DungeonGuide"):GetActive() then
+    frame.footer.text:SetText(string.format(L.NS_FOOTER_DUNGEON, stepCount))
+  else
+    local zone = Pathwise:GetModule("Character"):GetSnapshot().zone
+    frame.footer.text:SetText(string.format(L.NS_FOOTER, stepCount, zone and zone.zone or ""))
+  end
+end
+
+-- "To-do", or "Dungeon: The Deadmines" in dungeon mode.
+local function UpdateTitle()
+  local dungeon = Pathwise:GetModule("DungeonGuide"):GetActive()
+  frame:SetTitleText(dungeon and string.format(L.DUNGEON_TITLE, dungeon.name) or L.NS_TITLE)
 end
 
 -- The step that gets its details listed underneath: the one the arrow
@@ -258,9 +271,30 @@ local function CreateWindow()
     GameTooltip:Hide()
   end)
   frame.path = path
-  -- The step count and zone stop at the path button ("..." when too long).
+
+  -- "Dungeons" left of it: opens the dungeon picker (dungeon mode).
+  local dungeons = CreateFrame("Button", nil, frame.footer)
+  dungeons:SetHeight(16)
+  dungeons:SetPoint("RIGHT", path, "LEFT", -10, 0)
+  dungeons.text = dungeons:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  dungeons.text:SetPoint("RIGHT", dungeons, "RIGHT", 0, 0)
+  dungeons:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+  dungeons:SetScript("OnClick", function()
+    Pathwise:GetModule("DungeonPicker"):Toggle()
+  end)
+  dungeons:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText(L.NS_DUNGEONS)
+    GameTooltip:AddLine(L.NS_DUNGEONS_TOOLTIP, 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  dungeons:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+  end)
+  frame.dungeons = dungeons
+  -- The step count and zone stop at the buttons ("..." when too long).
   local footerText = frame.footer.text
-  footerText:SetPoint("RIGHT", path, "LEFT", -8, 0)
+  footerText:SetPoint("RIGHT", dungeons, "LEFT", -8, 0)
   footerText:SetJustifyH("LEFT")
   if footerText.SetWordWrap then
     footerText:SetWordWrap(false)
@@ -284,15 +318,23 @@ function NextStepsFrame:OnUpdated()
   self:Render()
 end
 
+function NextStepsFrame:OnDungeonModeChanged()
+  UpdateTitle()
+  self:Render()
+end
+
 function NextStepsFrame:OnInitialize()
   CreateWindow()
+  self:RegisterCallback("DUNGEON_MODE_CHANGED", "OnDungeonModeChanged")
   self:RegisterCallback("NEXT_STEPS_UPDATED", "OnUpdated")
   self:RegisterCallback("SPEC_CHANGED", "OnUpdated")
   self:RegisterCallback("SETTINGS_RESET", "OnSettingsReset")
 end
 
 function NextStepsFrame:OnEnable()
-  -- Saved variables are loaded now: apply the saved theme.
+  -- Saved variables are loaded now: apply the saved theme (and the title of
+  -- a dungeon mode left on).
+  UpdateTitle()
   Pathwise.Theme.Apply(frame)
   frame:SetShown(Pathwise.db.nextSteps.shown)
   self:Render()

@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.20.0
+
+- **Dungeon guide**: "Dungeons" in the To-do window footer (or
+  `/pw dungeon`) lists the classic dungeons for your faction with their
+  level range and how many of their quests you have left. Pick one and the
+  To-do list turns into **dungeon mode** ("Dungeon: The Deadmines"): only
+  that dungeon's quests to pick up, the pre-quests that unlock them
+  (followed back through their chains, whatever their zone or level), the
+  pre-quests and dungeon quests in your log, the way to the entrance with
+  the arrow on it, and the dungeon quests that come at a higher level.
+  "Leave dungeon mode" (or `/pw dungeon off`) brings the usual guide back.
+  Needs QuestieDB; dungeon entrances are QuestieDB's.
+
 ## 0.19.0
 
 - **Auto-accept**: talking to a quest giver, the quests the guide suggests

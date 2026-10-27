@@ -268,6 +268,7 @@ end
 -- pickups: optional quests to pick up (QuestieData:GetPickups), which join
 -- the same near/far order as kind "pickup"; class quest steps
 -- (Classes/ClassQuests.lua, with classQuest = true) join it the same way.
+-- A pickup's note is added to its details. anyZone: see RouteFar.
 -- A class quest step as a quest to pick up: near or far by its distance.
 -- The important ones (urgent) are never held back for "finish the zone
 -- first" (RouteFar).
@@ -295,7 +296,7 @@ local function ClassQuestItem(step)
   }
 end
 
-function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pickups)
+function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pickups, anyZone)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local items = {}
 
@@ -380,6 +381,9 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
       if leadsAway then
         detail[#detail + 1] = string.format(L.QA_PICKUP_LEADS_AWAY, Platform.GetMapName(pickup.finishMapID) or "?")
       end
+      if pickup.note then
+        detail[#detail + 1] = pickup.note
+      end
       items[#items + 1] = {
         id = "pickup:" .. pickup.questID,
         priority = (near and not leadsAway) and P.QUEST_NEAR or P.QUEST_FAR,
@@ -410,7 +414,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
     end
     return a.text < b.text
   end)
-  QuestAdvisor.RouteFar(items, location)
+  QuestAdvisor.RouteFar(items, location, anyZone)
   return items
 end
 
@@ -423,7 +427,8 @@ end
 -- capital included) come first, then steps elsewhere and pickups that lead
 -- away - otherwise e.g. the boat from Rut'theran to Darkshore "won" over
 -- the turn-ins still waiting up on Teldrassil.
-function QuestAdvisor.RouteFar(items, location)
+-- anyZone: no "finish the zone first" (dungeon mode).
+function QuestAdvisor.RouteFar(items, location, anyZone)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local first, last
   for index, item in ipairs(items) do
@@ -438,7 +443,7 @@ function QuestAdvisor.RouteFar(items, location)
   local Travel = Pathwise:GetModule("Travel")
   local zone = Travel.ZoneGroup(location.mapID)
   local function InZone(item)
-    return item.urgent or (not item.leadsAway and Travel.ZoneGroup(item.target.mapID) == zone)
+    return anyZone or item.urgent or (not item.leadsAway and Travel.ZoneGroup(item.target.mapID) == zone)
   end
   local pending = {}
   for index = first, last do
@@ -516,8 +521,52 @@ function QuestAdvisor:IsSuggested(questID, title)
   return Pathwise:GetModule("QuestieData"):WouldSuggest(questID, title, ctx) == true
 end
 
+-- Dungeon mode (Core/DungeonGuide.lua): only the dungeon's quests and the
+-- ones that lead to them, planned like the usual steps but without
+-- "finish the zone first"; the dungeon's own quests point at the entrance.
+local DUNGEON_MAX_PICKUPS = 12
+
+local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local belongs = DungeonGuide:GetQuests(dungeon)
+  local items = {}
+  if belongs then
+    local mine = {}
+    for _, quest in ipairs(quests) do
+      if quest.questID and belongs.quests[quest.questID] then
+        mine[#mine + 1] = quest
+      end
+    end
+    local entrance = DungeonGuide:EntranceTarget(dungeon)
+    local function DungeonLocate(quest, kind)
+      if kind == "do" and entrance and belongs.inDungeon[quest.questID] then
+        return entrance -- (its objectives are inside)
+      end
+      return Locate(quest, kind)
+    end
+    local ctx = PickupContext(quests, level, greenRange)
+    ctx.only = belongs.quests
+    -- Pre-quests count whatever their level (a grey one can still unlock
+    -- the chain).
+    ctx.outOfRange = function() return false end
+    local pickups = Pathwise:GetModule("QuestieData"):GetPickups(ctx, DUNGEON_MAX_PICKUPS) or {}
+    for _, pickup in ipairs(pickups) do
+      pickup.finishMapID = nil
+      if not belongs.inDungeon[pickup.questID] then
+        pickup.note = string.format(L.DUNGEON_PREQUEST, dungeon.name)
+      end
+    end
+    items = QuestAdvisor.Plan(mine, level, greenRange, location, DungeonLocate, pickups, true)
+  end
+  for _, item in ipairs(DungeonGuide:ExtraItems(dungeon, quests)) do
+    items[#items + 1] = item
+  end
+  return items
+end
+
 function QuestAdvisor:Update()
-  if not Pathwise.db.questGuide then
+  local dungeon = Pathwise:GetModule("DungeonGuide"):GetActive()
+  if not Pathwise.db.questGuide and not dungeon then
     lastPickups = {}
     Pathwise:GetModule("NextSteps"):SetItems("quests", {})
     Pathwise:FireCallback("QUESTS_PLANNED", {})
@@ -538,41 +587,47 @@ function QuestAdvisor:Update()
     return QuestieData:GetTarget(quest, kind) or QuestLocations:GetTarget(quest, kind)
   end
   local greenRange = Platform.GetQuestGreenRange(level)
-  -- Class quest steps first: the pickups below leave their quests out.
-  local ClassQuests = Pathwise:GetModule("ClassQuests")
-  local classSteps = ClassQuests:GetSteps()
-  -- Quests to pick up (nil while QuestieDB's quest list is being scanned,
-  -- or without QuestieDB).
-  local pickups
-  if Pathwise.db.questPickups then
-    pickups = QuestieData:GetPickups(PickupContext(quests, level, greenRange), QuestAdvisor.MAX_PICKUPS)
-  end
-  lastPickups = pickups or {}
-  -- Class quest steps with a known giver join the plan like pickups.
-  local planned = {}
-  for _, pickup in ipairs(pickups or {}) do
-    planned[#planned + 1] = pickup
-  end
-  for _, step in ipairs(classSteps) do
-    if ClassQuests.InQuestPlan(step) then
-      step.classQuest = true
-      step.distance = mapID and Pathwise:GetModule("Waypoints").TravelDistance(mapID, x, y,
-        step.target.mapID, step.target.x, step.target.y, true)
-      planned[#planned + 1] = step
+  local items
+  if dungeon then
+    lastPickups = {}
+    items = DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
+  else
+    -- Class quest steps first: the pickups below leave their quests out.
+    local ClassQuests = Pathwise:GetModule("ClassQuests")
+    local classSteps = ClassQuests:GetSteps()
+    -- Quests to pick up (nil while QuestieDB's quest list is being scanned,
+    -- or without QuestieDB).
+    local pickups
+    if Pathwise.db.questPickups then
+      pickups = QuestieData:GetPickups(PickupContext(quests, level, greenRange), QuestAdvisor.MAX_PICKUPS)
     end
-  end
-  local items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, planned)
-  local zoneItem = pickups and QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone)
-  if zoneItem then
-    items[#items + 1] = zoneItem
-  end
+    lastPickups = pickups or {}
+    -- Class quest steps with a known giver join the plan like pickups.
+    local planned = {}
+    for _, pickup in ipairs(pickups or {}) do
+      planned[#planned + 1] = pickup
+    end
+    for _, step in ipairs(classSteps) do
+      if ClassQuests.InQuestPlan(step) then
+        step.classQuest = true
+        step.distance = mapID and Pathwise:GetModule("Waypoints").TravelDistance(mapID, x, y,
+          step.target.mapID, step.target.x, step.target.y, true)
+        planned[#planned + 1] = step
+      end
+    end
+    items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, planned)
+    local zoneItem = pickups and QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone)
+    if zoneItem then
+      items[#items + 1] = zoneItem
+    end
 
-  if #collapsed > 0 then
-    items[#items + 1] = {
-      id = "quest:collapsed",
-      priority = 0,
-      text = string.format(L.QA_COLLAPSED, table.concat(collapsed, ", ")),
-    }
+    if #collapsed > 0 then
+      items[#items + 1] = {
+        id = "quest:collapsed",
+        priority = 0,
+        text = string.format(L.QA_COLLAPSED, table.concat(collapsed, ", ")),
+      }
+    end
   end
   Pathwise:GetModule("NextSteps"):SetItems("quests", items)
   -- (For the hearthstone tip: how much there is to do in this zone.)
