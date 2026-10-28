@@ -38,7 +38,9 @@ function TargetMacro.Groups(names)
   for _, name in ipairs(names or {}) do
     local key = name
     for _, other in ipairs(names) do
-      if #other < #key and name:find(other, 1, true) then
+      -- (Whole words only: "Crag Boar" in "Large Crag Boar", not "Rat" in
+      -- "Pirate".)
+      if #other < #key and (" " .. name .. " "):find(" " .. other .. " ", 1, true) then
         key = other
       end
     end

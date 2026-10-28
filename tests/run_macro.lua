@@ -32,6 +32,8 @@ check("and it fits the 255 character limit", #body <= 255)
 local groups = TargetMacro.Groups(seven)
 check("four groups, in order", #groups == 4 and groups[1].name == "Crag Boar" and groups[1].partial
   and groups[2].name == "Rockjaw Trogg" and groups[3].name == "Frostmane Troll Whelp" and not groups[3].partial)
+check("whole words only: Rat doesn't take in Pirate", not TargetMacro.Groups({ "Rat", "Pirate" })[1].partial
+  and #TargetMacro.Groups({ "Rat", "Pirate" }) == 2)
 check("a name inside no other: exact as before", TargetMacro.BuildBody({ "Crag Boar", "Rockjaw Trogg" })
   :find("/targetexact Crag Boar", 1, true) ~= nil)
 check("body without names: harmless message", TargetMacro.BuildBody({}):find("^/run print") ~= nil)

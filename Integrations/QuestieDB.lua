@@ -1019,16 +1019,18 @@ function QuestieData:WouldSuggest(questID, title, ctx)
   return false
 end
 
--- The nearest giver spot of a quest from the player, or nil: point,
--- distance.
-local function NearestGiver(candidate, mapID, x, y)
+-- The nearest giver spot of a quest from the player (of the spots keep
+-- allows, if given), or nil: point, distance.
+local function NearestGiver(candidate, mapID, x, y, keep)
   local Waypoints = Pathwise:GetModule("Waypoints")
   local ok, points = pcall(GiverPoints, candidate)
   local best, bestDistance
   for _, point in ipairs(ok and points or {}) do
-    local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
-    if distance and (not bestDistance or distance < bestDistance) then
-      best, bestDistance = point, distance
+    if not keep or keep(point) then
+      local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
+      if distance and (not bestDistance or distance < bestDistance) then
+        best, bestDistance = point, distance
+      end
     end
   end
   return best, bestDistance
@@ -1056,8 +1058,8 @@ function QuestieData:GetUpcoming(fromLevel, toLevel, ctxFor, limit, keep)
         contexts[atLevel] = contexts[atLevel] or ctxFor(atLevel)
         local ok, eligible = pcall(Eligible, candidate, contexts[atLevel])
         if ok and eligible then
-          local best, distance = NearestGiver(candidate, mapID, x, y)
-          if best and (not keep or keep(best)) then
+          local best, distance = NearestGiver(candidate, mapID, x, y, keep)
+          if best then
             found[#found + 1] = { questID = candidate.id, title = candidate.name, atLevel = atLevel,
               level = candidate.level == -1 and atLevel or candidate.level,
               target = best, giver = best.giver, distance = distance }

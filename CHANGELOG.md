@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.2
+
+Fixes from a check of the new features:
+
+- Target macro: names are only grouped into one `/target` line when one
+  contains the other as whole words ("Crag Boar" in "Large Crag Boar"),
+  never inside a word ("Rat" in "Pirate").
+- "More quests here": quest givers outside your zone are passed over
+  before any distance is worked out (less work while you're grinding).
+
 ## 0.28.1
 
 - "More quests here at level 7" now also counts quests you may already
