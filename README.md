@@ -184,13 +184,13 @@ Make a character of another class (any level works; a level 10+ one shows talent
 Needs QuestieDB. Try it with a dungeon of your level, e.g. The Deadmines or Wailing Caverns around level 18-22.
 
 - [ ] "Dungeons" in the To-do window footer (or `/pw dungeon`) opens a list of the dungeons for your faction, in level order: the level range colored (green fits, orange still high, grey too low), and how many of each dungeon's quests you haven't done. Escape or X closes it.
-- [ ] Click one: the title says `Dungeon: The Deadmines`, the footer `... steps · dungeon mode`, and chat explains it once.
+- [ ] Click one: the title says `The Deadmines` under `PATHWISE · DUNGEON`, on one line (a long name like Lower Blackrock Spire gets smaller type), and chat explains it once.
 - [ ] The list shows only that dungeon: its quests to pick up, the pre-quests that unlock them (their tooltip says "A pre-quest..."; e.g. the Westfall chain for The Defias Brotherhood), pre-quests in your log with their objectives, and `Go to The Deadmines (entrance in Westfall)` with the arrow on the entrance.
 - [ ] Dungeon quests you have point the arrow at the entrance. Chains you're too low for are listed as `Later: N quest chains, the first from level X`; the tooltip says where each one starts (quest, level, giver and zone - e.g. The Defias Brotherhood from level 14 in Westfall for The Deadmines).
 - [ ] Far below the dungeon's level, the entrance waits at the bottom (`... - from level 17`) and doesn't take the arrow; within 2 levels of the range it becomes a step, after the quests and pre-quests.
 - [ ] Finish a pre-quest: the next quest of the chain appears to pick up. Auto-accept takes them when you talk to the giver.
 - [ ] "Leave dungeon mode" at the top of the list (or `/pw dungeon off`): the usual guide is back. Dungeon mode stays on over a /reload until you leave it.
-- [ ] Switching: the footer button says what a click switches to - "Normal mode" in dungeon mode, "Dungeon mode" in the normal guide (for the last dungeon you picked). One click switches; right-click opens the dungeon list to pick another. Chat explains it once, then only says the mode. There's also a key binding (Key Bindings > AddOns > Pathwise) and `/pw dungeon toggle`.
+- [ ] Switching: the footer button says what a click switches to - "Normal mode" in dungeon mode, "Dungeon mode" in the normal guide (for the last dungeon you picked). One click switches; right-click, or clicking the dungeon's name in the title, opens the dungeon list to pick another. Chat explains it once, then only says the mode. There's also a key binding (Key Bindings > AddOns > Pathwise) and `/pw dungeon toggle`.
 - [ ] Check whether a quest you know belongs to the dungeon is missing, or one that doesn't shows up, and tell me.
 
 Inside a dungeon (works in any of them, with or without dungeon mode):

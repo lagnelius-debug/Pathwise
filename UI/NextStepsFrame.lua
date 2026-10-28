@@ -112,16 +112,22 @@ local function UpdateFooter(stepCount)
   end
 end
 
--- "To-do", or "Dungeon: The Deadmines" inside a dungeon or in dungeon
--- mode. (Re-skins only when it changes; not while drawing the list, since
--- a new title re-skins and redraws the window.)
+-- "To-do", or the dungeon's name under "PATHWISE · DUNGEON" inside a
+-- dungeon or in dungeon mode. In dungeon mode the name can be clicked to
+-- pick another dungeon. (Re-skins only when it changes; not while drawing
+-- the list, since a new title re-skins and redraws the window.)
 local function UpdateTitle()
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
   local dungeon = DungeonGuide:GetInside() or DungeonGuide:GetActive()
-  local title = dungeon and string.format(L.DUNGEON_TITLE, dungeon.name) or L.NS_TITLE
+  local title = dungeon and dungeon.name or L.NS_TITLE
   if frame.titleText ~= title then
-    frame:SetTitleText(title)
+    if dungeon then
+      frame:SetTitleText(title, L.DUNGEON_LABEL, string.format(L.DUNGEON_TITLE, dungeon.name))
+    else
+      frame:SetTitleText(title)
+    end
   end
+  frame.titleButton:SetShown(DungeonGuide:GetActive() ~= nil)
 end
 
 -- The step that gets its details listed underneath: the one the arrow
@@ -237,6 +243,34 @@ local function CreateWindow()
   frame.close:SetScript("OnClick", function()
     NextStepsFrame:SetShown(false)
   end)
+
+  -- In dungeon mode the dungeon's name opens the list of dungeons. (Drags
+  -- still move the window.)
+  local titleButton = CreateFrame("Button", nil, frame)
+  titleButton:SetAllPoints(frame.title)
+  titleButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+  titleButton:RegisterForDrag("LeftButton")
+  titleButton:SetScript("OnDragStart", function()
+    frame:StartMoving()
+  end)
+  titleButton:SetScript("OnDragStop", function()
+    frame:StopMovingOrSizing()
+    SavePosition()
+  end)
+  titleButton:SetScript("OnClick", function()
+    Pathwise:GetModule("DungeonPicker"):Toggle()
+  end)
+  titleButton:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText(frame.titleText or "")
+    GameTooltip:AddLine(L.DUNGEON_TITLE_TOOLTIP, 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  titleButton:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+  end)
+  titleButton:Hide()
+  frame.titleButton = titleButton
 
   -- Size grip: the saved size (nil height = automatic) is applied here and
   -- after every resize.

@@ -35,6 +35,8 @@ local HEADER_PLAIN = 44    -- title left-aligned
 local HEADER_TILED = 60    -- v4 tiled frame: band, 22 px padding, label, title
 local SIDE_PADDING = 14
 local CREATURE_PADDING = 40 -- keeps the centered title clear of the corner art
+local TITLE_CLOSE_ROOM = 40 -- right of a left-aligned title: the close button
+local TITLE_MIN_SIZE = 10 -- a long title shrinks down to this font size
 local CONTENT_GAP = 8
 local FOOTER_HEIGHT = 18
 local BOTTOM_PADDING = 10
@@ -431,8 +433,30 @@ function WindowMixin:PlaceGrip()
   self.grip:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", offset[1], offset[2])
 end
 
-function WindowMixin:SetTitleText(text)
-  self.titleText = text
+-- text: the big title; label: the small line above it (default
+-- "PATHWISE"); single: the title in single-line headers (default text).
+-- Keeps the title on one line: back to its full size, then smaller type
+-- when it's wider than the room (a long dungeon name).
+function WindowMixin:FitTitle()
+  local title = self.title
+  if title.SetFontObject then
+    title:SetFontObject(GameFontNormalLarge)
+  end
+  if title.SetWordWrap then
+    title:SetWordWrap(false)
+  end
+  local room = self:GetWidth() - (self.titleInset or 0)
+  local width = title:GetStringWidth()
+  if title.GetFont and room > 0 and width > room then
+    local font, size, flags = title:GetFont()
+    if font and size then
+      title:SetFont(font, math.max(TITLE_MIN_SIZE, math.floor(size * room / width)), flags)
+    end
+  end
+end
+
+function WindowMixin:SetTitleText(text, label, single)
+  self.titleText, self.labelText, self.singleTitleText = text, label, single
   if self.theme then
     Theme.Apply(self, self.themeId)
   end
@@ -510,6 +534,7 @@ function Theme.CreateWindow(name, parent, titleText)
   end
   window:HookScript("OnSizeChanged", function()
     window:UpdateTiling()
+    window:FitTitle()
   end)
 
   Theme.Register(window)
@@ -740,7 +765,7 @@ local function ApplyHeader(window, theme)
   label:ClearAllPoints()
   title:ClearAllPoints()
   icon:Hide()
-  label:SetText(L.WINDOW_LABEL)
+  label:SetText(window.labelText or L.WINDOW_LABEL)
   label:SetTextColor(RGB(theme.label or theme.muted))
   title:SetTextColor(RGB(theme.title))
   -- Left-aligned by default; the centered layout below overrides this.
@@ -752,8 +777,9 @@ local function ApplyHeader(window, theme)
   if theme.titleText then
     -- Single-line header ("Pathwise · To-do").
     label:Hide()
-    title:SetText(string.format(L.WINDOW_SINGLE_TITLE, window.titleText))
+    title:SetText(string.format(L.WINDOW_SINGLE_TITLE, window.singleTitleText or window.titleText))
     title:SetPoint("LEFT", window, "TOPLEFT", SIDE_PADDING, -headerHeight / 2)
+    window.titleInset = SIDE_PADDING + TITLE_CLOSE_ROOM
   elseif creature or tiled then
     label:Show()
     title:SetText(window.titleText)
@@ -765,6 +791,7 @@ local function ApplyHeader(window, theme)
     title:SetPoint("TOPRIGHT", window, "TOPRIGHT", -CREATURE_PADDING, -(top + 12))
     title:SetJustifyH("CENTER")
     label:SetJustifyH("CENTER")
+    window.titleInset = 2 * CREATURE_PADDING
   else
     label:Show()
     title:SetText(window.titleText)
@@ -778,7 +805,9 @@ local function ApplyHeader(window, theme)
     end
     label:SetPoint("TOPLEFT", window, "TOPLEFT", x, -8)
     title:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -2)
+    window.titleInset = x + TITLE_CLOSE_ROOM
   end
+  window:FitTitle()
 
   -- Close button: right side of the header, clear of the corner art.
   local close = window.close

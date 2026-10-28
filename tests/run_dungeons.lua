@@ -99,7 +99,24 @@ WoW.ClearChat()
 WoW.Slash("dungeon test mines")
 check("/pw dungeon <name> turns it on", DungeonGuide:GetActive() == dungeon
   and WoW.ChatContains("Dungeon mode: The Test Mines."))
-check("title: Dungeon: The Test Mines", window.title:GetText() == "Dungeon: The Test Mines")
+check("title: the dungeon's name under PATHWISE · DUNGEON", window.title:GetText() == "The Test Mines"
+  and window.label:GetText() == "PATHWISE · DUNGEON")
+check("one line: never wrapped", window.title._wordWrap == false)
+check("the name can be clicked", window.titleButton:IsShown())
+local picker = _G.PathwiseDungeonPicker
+window.titleButton:Click()
+check("clicking it opens the dungeon list", picker:IsShown())
+picker:Hide()
+-- A long name gets smaller type to fit (the mock's text is 6 px a letter).
+local width = window:GetWidth()
+window:SetWidth(150)
+window:FitTitle()
+local _, size = window.title:GetFont()
+check("a long name in a narrow window: smaller type", size < 16)
+window:SetWidth(width)
+window:FitTitle()
+_, size = window.title:GetFont()
+check("room again: full size", size == 16)
 check("the mode button offers the normal guide", window.dungeons.text:GetText() == "Normal mode")
 local pre, own = Item("pickup:9600"), Item("pickup:9602")
 check("the pre-quest to pick up, marked as one", pre ~= nil and pre.detail[#pre.detail]:find("pre-quest", 1, true) ~= nil)
@@ -200,7 +217,7 @@ local log = { { title = "Mine Quest", level = L, questID = 9602, zone = "The Tes
   objectives = { { text = "Mine Boss slain: 0/1" }, { text = "Mine Key: 0/1" }, { text = "Boss Key: 0/1" } } } }
 UpdateLog(log)
 check("inside: the dungeon is known by its instance", DungeonGuide:GetInside() == dungeon
-  and window.title:GetText() == "Dungeon: The Test Mines")
+  and window.title:GetText() == "The Test Mines")
 local boss = Item("inside:boss:1")
 check("one step per quest boss, with its place and where (" .. tostring(boss and boss.text) .. ")",
   boss and boss.text == "Boss 1 of 2: Mine Boss - the deep end" and boss.subLines[1].text:find("^Kill Mine Boss %(") ~= nil
@@ -262,6 +279,8 @@ check("an older QuestieDB (no quest list): says so instead of loading forever", 
   and Item("dungeon:loading").text:find("newer QuestieDB", 1, true))
 DungeonGuide:SetDungeon(nil)
 table.remove(Pathwise.Data.Dungeons)
+check("normal mode: To-do under PATHWISE, the title not a button", window.title:GetText() == "To-do"
+  and window.label:GetText() == "PATHWISE" and not window.titleButton:IsShown())
 
 -- Clean up
 LibQuestieDB.Item.Get = itemGet

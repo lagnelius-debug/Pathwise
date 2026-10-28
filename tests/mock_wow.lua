@@ -152,6 +152,9 @@ function FrameMethods:SetBackdropColor(r, g, b, a) self._backdropColor = { r, g,
 function FrameMethods:SetBackdropBorderColor(r, g, b, a) self._borderColor = { r, g, b, a } end
 function FrameMethods:SetTextColor(r, g, b) self._textColor = { r, g, b } end
 function FrameMethods:SetWordWrap(wrap) self._wordWrap = wrap end
+function FrameMethods:SetFontObject(object) self._fontObject, self._fontSize = object, nil end
+function FrameMethods:SetFont(font, size, flags) self._font, self._fontSize = font, size end
+function FrameMethods:GetFont() return self._font or "Fonts\\FRIZQT__.TTF", self._fontSize or 16, "" end
 function FrameMethods:SetChecked(checked) self._checked = checked end
 function FrameMethods:GetChecked() return self._checked end
 function FrameMethods:SetVertexColor(r, g, b) self._color = { r, g, b } end

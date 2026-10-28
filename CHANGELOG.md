@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.26.1
+
+- Dungeon mode: the To-do title is the dungeon's name under
+  "PATHWISE · DUNGEON", always on one line. A long name gets smaller type
+  instead of wrapping into the divider ("Dungeon: The Deadmines" ran over
+  two lines).
+- Picking another dungeon: click the dungeon's name in the title (it
+  highlights, with a tooltip). Before, only right-clicking the "Normal
+  mode" button did it, which was easy to miss: a left-click switches
+  between dungeon mode and the normal guide, always back to the same
+  dungeon.
+
 ## 0.26.0
 
 - **The arrow follows the mob you target**: targeting a mob of the step
