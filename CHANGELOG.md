@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.1
+
+- "More quests here at level 7" now also counts quests you may already
+  take but that are still far too hard (red) at your level - like
+  Protecting the Herd and The Public Servant in Dun Morogh at level 6 -
+  not only quests that need a higher level. It also only looks at quest
+  givers in your zone from the start, so quests elsewhere on the continent
+  can't crowd them out. (In Dun Morogh at level 6 it said nothing.)
+
 ## 0.28.0
 
 - **Out of quests because of your level**: when there's nothing to do but

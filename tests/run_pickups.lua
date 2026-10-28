@@ -41,6 +41,9 @@ local quests = {
   [7007] = { name = "Holiday", requiredLevel = 1, questLevel = L, zoneOrSort = -22, startedBy = { { 9101 } } },
   [7008] = { name = "Too High", requiredLevel = L + 3, questLevel = L + 3, startedBy = { { 9101 } } },
   [7017] = { name = "Next Level", requiredLevel = L + 1, questLevel = L + 1, startedBy = { { 9102 } } },
+  -- Takeable now, but red (5 levels up) until the next level.
+  [7018] = { name = "Red For Now", requiredLevel = 1, questLevel = L + 5, startedBy = { { 9101 } } },
+  [7019] = { name = "Next Level Elsewhere", requiredLevel = L + 1, questLevel = L + 1, startedBy = { { 9104 } } },
   [7009] = { name = "Grey", requiredLevel = 1, questLevel = 1, startedBy = { { 9101 } } },
   [7010] = { name = "From An Item", requiredLevel = 1, questLevel = L, startedBy = { nil, nil, { 1234 } } },
   [7011] = { name = "In The Log", requiredLevel = 1, questLevel = L, startedBy = { { 9101 } } },
@@ -55,6 +58,7 @@ local npcs = {
   [9101] = { name = "Giver Near", spawns = { [141] = { { 58, 41 } } } },   -- 30 yd
   [9102] = { name = "Giver Mid", spawns = { [141] = { { 58, 45 } } } },    -- 150 yd
   [9103] = { name = "Giver Far", spawns = { [141] = { { 58, 70 } } } },    -- 900 yd
+  [9104] = { name = "Giver In Darkshore", spawns = { [148] = { { 50, 10 } } } },
 }
 local objects = { [9201] = { name = "Wanted Poster", spawns = { [141] = { { 60, 40 } } } } } -- 60 yd
 
@@ -120,20 +124,23 @@ UpdateLog({ { header = true, title = "Teldrassil" },
 check("with a quest to do: no zone suggestion", Item("zone:next") == nil)
 
 -- Your screenshot: nothing to do at level 6, but quests here open at 7.
-WoW.completedQuests[7017] = nil
+WoW.completedQuests[7017], WoW.completedQuests[7018], WoW.completedQuests[7019] = nil, nil, nil
 S.xp, S.xpMax = 300, 1000
 UpdateLog({})
 local soon = Item("level:next")
 check("quests here at the next level: says which level and which (" .. tostring(soon and Strip(soon.text)) .. ")",
-  soon ~= nil and Strip(soon.text) == "More quests here at level " .. (L + 1) .. ": [" .. (L + 1) .. "] Next Level"
+  soon ~= nil and Strip(soon.text) == "More quests here at level " .. (L + 1) .. ": [" .. (L + 5) .. "] Red For Now +1"
   and soon.priority == P.QUEST_ZONE and Item("zone:next") == nil)
 check("how much XP is left, and the quest with its giver", soon.detail[1] == "700 XP to level " .. (L + 1) .. "."
-  and soon.detail[2]:find("^Level " .. (L + 1) .. ": %[" .. (L + 1) .. "%] Next Level from Giver Mid %- ") ~= nil
+  and soon.detail[3]:find("^Level " .. (L + 1) .. ": %[" .. (L + 1) .. "%] Next Level from Giver Mid %- ") ~= nil
   and soon.subLines[1].text == "Kill mobs around you to reach level " .. (L + 1))
 check("clicking it points at the giver", soon.target and soon.target.mapID == 1438)
-check("three levels ahead: too far off to mention", not Strip(soon.text):find("Too High", 1, true)
-  and not soon.detail[3])
-WoW.completedQuests[7017] = true
+check("a quest you may take now but is red until then (Protecting the Herd): first, its giver is nearest",
+  soon.detail[2]:find("Red For Now from Giver Near", 1, true) ~= nil)
+check("only givers in this zone (not Darkshore); three levels ahead: too far off",
+  not table.concat(soon.detail, "|"):find("Elsewhere", 1, true) and not table.concat(soon.detail, "|"):find("Too High", 1, true)
+  and #soon.detail == 3)
+WoW.completedQuests[7017], WoW.completedQuests[7018], WoW.completedQuests[7019] = true, true, true
 S.xp, S.xpMax = nil, nil
 
 -- Zones on your own continent first: a gnome in Dun Morogh hears about

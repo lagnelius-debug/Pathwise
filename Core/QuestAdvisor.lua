@@ -866,19 +866,15 @@ function QuestAdvisor:Update()
     -- Nothing to do: quests here a level or two from now, else other zones.
     local zoneItem
     if pickups and NothingToDo(items) then
-      local upcoming = QuestieData:GetUpcoming(level, level + QuestAdvisor.UPCOMING_LEVELS, function(atLevel)
-        return PickupContext(quests, atLevel, Platform.GetQuestGreenRange(atLevel))
-      end, QuestAdvisor.MAX_UPCOMING * 4)
+      -- (Givers in this zone only.)
       local Travel = Pathwise:GetModule("Travel")
-      local here = {}
-      for _, quest in ipairs(upcoming or {}) do
-        if mapID and Travel.ZoneGroup(quest.target.mapID) == Travel.ZoneGroup(mapID)
-          and #here < QuestAdvisor.MAX_UPCOMING then
-          here[#here + 1] = quest
-        end
-      end
+      local upcoming = mapID and QuestieData:GetUpcoming(level, level + QuestAdvisor.UPCOMING_LEVELS, function(atLevel)
+        return PickupContext(quests, atLevel, Platform.GetQuestGreenRange(atLevel))
+      end, QuestAdvisor.MAX_UPCOMING, function(target)
+        return Travel.ZoneGroup(target.mapID) == Travel.ZoneGroup(mapID)
+      end)
       local xp, xpMax = Platform.GetXP()
-      zoneItem = QuestAdvisor.UpcomingItem(items, here, level, xp, xpMax)
+      zoneItem = QuestAdvisor.UpcomingItem(items, upcoming, level, xp, xpMax)
       if not zoneItem then
         local continent = mapID and Pathwise:GetModule("Waypoints").ToWorld(mapID, x, y)
         zoneItem = QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone, continent)
@@ -929,23 +925,23 @@ function QuestAdvisor.UpcomingItem(items, upcoming, level, xp, xpMax)
   local first = upcoming[1]
   local atLevel = 0
   for _, quest in ipairs(upcoming) do
-    if quest.requiredLevel == first.requiredLevel then
+    if quest.atLevel == first.atLevel then
       atLevel = atLevel + 1
     end
   end
   local name = string.format("[%d] %s", first.level, first.title)
-  local text = string.format(L.UPCOMING, first.requiredLevel, name)
+  local text = string.format(L.UPCOMING, first.atLevel, name)
   if atLevel > 1 then
     text = text .. string.format(L.UPCOMING_MORE, atLevel - 1)
   end
   local detail = {}
-  if first.requiredLevel == level + 1 and xp and xpMax and xpMax > 0 then
-    detail[1] = string.format(L.UPCOMING_XP, xpMax - xp, first.requiredLevel)
+  if first.atLevel == level + 1 and xp and xpMax and xpMax > 0 then
+    detail[1] = string.format(L.UPCOMING_XP, xpMax - xp, first.atLevel)
   else
-    detail[1] = string.format(L.UPCOMING_LEVELS, first.requiredLevel - level, first.requiredLevel)
+    detail[1] = string.format(L.UPCOMING_LEVELS, first.atLevel - level, first.atLevel)
   end
   for _, quest in ipairs(upcoming) do
-    detail[#detail + 1] = string.format(L.UPCOMING_QUEST, quest.requiredLevel, quest.level, quest.title,
+    detail[#detail + 1] = string.format(L.UPCOMING_QUEST, quest.atLevel, quest.level, quest.title,
       quest.giver or "?", Pathwise.FormatDistance(quest.distance))
   end
   return {
@@ -955,7 +951,7 @@ function QuestAdvisor.UpcomingItem(items, upcoming, level, xp, xpMax)
     detail = detail,
     -- (Clicking the line points the arrow at the first one's giver.)
     target = first.target,
-    subLines = { { text = string.format(L.UPCOMING_TASK, first.requiredLevel), level = 1, task = true } },
+    subLines = { { text = string.format(L.UPCOMING_TASK, first.atLevel), level = 1, task = true } },
   }
 end
 

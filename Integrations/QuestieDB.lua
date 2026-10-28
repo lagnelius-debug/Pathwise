@@ -1034,12 +1034,14 @@ local function NearestGiver(candidate, mapID, x, y)
   return best, bestDistance
 end
 
--- Quests the player can't take yet but could a few levels from now (the
--- same rules as GetPickups at that level): { questID, title, level,
--- requiredLevel, target, giver, distance }, lowest required level first,
--- then nearest. nil while the quest list isn't scanned. ctxFor(level): the
--- pickup context at that level.
-function QuestieData:GetUpcoming(fromLevel, toLevel, ctxFor, limit)
+-- Quests the guide would suggest a few levels from now but not yet: they
+-- need a higher level, or are still far too hard (red) at this one. The
+-- same rules as GetPickups, at each level up to toLevel: { questID, title,
+-- level, atLevel (the first level it's suggested at), target, giver,
+-- distance }, lowest atLevel first, then nearest. nil while the quest list
+-- isn't scanned. ctxFor(level): the pickup context at that level;
+-- keep(target): only givers where this says so (e.g. this zone).
+function QuestieData:GetUpcoming(fromLevel, toLevel, ctxFor, limit, keep)
   if not self:PickupsReady() then
     return nil
   end
@@ -1049,23 +1051,25 @@ function QuestieData:GetUpcoming(fromLevel, toLevel, ctxFor, limit)
   end
   local contexts, found = {}, {}
   for _, candidate in ipairs(pickupCandidates) do
-    local required = candidate.requiredLevel
-    if required > fromLevel and required <= toLevel then
-      contexts[required] = contexts[required] or ctxFor(required)
-      local ok, eligible = pcall(Eligible, candidate, contexts[required])
-      if ok and eligible then
-        local best, distance = NearestGiver(candidate, mapID, x, y)
-        if best then
-          found[#found + 1] = { questID = candidate.id, title = candidate.name, requiredLevel = required,
-            level = candidate.level == -1 and required or candidate.level,
-            target = best, giver = best.giver, distance = distance }
+    if candidate.requiredLevel <= toLevel then
+      for atLevel = fromLevel + 1, toLevel do
+        contexts[atLevel] = contexts[atLevel] or ctxFor(atLevel)
+        local ok, eligible = pcall(Eligible, candidate, contexts[atLevel])
+        if ok and eligible then
+          local best, distance = NearestGiver(candidate, mapID, x, y)
+          if best and (not keep or keep(best)) then
+            found[#found + 1] = { questID = candidate.id, title = candidate.name, atLevel = atLevel,
+              level = candidate.level == -1 and atLevel or candidate.level,
+              target = best, giver = best.giver, distance = distance }
+          end
+          break
         end
       end
     end
   end
   table.sort(found, function(a, b)
-    if a.requiredLevel ~= b.requiredLevel then
-      return a.requiredLevel < b.requiredLevel
+    if a.atLevel ~= b.atLevel then
+      return a.atLevel < b.atLevel
     end
     return a.distance < b.distance
   end)
