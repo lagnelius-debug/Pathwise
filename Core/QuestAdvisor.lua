@@ -869,7 +869,9 @@ function QuestAdvisor:Update()
       -- (Givers in this zone only.)
       local Travel = Pathwise:GetModule("Travel")
       local upcoming = mapID and QuestieData:GetUpcoming(level, level + QuestAdvisor.UPCOMING_LEVELS, function(atLevel)
-        return PickupContext(quests, atLevel, Platform.GetQuestGreenRange(atLevel))
+        local ctx = PickupContext(quests, atLevel, Platform.GetQuestGreenRange(atLevel))
+        ctx.future = true
+        return ctx
       end, QuestAdvisor.MAX_UPCOMING, function(target)
         return Travel.ZoneGroup(target.mapID) == Travel.ZoneGroup(mapID)
       end)
@@ -1123,6 +1125,51 @@ Pathwise:RegisterCommand("units", function(args)
 end, L.CMD_UNITS)
 
 -- /pw pickups on|off: suggest quests to pick up (needs QuestieDB)
+-- /pw why <quest name or ID>: why the guide does or doesn't suggest
+-- picking up a quest, now and at the next levels.
+Pathwise:RegisterCommand("why", function(args)
+  if args == "" then
+    Pathwise:Print(L.WHY_USAGE)
+    return
+  end
+  local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
+  local level = snapshot.level or 1
+  local quests = Platform.GetQuestLog()
+  local results = Pathwise:GetModule("QuestieData"):Explain(args, level, level + QuestAdvisor.UPCOMING_LEVELS,
+    function(atLevel)
+      local ctx = PickupContext(quests, atLevel, Platform.GetQuestGreenRange(atLevel))
+      ctx.future = atLevel > level
+      return ctx
+    end)
+  if not results then
+    Pathwise:Print(L.WHY_NOT_READY)
+    return
+  elseif #results == 0 then
+    Pathwise:Printf(L.WHY_NOT_FOUND, args)
+    return
+  end
+  local Travel = Pathwise:GetModule("Travel")
+  local mapID = Platform.GetPlayerMapPosition()
+  for _, entry in ipairs(results) do
+    local where
+    if entry.mapID and mapID and Travel.ZoneGroup(entry.mapID) == Travel.ZoneGroup(mapID) then
+      where = L.WHY_THIS_ZONE
+    else
+      where = entry.mapID and (Platform.GetMapName(entry.mapID) or "?") or L.WHY_NO_GIVER
+    end
+    local distance = entry.distance and Pathwise.FormatDistance(entry.distance) or "?"
+    Pathwise:Printf(L.WHY_HEADER, entry.level or 0, entry.title or "?", entry.id, entry.requiredLevel or 1,
+      entry.giver or "?", where, distance)
+    for atLevel = level, level + QuestAdvisor.UPCOMING_LEVELS do
+      local reason = entry.reasons[atLevel]
+      Pathwise:Printf(L.WHY_AT_LEVEL, atLevel, reason and (L["WHY_" .. reason] or reason) or L.WHY_OK)
+    end
+    if entry.questieDoable == false then
+      Pathwise:Print(L.WHY_QUESTIE_NOW)
+    end
+  end
+end, L.CMD_WHY)
+
 Pathwise:RegisterCommand("pickups", function(args)
   args = args:lower()
   if args == "on" or args == "off" then

@@ -974,22 +974,45 @@ function QuestieData:GetDungeonQuests(dungeonID)
   return dungeonQuests[dungeonID] or {}
 end
 
--- Whether a scanned quest can be suggested now (ctx as for GetPickups).
-local function Eligible(candidate, ctx)
+-- Why a scanned quest can't be suggested now (ctx as for GetPickups): a
+-- reason ("level", "inLog", "range", "done", "pre", "exclusive", "chain",
+-- "skip", "questie"), or nil when it can. (/pw why shows these.)
+local function NotEligibleReason(candidate, ctx)
   local isCompleted = Platform.IsQuestCompleted
   local level = candidate.level == -1 and ctx.level or candidate.level
-  return candidate.requiredLevel <= ctx.level and not ctx.inLog[candidate.id] and not ctx.outOfRange(level)
-    and not isCompleted(candidate.id)
-    and (not NonEmpty(candidate.preGroup) or AllCompleted(candidate.preGroup, isCompleted))
-    and (not NonEmpty(candidate.preSingle) or AnyCompleted(candidate.preSingle, isCompleted))
-    and not (NonEmpty(candidate.exclusive) and (AnyCompleted(candidate.exclusive, isCompleted)
-      or AnyCompleted(candidate.exclusive, function(id) return ctx.inLog[id] end)))
-    -- A later quest of the chain (or the quest a breadcrumb leads to) is
-    -- already done or in the log: this one is no longer offered.
-    and not DoneOrInLog(candidate.nextInChain, isCompleted, ctx.inLog)
-    and not DoneOrInLog(candidate.breadcrumbFor, isCompleted, ctx.inLog)
-    and not (ctx.skip and ctx.skip(candidate.id))
-    and QuestieIsDoable(candidate.id) ~= false
+  if candidate.requiredLevel > ctx.level then
+    return "level"
+  elseif ctx.inLog[candidate.id] then
+    return "inLog"
+  elseif ctx.outOfRange(level) then
+    return "range"
+  elseif isCompleted(candidate.id) then
+    return "done"
+  elseif (NonEmpty(candidate.preGroup) and not AllCompleted(candidate.preGroup, isCompleted))
+    or (NonEmpty(candidate.preSingle) and not AnyCompleted(candidate.preSingle, isCompleted)) then
+    return "pre"
+  elseif NonEmpty(candidate.exclusive) and (AnyCompleted(candidate.exclusive, isCompleted)
+    or AnyCompleted(candidate.exclusive, function(id) return ctx.inLog[id] end)) then
+    return "exclusive"
+  -- A later quest of the chain (or the quest a breadcrumb leads to) is
+  -- already done or in the log: this one is no longer offered.
+  elseif DoneOrInLog(candidate.nextInChain, isCompleted, ctx.inLog)
+    or DoneOrInLog(candidate.breadcrumbFor, isCompleted, ctx.inLog) then
+    return "chain"
+  elseif ctx.skip and ctx.skip(candidate.id) then
+    return "skip"
+  -- (Questie's own check uses the player's level as it is now - older
+  -- versions reject quests that need a higher one - so it's only asked
+  -- about now, not about a level the player hasn't reached: ctx.future.)
+  elseif not ctx.future and QuestieIsDoable(candidate.id) == false then
+    return "questie"
+  end
+  return nil
+end
+
+-- Whether a scanned quest can be suggested now (ctx as for GetPickups).
+local function Eligible(candidate, ctx)
+  return NotEligibleReason(candidate, ctx) == nil
 end
 
 -- Whether the guide would suggest picking up a quest now (by its ID, or by
@@ -1079,6 +1102,50 @@ function QuestieData:GetUpcoming(fromLevel, toLevel, ctxFor, limit, keep)
     found[i] = nil
   end
   return found
+end
+
+-- /pw why: the scanned quests matching an ID or (part of) a title, each
+-- as { id, title, level, requiredLevel, giver, mapID, distance, reasons =
+-- { [level] = reason or false } } for the levels fromLevel..toLevel (false:
+-- suggested at that level). nil while the quest list isn't scanned.
+function QuestieData:Explain(query, fromLevel, toLevel, ctxFor)
+  if not self:PickupsReady() then
+    return nil
+  end
+  local id = tonumber(query)
+  local text = query:lower()
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  local results = {}
+  for _, candidate in ipairs(pickupCandidates) do
+    if (id and candidate.id == id) or (not id and candidate.name and candidate.name:lower():find(text, 1, true)) then
+      local entry = { id = candidate.id, title = candidate.name, level = candidate.level,
+        requiredLevel = candidate.requiredLevel, reasons = {} }
+      for atLevel = fromLevel, toLevel do
+        local ok, reason = pcall(NotEligibleReason, candidate, ctxFor(atLevel))
+        if not ok then
+          reason = "error"
+        end
+        entry.reasons[atLevel] = reason or false
+      end
+      local best, distance
+      if mapID then
+        best, distance = NearestGiver(candidate, mapID, x, y)
+      end
+      if not best then
+        local ok, points = pcall(GiverPoints, candidate)
+        best = ok and points and points[1]
+      end
+      entry.giver = best and best.giver
+      entry.mapID = best and best.mapID
+      entry.distance = distance
+      entry.questieDoable = QuestieIsDoable(candidate.id)
+      results[#results + 1] = entry
+      if #results >= 5 then
+        break
+      end
+    end
+  end
+  return results
 end
 
 function QuestieData:GetPickups(ctx, limit)

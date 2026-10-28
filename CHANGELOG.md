@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.3
+
+- "More quests here at level 7" no longer asks Questie whether a quest is
+  available for a level you haven't reached: older Questie versions check
+  your current level there, which hid every quest that needs a higher one.
+  (Pathwise checks pre-quests, chains and exclusive quests itself.)
+- New `/pw why <quest name or ID>`: says why the guide does or doesn't
+  suggest picking up a quest - at your level and the next two (needs a
+  higher level, too hard, already done, a quest before it isn't done,
+  ...), with its giver, the zone and the distance.
+
 ## 0.28.2
 
 Fixes from a check of the new features:

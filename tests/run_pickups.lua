@@ -140,6 +140,34 @@ check("a quest you may take now but is red until then (Protecting the Herd): fir
 check("only givers in this zone (not Darkshore); three levels ahead: too far off",
   not table.concat(soon.detail, "|"):find("Elsewhere", 1, true) and not table.concat(soon.detail, "|"):find("Too High", 1, true)
   and #soon.detail == 3)
+-- An older Questie checks the player's current level in its own "doable"
+-- check: a quest for the next level must still count.
+QuestieLoader = { ImportModule = function() return { IsDoable = function(id)
+  return not (quests[id] and quests[id].requiredLevel > S.level)
+end } end }
+UpdateLog({})
+check("an older Questie's level check doesn't hide next level's quests", Item("level:next") ~= nil
+  and table.concat(Item("level:next").detail, "|"):find("Next Level from Giver Mid", 1, true) ~= nil)
+
+-- /pw why: the reason at each level
+WoW.ClearChat()
+WoW.Slash("why next level")
+check("/pw why: the quest, its giver and zone", WoW.ChatContains("[" .. (L + 1) .. "] Next Level (ID 7017, needs level "
+  .. (L + 1) .. ") from Giver Mid - in this zone"))
+check("/pw why: needs a higher level now, suggested at the next", WoW.ChatContains("Level " .. L .. ": needs a higher level")
+  and WoW.ChatContains("Level " .. (L + 1) .. ": suggested"))
+check("/pw why: Questie's own answer right now", WoW.ChatContains("Questie itself says it isn't available"))
+QuestieLoader = nil
+WoW.ClearChat()
+WoW.Slash("why 7018")
+check("/pw why by ID: red now", WoW.ChatContains("Level " .. L .. ": too hard (red) or too easy (grey)")
+  and WoW.ChatContains("Level " .. (L + 1) .. ": suggested"))
+WoW.ClearChat()
+WoW.Slash("why no such quest")
+check("/pw why: nothing found", WoW.ChatContains("No quest to pick up matches"))
+WoW.ClearChat()
+WoW.Slash("why")
+check("/pw why: usage", WoW.ChatContains("Usage: /pw why"))
 WoW.completedQuests[7017], WoW.completedQuests[7018], WoW.completedQuests[7019] = true, true, true
 S.xp, S.xpMax = nil, nil
 

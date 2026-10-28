@@ -55,6 +55,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 | `/pw flights` | List the flight points Pathwise knows for this character (talk to a flight master to update them) |
 | `/pw hearth on\|off` | Suggest setting your hearthstone in the zone you're questing in |
 | `/pw pickups on\|off` | Suggest quests to pick up nearby (needs QuestieDB) |
+| `/pw why <quest name or ID>` | Why the guide does or doesn't suggest picking up a quest, now and at your next two levels (needs QuestieDB) |
 | `/pw units meters\|yards` | Show distances in meters (default) or yards |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |
