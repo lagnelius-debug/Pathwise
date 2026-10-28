@@ -2,6 +2,7 @@ local addonName, Pathwise = ...
 
 -- Highlights the recommended quest reward: a green border around the reward
 -- button and a small label ("Best upgrade" / "Best to sell") in its corner.
+-- Rewards that sell for exactly the same are all highlighted ("Same value").
 --
 -- The reward buttons' names differ between client versions, so they are
 -- looked up at runtime: QuestInfoRewardsFrame.RewardButtons (QuestInfo
@@ -13,7 +14,7 @@ local Platform = Pathwise.Platform
 
 local QuestRewardUI = Pathwise:NewModule("QuestRewardUI")
 
-local highlight
+local highlights = {} -- one per highlighted reward button
 
 local function FindChoiceButton(index)
   local container = QuestInfoRewardsFrame
@@ -35,7 +36,7 @@ end
 
 local function CreateHighlight()
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
-  highlight = CreateFrame("Frame", nil, UIParent, template)
+  local highlight = CreateFrame("Frame", nil, UIParent, template)
   if highlight.SetBackdrop then
     highlight:SetBackdrop({
       edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -57,39 +58,43 @@ local function CreateHighlight()
   highlight.label = label
 
   highlight:Hide()
+  return highlight
 end
 
 local function Clear()
-  if highlight then
+  for _, highlight in ipairs(highlights) do
     highlight:Hide()
     highlight:SetParent(UIParent)
   end
 end
 
 function QuestRewardUI:Apply(recommendation)
-  local button = FindChoiceButton(recommendation.index)
-  if not button then
-    self:Debugf("Reward button %d not found; no highlight.", recommendation.index)
-    Clear()
-    return
-  end
-  if not highlight then
-    CreateHighlight()
-  end
-  -- Parented to the button so it hides and moves with the quest frame.
-  highlight:SetParent(button)
-  highlight:SetFrameLevel(button:GetFrameLevel() + 5)
-  highlight:ClearAllPoints()
-  highlight:SetPoint("TOPLEFT", button, "TOPLEFT", -3, 3)
-  highlight:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -3)
   local label = L.QUEST_LABEL_UPGRADE
-  if recommendation.reason == "SELL" then
+  if recommendation.ties then
+    label = L.QUEST_LABEL_SAME
+  elseif recommendation.reason == "SELL" then
     label = L.QUEST_LABEL_SELL
   elseif recommendation.reason == "UPGRADE_LATER" then
     label = recommendation.compare.reason == "TRAIN" and L.QUEST_LABEL_TRAIN or L.QUEST_LABEL_LATER
   end
-  highlight.label:SetText(label)
-  highlight:Show()
+  Clear()
+  for slot, index in ipairs(recommendation.ties or { recommendation.index }) do
+    local button = FindChoiceButton(index)
+    if button then
+      local highlight = highlights[slot] or CreateHighlight()
+      highlights[slot] = highlight
+      -- Parented to the button so it hides and moves with the quest frame.
+      highlight:SetParent(button)
+      highlight:SetFrameLevel(button:GetFrameLevel() + 5)
+      highlight:ClearAllPoints()
+      highlight:SetPoint("TOPLEFT", button, "TOPLEFT", -3, 3)
+      highlight:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -3)
+      highlight.label:SetText(label)
+      highlight:Show()
+    else
+      self:Debugf("Reward button %d not found; no highlight.", index)
+    end
+  end
 end
 
 function QuestRewardUI:OnRecommended(_, recommendation)

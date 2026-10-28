@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.27.0
+
+- Quest rewards that sell for exactly the same (and no upgrade among
+  them) are now all highlighted, labelled "Same value", and chat says to
+  take whichever you like. Before, only the first of them got "Best to
+  sell".
+
 ## 0.26.1
 
 - Dungeon mode: the To-do title is the dungeon's name under

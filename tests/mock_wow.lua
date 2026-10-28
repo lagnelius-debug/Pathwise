@@ -450,6 +450,8 @@ WoW.items = {
               stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.5 } },
   [9016] = { name = "Thistlewood Blade", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 7,
               stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.6 } },
+  [9017] = { name = "Tough Jerky", equipLoc = "", classID = 0, subclassID = 0, sell = 6, stats = {} },
+  [9018] = { name = "Refreshing Spring Water", equipLoc = "", classID = 0, subclassID = 0, sell = 6, stats = {} },
   [9011] = { name = "Sharp Dagger", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 15,
              stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 3, ITEM_MOD_AGILITY_SHORT = 1 } },
 }

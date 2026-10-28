@@ -27,13 +27,15 @@ local waits = 0
 -- Pure function. candidates: { { index, compare, sellPrice, count } } where
 -- compare is a GearScore:Compare result or nil. Returns nil or
 --   { index, reason = "UPGRADE" | "UPGRADE_LATER" | "SELL", compare, value,
---     passedOver }
+--     passedOver, ties }
 -- Upgrades usable now beat big upgrades that need a level or a weapon/armor
 -- skill first, which beat the highest vendor value, which beats small
 -- later upgrades. passedOver: the small later upgrade the sell pick won
--- over (its candidate), if any.
+-- over (its candidate), if any. ties: when several rewards sell for
+-- exactly the most, the indices of all of them (it doesn't matter which).
 function QuestRewards.Pick(candidates)
   local best = {}
+  local sellValues = {} -- { index, value } of the rewards picked by sell value
   for _, candidate in ipairs(candidates) do
     local compare = candidate.compare
     local tier, value
@@ -47,6 +49,9 @@ function QuestRewards.Pick(candidates)
       tier = "SELL"
       value = candidate.sellPrice * (candidate.count or 1)
     end
+    if tier == "SELL" then
+      sellValues[#sellValues + 1] = { candidate.index, value }
+    end
     if tier and (not best[tier] or value > best[tier].value) then
       best[tier] = { index = candidate.index, reason = tier, compare = compare, value = value }
     end
@@ -57,7 +62,27 @@ function QuestRewards.Pick(candidates)
       best.SELL.passedOver = best.SMALL_LATER
     end
   end
-  return best.UPGRADE or best.UPGRADE_LATER or best.SELL or best.SMALL_LATER
+  local pick = best.UPGRADE or best.UPGRADE_LATER or best.SELL or best.SMALL_LATER
+  if pick and pick == best.SELL then
+    local ties = {}
+    for _, entry in ipairs(sellValues) do
+      if entry[2] == pick.value then
+        ties[#ties + 1] = entry[1]
+      end
+    end
+    if #ties > 1 then
+      pick.ties = ties
+    end
+  end
+  return pick
+end
+
+-- "[A] and [B]", "[A], [B] and [C]".
+local function JoinLinks(links)
+  if #links < 2 then
+    return links[1] or "?"
+  end
+  return table.concat(links, ", ", 1, #links - 1) .. L.QUEST_AND .. links[#links]
 end
 
 QuestRewards.FormatMoney = Pathwise.FormatMoney
@@ -78,6 +103,9 @@ local function Announce(recommendation, link)
     Pathwise:Printf(L.QUEST_BEST_UPGRADE_TRAIN, link, skill)
   elseif recommendation.reason == "UPGRADE_LATER" then
     Pathwise:Printf(L.QUEST_BEST_UPGRADE_LATER, link, compare.level)
+  elseif recommendation.ties then
+    Pathwise:Printf(L.QUEST_SAME_SELL, JoinLinks(recommendation.tieLinks or {}),
+      QuestRewards.FormatMoney(recommendation.value))
   elseif recommendation.passedOver then
     Pathwise:Printf(L.QUEST_BEST_SELL_OVER_SMALL, link, QuestRewards.FormatMoney(recommendation.value),
       recommendation.passedOver.link or "?")
@@ -123,9 +151,17 @@ function QuestRewards:Evaluate()
     Pathwise:FireCallback("QUEST_REWARD_CLEARED")
     return
   end
+  local tied = {}
+  for _, index in ipairs(recommendation.ties or {}) do
+    tied[index] = true
+  end
+  recommendation.tieLinks = recommendation.ties and {} or nil
   for _, candidate in ipairs(candidates) do
     if candidate.index == recommendation.index then
       recommendation.link = candidate.link
+    end
+    if tied[candidate.index] then
+      recommendation.tieLinks[#recommendation.tieLinks + 1] = candidate.link or "?"
     end
     if recommendation.passedOver and candidate.index == recommendation.passedOver.index then
       recommendation.passedOver.link = candidate.link

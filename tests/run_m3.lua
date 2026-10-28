@@ -63,6 +63,20 @@ pick = QuestRewards.Pick({
   { index = 2, sellPrice = 100 },
 })
 check("Pick: sell value counts stack size", pick.index == 1 and pick.reason == "SELL" and pick.value == 150)
+pick = QuestRewards.Pick({
+  { index = 1, sellPrice = 25, count = 5 },
+  { index = 2, sellPrice = 25, count = 5 },
+  { index = 3, sellPrice = 100 },
+})
+check("Pick: the same sell value: both", pick.reason == "SELL" and pick.index == 1
+  and pick.ties and table.concat(pick.ties, ",") == "1,2")
+pick = QuestRewards.Pick({
+  { index = 1, sellPrice = 50 },
+  { index = 2, sellPrice = 50 },
+  { index = 3, compare = { kind = "upgrade", newScore = 3, oldScore = 1 } },
+})
+check("Pick: an upgrade wins, no ties", pick.index == 3 and pick.ties == nil)
+check("Pick: one best: no ties", QuestRewards.Pick({ { index = 1, sellPrice = 5 }, { index = 2, sellPrice = 6 } }).ties == nil)
 check("FormatMoney", QuestRewards.FormatMoney(12345) == "1g 23s 45c" and QuestRewards.FormatMoney(120) == "1s 20c"
   and QuestRewards.FormatMoney(0) == "0c" and QuestRewards.FormatMoney(10000) == "1g")
 
@@ -97,6 +111,27 @@ TurnIn(9004, 9005)
 check("no upgrade: best to sell", WoW.ChatContains("No upgrade among the rewards. [Heavy Mace] sells for the most (1s 20c)."))
 check("sell highlight on choice 2", highlight:IsShown() and highlight._parent == QuestInfoRewardsFrame.RewardButtons[2]
   and highlight.label:GetText() == "Best to sell")
+WoW.FireEvent("QUEST_FINISHED")
+
+-- Your screenshot: Tough Jerky and Refreshing Spring Water, same value.
+TurnIn(9017, 9018)
+local shown = {}
+for _, frame in ipairs(WoW.frames) do
+  if frame.label and frame._shown and frame._parent and frame._parent.type == "choice" then
+    shown[#shown + 1] = frame
+  end
+end
+check("same value: both highlighted", #shown == 2 and shown[1]._parent ~= shown[2]._parent
+  and shown[1].label:GetText() == "Same value" and shown[2].label:GetText() == "Same value")
+check("chat: either one", WoW.ChatContains("[Tough Jerky] and [Refreshing Spring Water] sell for the same (6c)"))
+WoW.FireEvent("QUEST_FINISHED")
+check("both hidden when the window closes", not shown[1]:IsShown() and not shown[2]:IsShown())
+TurnIn(9004, 9005)
+local count = 0
+for _, frame in ipairs(WoW.frames) do
+  if frame.label and frame._shown and frame._parent and frame._parent.type == "choice" then count = count + 1 end
+end
+check("next time one best: one highlight", count == 1)
 WoW.FireEvent("QUEST_FINISHED")
 
 TurnIn(9004, 9003)
