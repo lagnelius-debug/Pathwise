@@ -40,6 +40,7 @@ local quests = {
   [7006] = { name = "Repeatable", requiredLevel = 1, questLevel = L, specialFlags = 1, startedBy = { { 9101 } } },
   [7007] = { name = "Holiday", requiredLevel = 1, questLevel = L, zoneOrSort = -22, startedBy = { { 9101 } } },
   [7008] = { name = "Too High", requiredLevel = L + 3, questLevel = L + 3, startedBy = { { 9101 } } },
+  [7017] = { name = "Next Level", requiredLevel = L + 1, questLevel = L + 1, startedBy = { { 9102 } } },
   [7009] = { name = "Grey", requiredLevel = 1, questLevel = 1, startedBy = { { 9101 } } },
   [7010] = { name = "From An Item", requiredLevel = 1, questLevel = L, startedBy = { nil, nil, { 1234 } } },
   [7011] = { name = "In The Log", requiredLevel = 1, questLevel = L, startedBy = { { 9101 } } },
@@ -117,6 +118,33 @@ check("not the zone you're in", not zoneItem.detail[1]:find("Teldrassil", 1, tru
 UpdateLog({ { header = true, title = "Teldrassil" },
   { title = "Some Quest", level = L, questID = 7999, objectives = { { text = "Thing: 0/5" } } } })
 check("with a quest to do: no zone suggestion", Item("zone:next") == nil)
+
+-- Your screenshot: nothing to do at level 6, but quests here open at 7.
+WoW.completedQuests[7017] = nil
+S.xp, S.xpMax = 300, 1000
+UpdateLog({})
+local soon = Item("level:next")
+check("quests here at the next level: says which level and which (" .. tostring(soon and Strip(soon.text)) .. ")",
+  soon ~= nil and Strip(soon.text) == "More quests here at level " .. (L + 1) .. ": [" .. (L + 1) .. "] Next Level"
+  and soon.priority == P.QUEST_ZONE and Item("zone:next") == nil)
+check("how much XP is left, and the quest with its giver", soon.detail[1] == "700 XP to level " .. (L + 1) .. "."
+  and soon.detail[2]:find("^Level " .. (L + 1) .. ": %[" .. (L + 1) .. "%] Next Level from Giver Mid %- ") ~= nil
+  and soon.subLines[1].text == "Kill mobs around you to reach level " .. (L + 1))
+check("clicking it points at the giver", soon.target and soon.target.mapID == 1438)
+check("three levels ahead: too far off to mention", not Strip(soon.text):find("Too High", 1, true)
+  and not soon.detail[3])
+WoW.completedQuests[7017] = true
+S.xp, S.xpMax = nil, nil
+
+-- Zones on your own continent first: a gnome in Dun Morogh hears about
+-- Elwynn Forest, not Teldrassil.
+local QuestAdvisor = Pathwise:GetModule("QuestAdvisor")
+local dwarf = QuestAdvisor.NextZoneItem({}, 6, "Alliance", "Dun Morogh", 0)
+check("same continent first (" .. tostring(dwarf and Strip(dwarf.text)) .. ")",
+  Strip(dwarf.text) == "No quests left nearby: try Elwynn Forest (1-10)"
+  and dwarf.detail[1] == "Zones for your level: Elwynn Forest (1-10), Teldrassil (1-10).")
+local elf = QuestAdvisor.NextZoneItem({}, 12, "Alliance", "Teldrassil", 1)
+check("and on Kalimdor: Darkshore first", Strip(elf.text) == "No quests left nearby: try Darkshore (10-20)")
 
 ---------------------------------------------------------------------------
 section("Pickups: on/off")

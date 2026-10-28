@@ -48,6 +48,10 @@ QuestAdvisor.MAX_PICKUPS = 4
 
 -- "Next zone" suggestion: at most this many zones listed.
 local MAX_ZONES = 3
+-- With nothing to do: quests in this zone up to this many levels ahead are
+-- mentioned (at most MAX_UPCOMING of them).
+QuestAdvisor.UPCOMING_LEVELS = 2
+QuestAdvisor.MAX_UPCOMING = 4
 
 local DIFFICULTY_COLORS = {
   RED = "ff2020",
@@ -790,6 +794,18 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
   return items
 end
 
+-- True when no quest step is worth walking to (nothing to do, turn in or
+-- pick up).
+local function NothingToDo(items)
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  for _, item in ipairs(items) do
+    if item.priority >= P.QUEST_ELSEWHERE and (item.kind == "do" or item.kind == "turnIn" or item.kind == "pickup") then
+      return false
+    end
+  end
+  return true
+end
+
 function QuestAdvisor:Update()
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
   local inside = DungeonGuide:GetInside()
@@ -847,7 +863,27 @@ function QuestAdvisor:Update()
       end
     end
     items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, planned)
-    local zoneItem = pickups and QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone)
+    -- Nothing to do: quests here a level or two from now, else other zones.
+    local zoneItem
+    if pickups and NothingToDo(items) then
+      local upcoming = QuestieData:GetUpcoming(level, level + QuestAdvisor.UPCOMING_LEVELS, function(atLevel)
+        return PickupContext(quests, atLevel, Platform.GetQuestGreenRange(atLevel))
+      end, QuestAdvisor.MAX_UPCOMING * 4)
+      local Travel = Pathwise:GetModule("Travel")
+      local here = {}
+      for _, quest in ipairs(upcoming or {}) do
+        if mapID and Travel.ZoneGroup(quest.target.mapID) == Travel.ZoneGroup(mapID)
+          and #here < QuestAdvisor.MAX_UPCOMING then
+          here[#here + 1] = quest
+        end
+      end
+      local xp, xpMax = Platform.GetXP()
+      zoneItem = QuestAdvisor.UpcomingItem(items, here, level, xp, xpMax)
+      if not zoneItem then
+        local continent = mapID and Pathwise:GetModule("Waypoints").ToWorld(mapID, x, y)
+        zoneItem = QuestAdvisor.NextZoneItem(items, level, snapshot.faction, zone.zone, continent)
+      end
+    end
     if zoneItem then
       items[#items + 1] = zoneItem
     end
@@ -881,21 +917,71 @@ function QuestAdvisor:Update()
   knownComplete = nowComplete
 end
 
+-- Nothing to do, but quests in this zone open up a level or two from now:
+-- a step saying so (which level, which quests, how much XP is left), or
+-- nil. upcoming: QuestieData:GetUpcoming's list, already for this zone.
+-- xp, xpMax: the player's XP in this level.
+function QuestAdvisor.UpcomingItem(items, upcoming, level, xp, xpMax)
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  if not NothingToDo(items) or not upcoming or #upcoming == 0 then
+    return nil
+  end
+  local first = upcoming[1]
+  local atLevel = 0
+  for _, quest in ipairs(upcoming) do
+    if quest.requiredLevel == first.requiredLevel then
+      atLevel = atLevel + 1
+    end
+  end
+  local name = string.format("[%d] %s", first.level, first.title)
+  local text = string.format(L.UPCOMING, first.requiredLevel, name)
+  if atLevel > 1 then
+    text = text .. string.format(L.UPCOMING_MORE, atLevel - 1)
+  end
+  local detail = {}
+  if first.requiredLevel == level + 1 and xp and xpMax and xpMax > 0 then
+    detail[1] = string.format(L.UPCOMING_XP, xpMax - xp, first.requiredLevel)
+  else
+    detail[1] = string.format(L.UPCOMING_LEVELS, first.requiredLevel - level, first.requiredLevel)
+  end
+  for _, quest in ipairs(upcoming) do
+    detail[#detail + 1] = string.format(L.UPCOMING_QUEST, quest.requiredLevel, quest.level, quest.title,
+      quest.giver or "?", Pathwise.FormatDistance(quest.distance))
+  end
+  return {
+    id = "level:next",
+    priority = P.QUEST_ZONE,
+    text = text,
+    detail = detail,
+    -- (Clicking the line points the arrow at the first one's giver.)
+    target = first.target,
+    subLines = { { text = string.format(L.UPCOMING_TASK, first.requiredLevel), level = 1, task = true } },
+  }
+end
+
 -- When there's nothing left to pick up on this continent and nothing to do
 -- from the quest log: a step suggesting zones for the player's level
 -- (Data/Classic/Zones.lua), or nil.
-function QuestAdvisor.NextZoneItem(items, level, faction, currentZone)
+-- continent: the player's (0/1, as Waypoints.ToWorld says): its zones come
+-- first - a gnome in Dun Morogh hears about Elwynn Forest, not Teldrassil.
+function QuestAdvisor.NextZoneItem(items, level, faction, currentZone, continent)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
-  for _, item in ipairs(items) do
-    if item.priority >= P.QUEST_ELSEWHERE and (item.kind == "do" or item.kind == "turnIn" or item.kind == "pickup") then
-      return nil
+  if not NothingToDo(items) then
+    return nil
+  end
+  local zones, others = {}, {}
+  for _, zone in ipairs(Pathwise.Data.Zones[faction] or {}) do
+    if zone.min <= level and level < zone.max and zone.name ~= currentZone then
+      local here = continent == nil or Pathwise.Data.ZoneContinent[zone.name] == continent
+      local list = here and zones or others
+      list[#list + 1] = string.format(L.ZONE_RANGE, zone.name, zone.min, zone.max)
     end
   end
-  local zones = {}
-  for _, zone in ipairs(Pathwise.Data.Zones[faction] or {}) do
-    if zone.min <= level and level < zone.max and zone.name ~= currentZone and #zones < MAX_ZONES then
-      zones[#zones + 1] = string.format(L.ZONE_RANGE, zone.name, zone.min, zone.max)
-    end
+  for _, zone in ipairs(others) do
+    zones[#zones + 1] = zone
+  end
+  for i = #zones, MAX_ZONES + 1, -1 do
+    zones[i] = nil
   end
   if #zones == 0 then
     return nil

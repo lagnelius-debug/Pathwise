@@ -321,7 +321,8 @@ Needs QuestieDB. A `/reload` is enough. The quest list is read a few seconds aft
 - [ ] Nearby pickups (about 300 m) come right after nearby quest work; far ones join the route with your other far steps. The arrow and the target macro go to the quest giver.
 - [ ] Taking the quest makes its pickup line disappear; turning in a quest can bring up its follow-up.
 - [ ] No quests that aren't really offered (like "The Hunter's Path" from Jocaste at low level). If one shows up anyway, talk to the giver: when the quest isn't in their list, the line disappears and stays away until your next level.
-- [ ] With nothing left to pick up on this continent and nothing to do in your log: `No quests left nearby: try Darkshore (10-20)`, with other zones for your level in the tooltip.
+- [ ] With nothing left to pick up on this continent and nothing to do in your log: `No quests left nearby: try Darkshore (10-20)`, with other zones for your level in the tooltip. Zones on your own continent come first (Elwynn Forest for a level 6 in Dun Morogh, not Teldrassil).
+- [ ] Nothing to do, but quests in this zone open up within 2 levels: `More quests here at level 7: [7] ...` instead, with the XP left to that level and the quests and their givers in the tooltip, and `Kill mobs around you to reach level 7` under it.
 - [ ] `/pw pickups off` hides pickups and the zone suggestion; `/pw pickups on` brings them back.
 
 ## In-game test checklist (talent highlight)

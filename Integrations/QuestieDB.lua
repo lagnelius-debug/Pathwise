@@ -1019,6 +1019,62 @@ function QuestieData:WouldSuggest(questID, title, ctx)
   return false
 end
 
+-- The nearest giver spot of a quest from the player, or nil: point,
+-- distance.
+local function NearestGiver(candidate, mapID, x, y)
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local ok, points = pcall(GiverPoints, candidate)
+  local best, bestDistance
+  for _, point in ipairs(ok and points or {}) do
+    local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
+    if distance and (not bestDistance or distance < bestDistance) then
+      best, bestDistance = point, distance
+    end
+  end
+  return best, bestDistance
+end
+
+-- Quests the player can't take yet but could a few levels from now (the
+-- same rules as GetPickups at that level): { questID, title, level,
+-- requiredLevel, target, giver, distance }, lowest required level first,
+-- then nearest. nil while the quest list isn't scanned. ctxFor(level): the
+-- pickup context at that level.
+function QuestieData:GetUpcoming(fromLevel, toLevel, ctxFor, limit)
+  if not self:PickupsReady() then
+    return nil
+  end
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  if not mapID then
+    return {}
+  end
+  local contexts, found = {}, {}
+  for _, candidate in ipairs(pickupCandidates) do
+    local required = candidate.requiredLevel
+    if required > fromLevel and required <= toLevel then
+      contexts[required] = contexts[required] or ctxFor(required)
+      local ok, eligible = pcall(Eligible, candidate, contexts[required])
+      if ok and eligible then
+        local best, distance = NearestGiver(candidate, mapID, x, y)
+        if best then
+          found[#found + 1] = { questID = candidate.id, title = candidate.name, requiredLevel = required,
+            level = candidate.level == -1 and required or candidate.level,
+            target = best, giver = best.giver, distance = distance }
+        end
+      end
+    end
+  end
+  table.sort(found, function(a, b)
+    if a.requiredLevel ~= b.requiredLevel then
+      return a.requiredLevel < b.requiredLevel
+    end
+    return a.distance < b.distance
+  end)
+  for i = #found, limit + 1, -1 do
+    found[i] = nil
+  end
+  return found
+end
+
 function QuestieData:GetPickups(ctx, limit)
   if not self:PickupsReady() then
     return nil

@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.0
+
+- **Out of quests because of your level**: when there's nothing to do but
+  quests in this zone open up within 2 levels, the To-do list says so:
+  `More quests here at level 7: [7] Tools for Steelgrill +2`, with "Kill
+  mobs around you to reach level 7" underneath and, in the tooltip, the XP
+  left to that level and each quest with its giver and distance. Clicking
+  it points the arrow at the first giver. (Before, the guide just said no
+  quests were left and sent you to another zone.)
+- The zone tip suggests zones on your own continent first: a level 6 in
+  Dun Morogh hears about Elwynn Forest, not Teldrassil.
+
 ## 0.27.5
 
 - Target button and macro: a mob name inside another one shares a line.

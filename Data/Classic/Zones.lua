@@ -5,6 +5,21 @@ local addonName, Pathwise = ...
 -- quests are left nearby (Core/QuestAdvisor.lua). Contested zones are in
 -- both lists.
 
+-- The continent of each zone (as the world map positions say: 0 Eastern
+-- Kingdoms, 1 Kalimdor), so zones on the player's continent come first.
+Pathwise.Data.ZoneContinent = {
+  ["Teldrassil"] = 1, ["Darkshore"] = 1, ["Stonetalon Mountains"] = 1, ["Ashenvale"] = 1,
+  ["Thousand Needles"] = 1, ["Desolace"] = 1, ["Dustwallow Marsh"] = 1, ["Feralas"] = 1, ["Tanaris"] = 1,
+  ["Azshara"] = 1, ["Un'Goro Crater"] = 1, ["Felwood"] = 1, ["Winterspring"] = 1, ["Silithus"] = 1,
+  ["Durotar"] = 1, ["Mulgore"] = 1, ["The Barrens"] = 1,
+  ["Elwynn Forest"] = 0, ["Dun Morogh"] = 0, ["Westfall"] = 0, ["Loch Modan"] = 0,
+  ["Redridge Mountains"] = 0, ["Duskwood"] = 0, ["Wetlands"] = 0, ["Hillsbrad Foothills"] = 0,
+  ["Arathi Highlands"] = 0, ["Stranglethorn Vale"] = 0, ["Badlands"] = 0, ["Swamp of Sorrows"] = 0,
+  ["The Hinterlands"] = 0, ["Searing Gorge"] = 0, ["Blasted Lands"] = 0, ["Burning Steppes"] = 0,
+  ["Western Plaguelands"] = 0, ["Eastern Plaguelands"] = 0, ["Tirisfal Glades"] = 0,
+  ["Silverpine Forest"] = 0,
+}
+
 Pathwise.Data.Zones = {
   Alliance = {
     { name = "Teldrassil", min = 1, max = 10 },
