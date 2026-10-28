@@ -2,7 +2,7 @@
 ## Title: Pathwise
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
-## Version: 0.25.0
+## Version: 0.25.1
 ## OptionalDeps: QuestieDB
 ## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB

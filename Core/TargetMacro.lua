@@ -45,8 +45,13 @@ function TargetMacro.Ordered(names)
 end
 
 -- The player targeted something: one of the step's mobs moves the turn on
--- to the next kind.
-function TargetMacro:OnTargetChanged()
+-- to the next kind. (Looked at right after: the macro's /targetexact lines
+-- change the target several times in one press, and the macro isn't
+-- edited while it runs.)
+local checkPending = false
+
+local function CheckTarget()
+  checkPending = false
   local target = Pathwise:GetModule("Waypoints"):GetTarget()
   local names = target and target.names
   local name = Platform.GetTargetNPCName()
@@ -58,11 +63,18 @@ function TargetMacro:OnTargetChanged()
       local nextName = names[i % #names + 1]
       if nextName ~= preferred then
         preferred = nextName
-        self:Update()
+        TargetMacro:Update()
         Pathwise:FireCallback("TARGET_ORDER_CHANGED", preferred)
       end
       return
     end
+  end
+end
+
+function TargetMacro:OnTargetChanged()
+  if not checkPending then
+    checkPending = true
+    Platform.After(0, CheckTarget)
   end
 end
 

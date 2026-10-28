@@ -125,26 +125,37 @@ Waypoints:SetManual({ mapID = 1438, x = 0.6, y = 0.4, label = "Small Crag Boar +
   names = { "Small Crag Boar", "Rockjaw Trogg", "Frostmane Troll Whelp" } })
 check("first: the list's own order", GoesFor(button:GetAttribute("macrotext")) == "Small Crag Boar"
   and GoesFor(MacroBody()) == "Small Crag Boar" and button.label:GetText() == "Target: Small Crag Boar +2")
+-- One press of the macro changes the target once per /targetexact line
+-- that finds something: only where it ends up counts, after the press.
+S.targetName = "Frostmane Troll Whelp"
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
 S.targetName = "Small Crag Boar"
 WoW.FireEvent("PLAYER_TARGET_CHANGED")
+check("not changed while the macro runs", GoesFor(MacroBody()) == "Small Crag Boar")
+WoW.RunTimers()
 check("a boar targeted: the next press goes for a trogg (" .. tostring(GoesFor(MacroBody())) .. ")",
   GoesFor(button:GetAttribute("macrotext")) == "Rockjaw Trogg" and GoesFor(MacroBody()) == "Rockjaw Trogg"
   and button.label:GetText() == "Target: Rockjaw Trogg +2")
 check("the others stay as fallbacks", select(2, MacroBody():gsub("/targetexact", "")) == 3)
 S.targetName = "Rockjaw Trogg"
 WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
 check("a trogg: then a whelp", GoesFor(MacroBody()) == "Frostmane Troll Whelp")
 S.targetName = "Frostmane Troll Whelp"
 WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
 check("a whelp: back to the boars", GoesFor(MacroBody()) == "Small Crag Boar")
 S.targetName = "Some Other Mob"
 WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
 S.targetName = nil
 WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
 check("another mob, or no target: unchanged", GoesFor(MacroBody()) == "Small Crag Boar")
 S.targetName = "Small Crag Boar"
 S.inCombat = true
 WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
 check("in combat: the macro and button wait", GoesFor(MacroBody()) == "Small Crag Boar"
   and GoesFor(button:GetAttribute("macrotext")) == "Small Crag Boar")
 S.inCombat = false

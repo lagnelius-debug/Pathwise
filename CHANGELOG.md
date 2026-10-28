@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.25.1
+
+Fixes from a check of the new features:
+
+- Target macro: one press changes the target once for each of its
+  `/targetexact` lines that finds a mob. Pathwise now looks at where the
+  target ends up after the press, instead of rewriting the macro (and the
+  target button) for every in-between target while the macro is running.
+- "On the way" lines are added to a copy of a step's lines, so they can
+  never pile up on a list that's kept between updates.
+
 ## 0.25.0
 
 - A turn-in close by now waits while there's quest work close by too

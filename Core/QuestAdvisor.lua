@@ -522,10 +522,15 @@ function QuestAdvisor.AddOnTheWay(items, location)
           end
         end
         if #hints > 0 then
-          item.subLines = item.subLines or {}
-          for _, hint in ipairs(hints) do
-            item.subLines[#item.subLines + 1] = { text = hint, level = 1, onTheWay = true }
+          -- (A copy: a step's lines may be a table kept elsewhere.)
+          local lines = {}
+          for _, line in ipairs(item.subLines or {}) do
+            lines[#lines + 1] = line
           end
+          for _, hint in ipairs(hints) do
+            lines[#lines + 1] = { text = hint, level = 1, onTheWay = true }
+          end
+          item.subLines = lines
         end
       end
     end
