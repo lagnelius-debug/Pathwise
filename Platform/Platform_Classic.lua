@@ -794,6 +794,28 @@ function Platform.GetNumQuestChoices()
   return GetNumQuestChoices and GetNumQuestChoices() or 0
 end
 
+-- Items the quest reward window always gives (besides a choice).
+function Platform.GetNumQuestRewards()
+  return GetNumQuestRewards and GetNumQuestRewards() or 0
+end
+
+-- Free slots in the backpack and bags (general bags only: a quiver or a
+-- soul bag can't take a reward), or nil when the client can't tell.
+function Platform.GetFreeBagSlots()
+  local GetFree = (C_Container and C_Container.GetContainerNumFreeSlots) or GetContainerNumFreeSlots
+  if not GetFree then
+    return nil
+  end
+  local free = 0
+  for bag = 0, 4 do
+    local slots, bagType = GetFree(bag)
+    if slots and (bagType == nil or bagType == 0) then
+      free = free + slots
+    end
+  end
+  return free
+end
+
 function Platform.GetQuestReward(choice)
   if GetQuestReward then
     GetQuestReward(choice)

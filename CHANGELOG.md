@@ -3,6 +3,20 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.22.1
+
+Fixes from a check of auto turn-in:
+
+- Full bags: the reward is no longer "taken" when it can't fit (it failed
+  and the window stayed open, and every visit to the NPC opened the quest
+  again, so its vendor or other options were out of reach). Chat says to
+  make room and take it yourself; the quest is opened from the list again
+  once your bags change.
+- Quests without objectives (escorts, "Report to ...") are only opened
+  from the giver's list when the giver marks them complete. An unfinished
+  escort could be opened and leave you stuck in its "not done yet"
+  window.
+
 ## 0.22.0
 
 - **Auto turn-in**: talking to the NPC of a finished quest, Pathwise opens

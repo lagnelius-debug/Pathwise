@@ -34,13 +34,14 @@ local function TurnInActive()
   return Pathwise.db.autoTurnIn and not Platform.IsShiftKeyDown()
 end
 
--- The quests in the log, by ID and by title: [key] = true when finished
--- (complete, or nothing to do like "Report to ..."), false otherwise.
+-- The quests in the log, by ID and by title: [key] = true when the log
+-- marks it complete, false otherwise. (A quest without objectives - "Report
+-- to ...", but also an escort - isn't counted as finished here: the
+-- giver's list or the game's "can be completed" decides.)
 local function LogQuests()
   local byID, byTitle = {}, {}
   for _, quest in ipairs(Platform.GetQuestLog()) do
     local finished = quest.complete == 1 or quest.complete == true
-      or (not quest.failed and #(quest.objectives or {}) == 0)
     if quest.questID then
       byID[quest.questID] = finished
     end
@@ -62,6 +63,9 @@ end
 -- The quest being turned in: set when its progress window is completed,
 -- so its reward window may be finished too.
 local turningIn
+-- Quests whose reward didn't fit in the bags: not opened from the list
+-- again until the bags change (so the NPC's other options stay reachable).
+local bagsFull = {}
 
 -- Gossip or greeting list: open the first finished quest to turn in.
 -- Returns true when one was opened.
@@ -76,7 +80,8 @@ local function OpenTurnIn(event)
     local logged = InLog(byID, byTitle, entry.questID, entry.title)
     -- Finished by the giver's word (the list's "complete"), else the log's.
     local finished = logged ~= nil and (entry.complete == true or (entry.complete == nil and logged))
-    if finished and not (opened[key] and now - opened[key] < REOPEN_SECONDS) then
+    if finished and not bagsFull[entry.questID or entry.title or ""]
+      and not (opened[key] and now - opened[key] < REOPEN_SECONDS) then
       opened[key] = now
       Platform.SelectActiveQuest(event, entry)
       return true
@@ -145,8 +150,18 @@ function AutoAccept:OnQuestProgress()
   end
 end
 
+-- Whether the bags have room for the reward items (fixed ones, plus the
+-- only choice). Unknown counts as room.
+local function RoomForRewards(choices)
+  local free = Platform.GetFreeBagSlots()
+  local needed = Platform.GetNumQuestRewards() + (choices == 1 and 1 or 0)
+  return free == nil or needed <= free
+end
+
 -- The reward window: take the reward when there's nothing to choose.
 -- (Also for a quest that skips the progress window: finished in the log.)
+-- With full bags it's left to the player: taking it would fail, and every
+-- visit to the NPC would open the quest again.
 function AutoAccept:OnQuestComplete()
   if not TurnInActive() then
     turningIn = nil
@@ -161,13 +176,27 @@ function AutoAccept:OnQuestComplete()
     or InLog(byID, byTitle, questID, title) ~= nil
   turningIn = nil
   local choices = Platform.GetNumQuestChoices()
-  if ours and choices <= 1 then
+  if ours and choices <= 1 and not RoomForRewards(choices) then
+    Pathwise:Print(L.AUTO_TURN_IN_BAGS_FULL)
+    bagsFull[questID or title or ""] = true
+  elseif ours and choices <= 1 then
     Platform.GetQuestReward(choices)
     if not Pathwise.db.autoTurnInHinted and Pathwise.db.chatMessages then
       Pathwise.db.autoTurnInHinted = true
       Pathwise:Printf(L.AUTO_TURN_IN_HINT, title or "?")
     end
   end
+end
+
+-- Bags changed: the rewards may fit now.
+function AutoAccept:OnCharacterUpdated(_, _, section)
+  if section == "bags" then
+    bagsFull = {}
+  end
+end
+
+function AutoAccept:OnInitialize()
+  self:RegisterCallback("CHARACTER_UPDATED", "OnCharacterUpdated")
 end
 
 function AutoAccept:OnEnable()

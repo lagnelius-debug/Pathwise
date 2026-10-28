@@ -186,12 +186,46 @@ WoW.FireEvent("QUEST_PROGRESS")
 WoW.FireEvent("QUEST_COMPLETE")
 check("switched off: nothing", completed == 1 and #rewards == 2)
 Pathwise.db.autoTurnIn = true
--- A breadcrumb ("Report to ...") has no objectives: finished in the log.
-WoW.questLog = { { title = "Report In", level = L, questID = 8103, objectives = {} } }
-C_GossipInfo.GetActiveQuests = function() return { { title = "Report In", questID = 8103 } } end
+-- A breadcrumb ("Report to ...") has no objectives: the giver's list says
+-- it's complete. An escort has none either, but isn't complete yet.
+WoW.questLog = { { title = "Report In", level = L, questID = 8103, objectives = {} },
+  { title = "Escort Me", level = L, questID = 8104, objectives = {} } }
+C_GossipInfo.GetActiveQuests = function()
+  return { { title = "Escort Me", questID = 8104, isComplete = false }, { title = "Report In", questID = 8103, isComplete = true } }
+end
 WoW.now = WoW.now + 10
 WoW.FireEvent("GOSSIP_SHOW")
 check("a quest with nothing to do (Report to ...) is turned in too", selectedActive[#selectedActive] == 8103)
+C_GossipInfo.GetActiveQuests = function() return { { title = "Escort Me", questID = 8104 } } end
+local before = #selectedActive
+WoW.now = WoW.now + 10
+WoW.FireEvent("GOSSIP_SHOW")
+check("an escort not done yet (no objectives, no word from the giver) isn't opened", #selectedActive == before)
+
+-- Full bags: the reward is left to the player, and the quest isn't opened
+-- again (the NPC's other options stay reachable) until the bags change.
+WoW.questLog = { { title = "All Done", level = L, questID = 8100, complete = 1, objectives = {} } }
+C_GossipInfo.GetActiveQuests = function() return { { title = "All Done", questID = 8100, isComplete = true } } end
+C_Container = { GetContainerNumFreeSlots = function() return 0, 0 end }
+GetNumQuestRewards = function() return 1 end
+detail = { id = 8100, title = "All Done" }
+WoW.ClearChat()
+local taken = #rewards
+WoW.FireEvent("QUEST_COMPLETE")
+check("bags full: the reward isn't taken, and chat says why", #rewards == taken and WoW.ChatContains("Your bags are full"))
+before = #selectedActive
+WoW.now = WoW.now + 10
+WoW.FireEvent("GOSSIP_SHOW")
+check("bags full: not opened again from the list", #selectedActive == before)
+C_Container.GetContainerNumFreeSlots = function(bag) return bag == 0 and 4 or 0, 0 end
+WoW.FireEvent("BAG_UPDATE_DELAYED")
+WoW.RunTimers()
+WoW.now = WoW.now + 10
+WoW.FireEvent("GOSSIP_SHOW")
+check("room again: opened again", selectedActive[#selectedActive] == 8100)
+WoW.FireEvent("QUEST_COMPLETE")
+check("and the reward taken", #rewards == taken + 1)
+C_Container, GetNumQuestRewards = nil, nil
 C_GossipInfo, WoW.questLog = nil, {}
 IsQuestCompletable, GetQuestMoneyToGet, CompleteQuest, GetNumQuestChoices, GetQuestReward = nil, nil, nil, nil, nil
 
