@@ -31,6 +31,11 @@ local auto   -- target of the top Next Steps item, or nil
 local autoItemId     -- id of the Next Steps item auto points at
 local lastItems = {} -- latest Next Steps items
 local skippedSteps = {} -- [Next Steps item id] = time the player skipped it
+-- The mob the player targeted, { itemId, name }: the arrow points at the
+-- nearest spawn of that mob instead (addons can't see where the mob itself
+-- is), while the arrow follows the same step.
+local focus
+local focused -- the auto target moved to that spawn, or nil
 
 ---------------------------------------------------------------------------
 -- Math (pure apart from the map rectangles)
@@ -142,7 +147,55 @@ function Waypoints:GetTarget()
     return manual, "manual"
   end
   if auto and Pathwise.db.arrowAuto then
-    return auto, "auto"
+    return focused or auto, "auto"
+  end
+end
+
+-- Whether the arrow and the target macro would show the same for both.
+local function Same(a, b)
+  local function Names(target)
+    return target and target.names and table.concat(target.names, ",") or ""
+  end
+  -- Names matter too: the target macro follows them (e.g. a combined step
+  -- loses a quest's mobs while the arrow stays on the same spot).
+  return (a and a.label) == (b and b.label)
+    and not (a and b and (a.mapID ~= b.mapID or a.x ~= b.x or a.y ~= b.y))
+    and Names(a) == Names(b)
+end
+
+-- Works out `focused`: the nearest spawn of the focused mob (unvisited
+-- ones first), as a copy of the auto target.
+local function FocusTarget()
+  focused = nil
+  if not (focus and auto and auto.spawn and auto.spawnPoints and focus.itemId == autoItemId) then
+    return
+  end
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  if not mapID then
+    return
+  end
+  local best, bestDistance, fallback, fallbackDistance
+  for _, point in ipairs(auto.spawnPoints) do
+    if point.npcName == focus.name then
+      local distance = Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+      if distance then
+        if not fallbackDistance or distance < fallbackDistance then
+          fallback, fallbackDistance = point, distance
+        end
+        if (not bestDistance or distance < bestDistance) and not Waypoints:IsVisited(point) then
+          best, bestDistance = point, distance
+        end
+      end
+    end
+  end
+  local point = best or fallback
+  if point then
+    focused = {}
+    for key, value in pairs(auto) do
+      focused[key] = value
+    end
+    focused.mapID, focused.x, focused.y = point.mapID, point.x, point.y
+    focused.label = point.label or auto.label
   end
 end
 
@@ -246,18 +299,45 @@ function Waypoints:RefreshAuto()
       break
     end
   end
-  local newAuto = chosen and chosen.target
-  local function Names(target)
-    return target and target.names and table.concat(target.names, ",") or ""
+  local before = focused or auto
+  auto, autoItemId = chosen and chosen.target, chosen and chosen.id
+  if focus and focus.itemId ~= autoItemId then
+    focus = nil -- another step: its own nearest spawn
   end
-  -- Names matter too: the target macro follows them (e.g. a combined step
-  -- loses a quest's mobs while the arrow stays on the same spot).
-  local changed = (newAuto and newAuto.label) ~= (auto and auto.label)
-    or (newAuto and auto and (newAuto.x ~= auto.x or newAuto.y ~= auto.y))
-    or Names(newAuto) ~= Names(auto)
-  auto, autoItemId = newAuto, chosen and chosen.id
-  if changed and not manual then
+  FocusTarget()
+  if not Same(before, focused or auto) and not manual then
     Changed()
+  end
+end
+
+-- The player targeted something (looked at right after: the target macro
+-- changes the target once per line in one press). A living mob of the step
+-- the arrow follows moves the arrow to that mob's nearest spawn.
+local targetCheckPending = false
+
+local function CheckTarget()
+  targetCheckPending = false
+  local name, dead = Platform.GetTargetNPCName()
+  if not name or dead or not (auto and auto.spawn and auto.names) then
+    return
+  end
+  for _, candidate in ipairs(auto.names) do
+    if candidate == name then
+      local before = focused or auto
+      focus = { itemId = autoItemId, name = name }
+      FocusTarget()
+      if not Same(before, focused or auto) and not manual then
+        Changed()
+      end
+      return
+    end
+  end
+end
+
+function Waypoints:OnTargetChanged()
+  if not targetCheckPending then
+    targetCheckPending = true
+    Platform.After(0, CheckTarget)
   end
 end
 
@@ -268,6 +348,10 @@ end
 
 function Waypoints:OnInitialize()
   self:RegisterCallback("NEXT_STEPS_UPDATED", "OnNextStepsUpdated")
+end
+
+function Waypoints:OnEnable()
+  self:RegisterEvent("PLAYER_TARGET_CHANGED", "OnTargetChanged")
 end
 
 ---------------------------------------------------------------------------

@@ -239,6 +239,15 @@ function QuestAdvisor.CombineNearby(items)
           target[key] = value
         end
         target.names, target.tasks = npcNames, tasks
+        -- Every member's spawns (the arrow goes to the nearest spawn of
+        -- the mob the player targets, whichever quest it's for).
+        local spawnPoints = {}
+        for _, member in ipairs(group) do
+          for _, point in ipairs(member.target.spawnPoints or {}) do
+            spawnPoints[#spawnPoints + 1] = point
+          end
+        end
+        target.spawnPoints = spawnPoints
         -- Short arrow label: where it points now, plus how many more quests.
         local more = #group == 2 and L.ARROW_MORE_QUEST or string.format(L.ARROW_MORE_QUESTS, #group - 1)
         target.label = (nearest.target.label or nearest.title) .. more

@@ -189,3 +189,75 @@ check("position saved", Pathwise.db.targetButton.point == "CENTER" and Pathwise.
 
 UpdateLog({})
 check("no quests: hidden", not button:IsShown())
+
+---------------------------------------------------------------------------
+section("Arrow: the targeted mob's nearest spawn")
+
+-- (Addons can't see where a mob is: the arrow goes to its nearest spawn.)
+local NextSteps = Pathwise:GetModule("NextSteps")
+local function Near(a, b) return a ~= nil and math.abs(a - b) < 1e-6 end
+Pathwise.db.arrowAuto = true
+S.mapID, S.mapX, S.mapY = 1438, 0.5, 0.5
+S.targetName, S.targetDead = nil, nil
+local function SpawnAt(x, y, name)
+  return { mapID = 1438, x = x, y = y, spawn = true, npcName = name, label = name }
+end
+local troggNear, troggFar = SpawnAt(0.52, 0.5, "Rockjaw Trogg"), SpawnAt(0.5, 0.7, "Rockjaw Trogg")
+local whelp = SpawnAt(0.5, 0.45, "Frostmane Troll Whelp")
+local function Step(id)
+  return { id = id or "focus:1", priority = 99, text = "Do together",
+    target = { mapID = 1438, x = 0.5, y = 0.49, label = "Small Crag Boar +2 quests", spawn = true,
+      names = { "Small Crag Boar", "Rockjaw Trogg", "Frostmane Troll Whelp" },
+      spawnPoints = { SpawnAt(0.5, 0.49, "Small Crag Boar"), troggFar, troggNear, whelp } } }
+end
+NextSteps:SetItems("focustest", { Step() })
+local function Points() local t = Waypoints:GetTarget() return t and t.x, t and t.y, t and t.label end
+local x, y = Points()
+check("first: the step's own nearest spawn", Near(x, 0.5) and Near(y, 0.49))
+
+local changes = 0
+local counter = { Count = function() changes = changes + 1 end }
+Pathwise:RegisterCallback("WAYPOINT_CHANGED", counter, "Count")
+S.targetName = "Rockjaw Trogg"
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
+local label
+x, y, label = Points()
+check("a trogg targeted: the arrow goes to the nearest trogg spawn", Near(x, 0.52) and Near(y, 0.5)
+  and label == "Rockjaw Trogg" and changes > 0)
+check("the macro keeps the step's mobs", table.concat(Waypoints:GetTarget().names, ",")
+  == "Small Crag Boar,Rockjaw Trogg,Frostmane Troll Whelp")
+
+NextSteps:SetItems("focustest", { Step() }) -- the plan made again (moving, progress)
+x, y = Points()
+check("stays on the trogg when the plan is made again", Near(x, 0.52))
+
+Waypoints:Next()
+WoW.RunTimers()
+x, y = Points()
+check("Next: the next trogg spawn", Near(x, 0.5) and Near(y, 0.7))
+
+S.targetName, S.targetDead = "Frostmane Troll Whelp", true
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
+x, y = Points()
+check("a dead mob (looting): unchanged", Near(y, 0.7))
+S.targetName, S.targetDead = "Somebody Else", nil
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
+x, y = Points()
+check("a mob of no quest: unchanged", Near(y, 0.7))
+S.targetName = "Frostmane Troll Whelp"
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
+x, y = Points()
+check("a whelp: its spawn", Near(x, 0.5) and Near(y, 0.45))
+
+NextSteps:SetItems("focustest", { Step("focus:2") })
+x, y = Points()
+check("another step: back to its own nearest spawn", Near(x, 0.5) and Near(y, 0.49))
+
+S.targetName = nil
+WoW.now = WoW.now + 1000
+NextSteps:SetItems("focustest", {})
+Pathwise:UnregisterCallback("WAYPOINT_CHANGED", counter)

@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.26.0
+
+- **The arrow follows the mob you target**: targeting a mob of the step
+  the arrow follows (with the target button, the Pathwise macro, or by
+  clicking it) points the arrow at that mob's nearest spawn spot, with its
+  name as the label. The game doesn't let addons see where a mob actually
+  is, so it points at where it spawns; mobs stay close to that spot. Next
+  moves on to the next spawn of the same mob, and quest progress does too.
+  Dead mobs (looting) and mobs of no quest change nothing; the next step
+  starts from its own nearest spawn again.
+- A "Do together" step now knows the spawns of all its quests, not only
+  the nearest one's.
+
 ## 0.25.1
 
 Fixes from a check of the new features:

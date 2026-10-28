@@ -337,6 +337,7 @@ function UnitName(unit)
   if unit == "target" then return S.targetName end
   return S.name
 end
+function UnitIsDead(unit) return unit == "target" and S.targetDead == true end
 function UnitExists(unit)
   if unit == "npc" then return S.npcName ~= nil end
   if unit == "pet" then return S.pet ~= nil end
