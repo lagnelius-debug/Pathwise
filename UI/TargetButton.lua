@@ -120,8 +120,10 @@ function TargetButton:Update()
   if button:GetAttribute("macrotext") ~= body then
     button:SetAttribute("macrotext", body)
   end
-  button.mobName = names[1]
-  local label = #names > 1 and string.format(L.TARGET_BUTTON_MORE, names[1], #names - 1) or names[1]
+  -- (As the macro groups them: "Crag Boar" for the Large ones too.)
+  local groups = Pathwise:GetModule("TargetMacro").Groups(names)
+  button.mobName = groups[1].name
+  local label = #groups > 1 and string.format(L.TARGET_BUTTON_MORE, groups[1].name, #groups - 1) or groups[1].name
   button.label:SetText(string.format(L.TARGET_BUTTON_LABEL, label))
   button:Show()
 end

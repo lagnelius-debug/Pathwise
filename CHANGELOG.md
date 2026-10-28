@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.27.5
+
+- Target button and macro: a mob name inside another one shares a line.
+  "Crag Boar", "Large Crag Boar" and "Small Crag Boar" become one
+  `/target Crag Boar` line, which matches part of a name and takes the
+  nearest of any of them. Before, each had its own `/targetexact` line:
+  the most important (Large Crag Boar) always won when one was in range,
+  even with a Crag Boar right next to you, and with seven kinds of mobs
+  some names didn't fit in the macro's 255 characters at all.
+- Taking turns goes by these groups (boars, then troggs, then whelps), and
+  the button names the group: `Target: Crag Boar +3`.
+- The skull line is shorter, leaving more room for names.
+
 ## 0.27.4
 
 Fix from a check of 0.27.3:

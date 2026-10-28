@@ -18,14 +18,60 @@ local TargetMacro = Pathwise:NewModule("TargetMacro")
 TargetMacro.MACRO_NAME = "Pathwise"
 local ICON = "Ability_Hunter_SniperShot"
 local MAX_BODY = 255 -- the client's macro length limit
--- (Only on something to fight: not on a vendor or quest giver.)
-local MARK_LINE = '/run if UnitCanAttack("player","target") and not UnitIsDead("target") then SetRaidTarget("target",8) end'
+-- (Only on something to fight: not on a vendor or quest giver. Kept short:
+-- the macro holds 255 characters.)
+local MARK_LINE = '/run local t="target"if UnitCanAttack("player",t)and not UnitIsDead(t)then SetRaidTarget(t,8)end'
 
 local lastBody
 local warnedFull = false
 -- The mob name to go for first (set when the player targets one of the
 -- step's mobs: the next one in the list), or nil for the list's own order.
 local preferred
+
+-- Names (most important first) -> groups, in that order: { name, partial }.
+-- A name that another one contains ("Crag Boar" in "Large Crag Boar" and
+-- "Small Crag Boar") stands for all of them: /target (not /targetexact)
+-- matches part of a name and takes the nearest, whichever kind it is.
+-- Second result: [name] = its group.
+function TargetMacro.Groups(names)
+  local keyOf = {}
+  for _, name in ipairs(names or {}) do
+    local key = name
+    for _, other in ipairs(names) do
+      if #other < #key and name:find(other, 1, true) then
+        key = other
+      end
+    end
+    keyOf[name] = key
+  end
+  local groups, groupOf = {}, {}
+  for _, name in ipairs(names or {}) do
+    local key = keyOf[name]
+    local group = groupOf[key]
+    if not group then
+      group = { name = key, partial = false }
+      groups[#groups + 1] = group
+      groupOf[key] = group
+    end
+    if key ~= name then
+      group.partial = true
+    end
+    groupOf[name] = group
+  end
+  return groups, groupOf
+end
+
+-- The group a targeted unit belongs to (by its name), or nil.
+local function GroupOfUnit(groups, groupOf, unitName)
+  if groupOf[unitName] then
+    return groupOf[unitName]
+  end
+  for _, group in ipairs(groups) do
+    if group.partial and unitName:find(group.name, 1, true) then
+      return group
+    end
+  end
+end
 
 -- Names (most important first) -> the same names starting at the one to go
 -- for first.
@@ -56,12 +102,18 @@ local function CheckTarget()
   local target = Pathwise:GetModule("Waypoints"):GetTarget()
   local names = target and target.names
   local name = Platform.GetTargetNPCName()
-  if not names or #names < 2 or not name then
+  if not names or not name then
     return
   end
-  for i, candidate in ipairs(names) do
-    if candidate == name then
-      local nextName = names[i % #names + 1]
+  -- (In turn by group: a Crag Boar moves on past the Large Crag Boars.)
+  local groups, groupOf = TargetMacro.Groups(names)
+  local group = #groups > 1 and GroupOfUnit(groups, groupOf, name)
+  if not group then
+    return
+  end
+  for i, candidate in ipairs(groups) do
+    if candidate == group then
+      local nextName = groups[i % #groups + 1].name
       if nextName ~= preferred then
         preferred = nextName
         TargetMacro:Update()
@@ -80,18 +132,20 @@ function TargetMacro:OnTargetChanged()
 end
 
 -- Pure function: names (most important first) -> macro body. Later
--- /targetexact lines win when several match, so the most important name
--- goes last. Lines that don't fit in the macro limit are left out.
+-- target lines win when several match, so the most important name goes
+-- last. Names grouped by Groups share one /target line. Lines that don't
+-- fit in the macro limit are left out.
 function TargetMacro.BuildBody(names)
   if not names or #names == 0 then
     return "/run print(\"" .. L.MACRO_NOTHING .. "\")"
   end
   local lines = { "/cleartarget" }
   local length = #lines[1]
+  local groups = TargetMacro.Groups(names)
   local targetLines = {}
-  for i = #names, 1, -1 do
-    local line = "/targetexact " .. names[i]
-    targetLines[#targetLines + 1] = line
+  for i = #groups, 1, -1 do
+    local group = groups[i]
+    targetLines[#targetLines + 1] = (group.partial and "/target " or "/targetexact ") .. group.name
   end
   -- Keep the most important names when space runs out.
   local kept = {}

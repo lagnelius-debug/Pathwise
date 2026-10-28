@@ -116,7 +116,7 @@ end
 -- The last /targetexact line wins: the mob the next press goes for.
 local function GoesFor(body)
   local last
-  for name in body:gmatch("/targetexact ([^\n]+)") do last = name end
+  for name in body:gmatch("/target%a* ([^\n]+)") do last = name end
   return last
 end
 Pathwise.db.targetMacro = true
@@ -162,6 +162,23 @@ S.inCombat = false
 WoW.FireEvent("PLAYER_REGEN_ENABLED")
 check("after the fight: trogg next", GoesFor(MacroBody()) == "Rockjaw Trogg"
   and GoesFor(button:GetAttribute("macrotext")) == "Rockjaw Trogg")
+-- Grouped names take turns as groups: a Large Crag Boar counts as a Crag Boar.
+Waypoints:SetManual({ mapID = 1438, x = 0.6, y = 0.4, label = "Large Crag Boar", spawn = true,
+  names = { "Large Crag Boar", "Crag Boar", "Rockjaw Trogg" } })
+check("the label names the group", button.label:GetText() == "Target: Crag Boar +1" or button.label:GetText() == "Target: Rockjaw Trogg +1")
+S.targetName = "Large Crag Boar"
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
+check("a Large Crag Boar targeted: troggs next, not the other boars", GoesFor(MacroBody()) == "Rockjaw Trogg"
+  and button.label:GetText() == "Target: Rockjaw Trogg +1")
+S.targetName = "Elder Crag Boar" -- found by the partial /target Crag Boar
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
+check("any boar the partial line found counts too", GoesFor(MacroBody()) == "Rockjaw Trogg")
+S.targetName = "Rockjaw Trogg"
+WoW.FireEvent("PLAYER_TARGET_CHANGED")
+WoW.RunTimers()
+check("a trogg: back to the boars, all of them", MacroBody():find("/target Crag Boar\n/run", 1, true) ~= nil)
 Waypoints:SetManual({ mapID = 1438, x = 0.6, y = 0.4, label = "Webwood Spider", spawn = true,
   names = { "Webwood Spider", "Githyiss the Vile" } })
 check("another step: its own order", GoesFor(MacroBody()) == "Webwood Spider")
