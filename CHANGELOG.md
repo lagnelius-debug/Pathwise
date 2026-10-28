@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.27.3
+
+- Neutral mobs you kill for a quest item are "Kill" again, with the target
+  button and macro. QuestieDB marks some of them as friendly to both
+  factions, so since 0.27.1 they read "Get <item> from <mob>" and counted
+  as NPCs that stand still. Now a friendly NPC only hands out (or sells)
+  an item when it has an NPC role (vendor, gossip, ...); plain creatures
+  are always kills.
+
 ## 0.27.2
 
 Fixes from a check of the new features:

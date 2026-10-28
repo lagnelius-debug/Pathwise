@@ -274,10 +274,20 @@ local function DroppersAndSellers(itemId, npcIds)
       sellers[#sellers + 1] = npcId
     end
   end
+  -- A friendly NPC hands the item out only if it's more than a creature:
+  -- some neutral mobs you can attack (and loot) count as friendly to both
+  -- factions, but have no NPC role (npcFlags 0: no vendor, gossip, ...).
+  local function Giver(npcId)
+    if not Friendly(npcId) then
+      return false
+    end
+    local flagsOk, flags = pcall(lib.Npc.Get, npcId, "npcFlags")
+    return not (flagsOk and flags == 0)
+  end
   for _, npcId in ipairs(npcIds or {}) do
     if not seen[npcId] then
       seen[npcId] = true
-      local list = Friendly(npcId) and givers or droppers
+      local list = Giver(npcId) and givers or droppers
       list[#list + 1] = npcId
     end
   end

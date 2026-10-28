@@ -239,9 +239,10 @@ check("kill objective: creature spawns", kill.target and Near(kill.target.x, 0.4
 db.Quest[384] = { finishedBy = { { 1235 } }, objectives = { nil, nil, { { 2886, nil, 1 }, { 2894, nil, 2 } } } }
 db.Npc[1125] = { name = "Crag Boar", spawns = { [141] = { { 30, 30 } } } }
 db.Npc[1247] = { name = "Innkeeper Belm", friendlyToFaction = "A", spawns = { [141] = { { 59, 41 } } } }
-db.Npc[1464] = { name = "Yanni Stoutheart", friendlyToFaction = "A", spawns = { [141] = { { 70, 70 } } } }
+db.Npc[1464] = { name = "Yanni Stoutheart", friendlyToFaction = "A", npcFlags = 1, spawns = { [141] = { { 70, 70 } } } }
+db.Npc[1126] = { name = "Neutral Boar", friendlyToFaction = "AH", npcFlags = 0, spawns = { [141] = { { 31, 31 } } } }
 db.Npc[1465] = { name = "Horde Brewer", friendlyToFaction = "H", spawns = { [141] = { { 58, 40 } } } }
-db.Item[2886] = { name = "Crag Boar Rib", npcDrops = { 1125 } }
+db.Item[2886] = { name = "Crag Boar Rib", npcDrops = { 1125, 1126 } }
 db.Item[2894] = { name = "Rhapsody Malt", npcDrops = { 1247, 1464 }, vendors = { 1465, 1247 } }
 UpdateLog({ { header = true, title = "Teldrassil" },
   { title = "Beer Basted Boar Ribs", level = 4, questID = 384,
@@ -249,7 +250,8 @@ UpdateLog({ { header = true, title = "Teldrassil" },
 local ribs = Item(384)
 local tasks = table.concat(ribs.target.tasks or {}, " | ")
 check("the item's vendor: buy; another friendly NPC that \"drops\" it: get (" .. tasks .. ")",
-  tasks == "Kill Crag Boar for Crag Boar Rib | Buy Rhapsody Malt from Innkeeper Belm | Get Rhapsody Malt from Yanni Stoutheart")
+  tasks == "Kill Crag Boar, Neutral Boar for Crag Boar Rib | Buy Rhapsody Malt from Innkeeper Belm"
+    .. " | Get Rhapsody Malt from Yanni Stoutheart")
 check("the innkeeper, nearest, is the arrow's target (a vendor: keeps the distance)", ribs.target.npcName == "Innkeeper Belm"
   and ribs.target.vendor == true and ribs.target.label == "Rhapsody Malt (Innkeeper Belm)")
 local horde = false
@@ -261,7 +263,18 @@ db.Item[2894].vendors = nil
 db.Item[2894].npcDrops = { 1465 }
 UpdateLog(WoW.questLog)
 check("vendors unknown, a hostile NPC: still a kill", table.concat(Item(384).target.tasks, " | ")
-  == "Kill Crag Boar for Crag Boar Rib | Kill Horde Brewer for Rhapsody Malt")
+  == "Kill Crag Boar, Neutral Boar for Crag Boar Rib | Kill Horde Brewer for Rhapsody Malt")
+-- A neutral mob QuestieDB calls friendly (no NPC role): a kill, with the
+-- target button and macro.
+db.Item[2886].npcDrops = { 1126 }
+S.mapX, S.mapY = 0.31, 0.31
+UpdateLog(WoW.questLog)
+local boar = Item(384)
+check("a neutral mob (friendly to both, no NPC role): Kill, not Get", boar.target.tasks[1] == "Kill Neutral Boar for Crag Boar Rib")
+check("and the target button targets it", boar.target.npcName == "Neutral Boar" and not boar.target.vendor
+  and _G.PathwiseTargetButton:IsShown()
+  and _G.PathwiseTargetButton:GetAttribute("macrotext"):find("/targetexact Neutral Boar", 1, true) ~= nil)
+S.mapX, S.mapY = 0.58, 0.40
 
 -- Unknown quest: falls back to learned locations
 Pathwise.db.questLocations[4242] = { pickup = { mapID = 1438, x = 0.1, y = 0.2 } }
