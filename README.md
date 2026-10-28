@@ -419,6 +419,7 @@ From docs/PATHWISE_THEMES_V4.md. **Fully restart WoW** first (not just `/reload`
 - [ ] With a kill or loot quest (e.g. Webwood Venom), a target button with a crosshair icon and `Target: Webwood Spider` shows up. Clicking it targets the nearest Webwood Spider and marks it with a skull. Needs QuestieDB.
 - [ ] The button hides for turn-ins and when no quest needs a mob. Changes during combat happen right after the fight.
 - [ ] Drag the button to move it (not in combat). Its position survives `/reload`.
+- [ ] A "Do together" step with several kinds of mobs (e.g. `Target: Small Crag Boar +2`) goes through them in turn: after you target a Small Crag Boar, the label and the next click go for the next kind (Rockjaw Trogg), then the next, and back to the first. When that kind isn't around, it targets one of the others. The Pathwise macro does the same. A change made in a fight waits until the fight ends.
 - [ ] `/pw targetbutton` and the "Show target button for quest mobs" checkbox in the settings turn it off and on.
 - [ ] When the arrow points at a mob's spawn spot it shows no distance, and `Look around here` once you get there. Objects that stay put (a moonwell, a herb, an ore vein), turn-ins and your own waypoints show the distance.
 

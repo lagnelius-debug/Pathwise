@@ -911,6 +911,13 @@ function Platform.GetInteractionNPCName()
   end
 end
 
+-- Name of the player's target when it's an NPC (mobs included), or nil.
+function Platform.GetTargetNPCName()
+  if UnitExists("target") and not (UnitIsPlayer and UnitIsPlayer("target")) then
+    return UnitName("target")
+  end
+end
+
 function Platform.GetMapName(mapID)
   if C_Map and C_Map.GetMapInfo then
     local info = C_Map.GetMapInfo(mapID)

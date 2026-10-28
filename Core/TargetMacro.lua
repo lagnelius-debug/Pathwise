@@ -3,6 +3,9 @@ local addonName, Pathwise = ...
 -- Target macro: keeps a character macro named "Pathwise" up to date with
 -- /targetexact lines for the NPCs of the arrow's current step (quest mobs
 -- still needed, or the turn-in NPC), plus a skull mark on the target.
+-- With several kinds of mobs (a "do together" step), it goes through them
+-- in turn: once you've targeted one kind, the next press goes for the next
+-- kind first (the others stay as fallbacks when it isn't around).
 -- The player drags it to an action bar once (/pw macro); after that it
 -- changes by itself. Macros can't be edited in combat, so changes made in
 -- combat wait until it ends.
@@ -19,6 +22,49 @@ local MARK_LINE = '/run if UnitExists("target") and not UnitIsDead("target") the
 
 local lastBody
 local warnedFull = false
+-- The mob name to go for first (set when the player targets one of the
+-- step's mobs: the next one in the list), or nil for the list's own order.
+local preferred
+
+-- Names (most important first) -> the same names starting at the one to go
+-- for first.
+function TargetMacro.Ordered(names)
+  if not names or not preferred then
+    return names
+  end
+  for i, name in ipairs(names) do
+    if name == preferred then
+      local ordered = {}
+      for k = 0, #names - 1 do
+        ordered[#ordered + 1] = names[(i - 1 + k) % #names + 1]
+      end
+      return ordered
+    end
+  end
+  return names
+end
+
+-- The player targeted something: one of the step's mobs moves the turn on
+-- to the next kind.
+function TargetMacro:OnTargetChanged()
+  local target = Pathwise:GetModule("Waypoints"):GetTarget()
+  local names = target and target.names
+  local name = Platform.GetTargetNPCName()
+  if not names or #names < 2 or not name then
+    return
+  end
+  for i, candidate in ipairs(names) do
+    if candidate == name then
+      local nextName = names[i % #names + 1]
+      if nextName ~= preferred then
+        preferred = nextName
+        self:Update()
+        Pathwise:FireCallback("TARGET_ORDER_CHANGED", preferred)
+      end
+      return
+    end
+  end
+end
 
 -- Pure function: names (most important first) -> macro body. Later
 -- /targetexact lines win when several match, so the most important name
@@ -55,7 +101,7 @@ function TargetMacro:Update()
     return
   end
   local target = Pathwise:GetModule("Waypoints"):GetTarget()
-  local body = TargetMacro.BuildBody(target and target.names)
+  local body = TargetMacro.BuildBody(TargetMacro.Ordered(target and target.names))
   if body == lastBody then
     return
   end
@@ -85,6 +131,7 @@ function TargetMacro:OnInitialize()
 end
 
 function TargetMacro:OnEnable()
+  self:RegisterEvent("PLAYER_TARGET_CHANGED", "OnTargetChanged")
   self:Update()
 end
 

@@ -36,12 +36,13 @@ local function RestorePosition()
   end
 end
 
--- Mob names (most important first) when the arrow follows a quest mob,
--- else nil. Turn-in NPCs and object spawns (no names) get no button.
+-- Mob names (the one to go for first leading, as in the macro) when the
+-- arrow follows a quest mob, else nil. Turn-in NPCs and object spawns (no
+-- names) get no button.
 function TargetButton.GetMobNames()
   local target = Pathwise:GetModule("Waypoints"):GetTarget()
   if target and target.spawn and target.names and #target.names > 0 then
-    return target.names
+    return Pathwise:GetModule("TargetMacro").Ordered(target.names)
   end
 end
 
@@ -157,6 +158,8 @@ function TargetButton:OnInitialize()
   CreateButton()
   self:RegisterCallback("WAYPOINT_CHANGED", "OnWaypointChanged")
   self:RegisterCallback("SETTINGS_RESET", "OnSettingsReset")
+  -- (Several kinds of mobs: the label names the one the next click goes for.)
+  self:RegisterCallback("TARGET_ORDER_CHANGED", "OnWaypointChanged")
 end
 
 function TargetButton:OnEnable()

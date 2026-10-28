@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.24.0
+
+- The target button and the Pathwise macro go through the kinds of mobs
+  of a "Do together" step in turn: once you've targeted one kind (say a
+  Small Crag Boar), the next click goes for the next kind (Rockjaw Trogg),
+  and so on, back to the first. The button's label names the one it goes
+  for next. When that kind isn't around, it targets one of the others, as
+  before. A change made in a fight waits until the fight ends (the game
+  doesn't allow changing them in combat).
+
 ## 0.23.1
 
 - "On the way" hints are now only in the To-do list, under the step the

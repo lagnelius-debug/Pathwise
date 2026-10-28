@@ -334,11 +334,13 @@ function UnitAffectingCombat() return S.inCombat end
 function UnitName(unit)
   if unit == "npc" then return S.npcName end
   if unit == "pet" then return S.pet and S.pet.name end
+  if unit == "target" then return S.targetName end
   return S.name
 end
 function UnitExists(unit)
   if unit == "npc" then return S.npcName ~= nil end
   if unit == "pet" then return S.pet ~= nil end
+  if unit == "target" then return S.targetName ~= nil end
   return true
 end
 
