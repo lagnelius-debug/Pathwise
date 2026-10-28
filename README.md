@@ -140,6 +140,7 @@ Test with a fresh level 1 Night Elf Hunter.
 - [ ] Reaching a quest spawn keeps the arrow there ("You are here") until you loot or kill something for the quest. Then it moves on to the next nearest spawn. Spawns within 20 yards of where the progress happened are skipped for 5 minutes.
 - [ ] **Next >** under the arrow moves on to the next spawn. So do right-clicking the arrow, `/pw next`, and the key binding (Key Bindings → Pathwise → "Skip to next spot"). On a step that isn't a spawn, like a turn-in, or once all spawns are used up, it skips the whole step for 5 minutes and points at the next one. `/pw arrow` turns following your next step off and on.
 - [ ] In a dungeon, or for a target on another continent, the arrow says `Can't point from here`.
+- [ ] Walking to a step (e.g. a turn-in) past the mobs of another quest in your log: a softer line under the arrow's label says `On the way: Kill <mob> (<quest>)`, and the same line is under the expanded step in the To-do list. It goes away once you've walked past them or finished that quest. Needs QuestieDB.
 - [ ] The direction is correct, not mirrored or rotated by 90 degrees. Use `/pw way` with a known spot to check.
 
 ## In-game test checklist (target macro and sell price)

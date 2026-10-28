@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.23.0
+
+- **On the way**: when the way to your next step passes the mobs or objects
+  of another quest you're on, the arrow says so under its label, e.g.
+  `On the way: Kill Rockjaw Trogg (A New Threat)`, and the same line shows
+  under the step in the To-do list. It counts spawns within about 50 yards
+  of the straight line to the target, names at most two quests, and is
+  worked out again as you move. Not for routes that go around something
+  (much longer than the straight line, like a boat), quests for later, or
+  targets right next to you. Needs QuestieDB.
+
 ## 0.22.1
 
 Fixes from a check of auto turn-in:

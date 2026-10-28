@@ -278,6 +278,8 @@ L.TASK_LOOT = "Kill %s for %s"
 L.TASK_COLLECT = "Collect %s"
 L.TASK_USE = "Use %s"
 L.TASK_TURN_IN = "Turn in at %s"
+-- Another quest's mobs or objects along the way: task, quest title.
+L.ON_THE_WAY = "On the way: %s (%s)"
 L.QA_LATER = "Later (level %d): %s"
 L.QA_GROUP = "Group quest: %s (%d players)"
 L.QA_GREY = "Low XP: %s - consider abandoning"

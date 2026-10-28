@@ -251,6 +251,7 @@ function QuestAdvisor.CombineNearby(items)
           kind = "do",
           distance = nearest.distance,
           order = nearest.order,
+          members = group,
         }
       end
     end
@@ -416,6 +417,104 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
   end)
   QuestAdvisor.RouteFar(items, location, anyZone)
   return items
+end
+
+-- "On the way" hints: spawns of another quest's mobs or objects within this
+-- many yards of the straight line to a step's target, e.g. "On the way:
+-- Kill Rockjaw Trogg (A New Threat)" while walking to a turn-in.
+QuestAdvisor.ON_THE_WAY_YARDS = 50
+-- Only for walks of this length (shorter: it's all "here" anyway; longer:
+-- the route rarely is a straight line).
+local ON_THE_WAY_MIN_YARDS = 60
+local ON_THE_WAY_MAX_YARDS = 1200
+-- A route this much longer than the straight line goes around something
+-- (a mountain, a boat): the line says nothing about the way.
+local ON_THE_WAY_DETOUR = 1.5
+local MAX_ON_THE_WAY = 2
+
+-- The quests of an item: itself, or the members of a "do together" step.
+local function Members(item)
+  return item.members or { item }
+end
+
+-- Sets target.onTheWay (text for the arrow) and adds the same lines under
+-- each step that walks past another quest's spawns.
+function QuestAdvisor.AddOnTheWay(items, location)
+  for _, item in ipairs(items) do
+    if item.target then
+      item.target.onTheWay = nil
+    end
+  end
+  if not (location and location.mapID and location.x) then
+    return
+  end
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local continent, n0, w0 = Waypoints.ToWorld(location.mapID, location.x, location.y)
+  if not continent then
+    return
+  end
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+
+  -- The spawns of the quests still to do, in world positions.
+  local sources = {}
+  for _, item in ipairs(items) do
+    if item.kind == "do" and item.priority >= P.QUEST_ELSEWHERE then
+      for _, member in ipairs(Members(item)) do
+        local spots = {}
+        for _, point in ipairs(member.target and member.target.spawnPoints or {}) do
+          local c, n, w = Waypoints.ToWorld(point.mapID, point.x, point.y)
+          if c == continent and point.task then
+            spots[#spots + 1] = { n, w, point.task }
+          end
+        end
+        if #spots > 0 then
+          sources[#sources + 1] = { item = item, title = member.title, spots = spots }
+        end
+      end
+    end
+  end
+  if #sources == 0 then
+    return
+  end
+
+  local corridor = QuestAdvisor.ON_THE_WAY_YARDS * QuestAdvisor.ON_THE_WAY_YARDS
+  for _, item in ipairs(items) do
+    local target = item.target
+    if target and item.priority >= P.QUEST_ELSEWHERE then
+      local c, n1, w1 = Waypoints.ToWorld(target.mapID, target.x, target.y)
+      local dn, dw = (n1 or 0) - n0, (w1 or 0) - w0
+      local length = math.sqrt(dn * dn + dw * dw)
+      if c == continent and length >= ON_THE_WAY_MIN_YARDS and length <= ON_THE_WAY_MAX_YARDS
+        and not (item.distance and item.distance > length * ON_THE_WAY_DETOUR) then
+        local hints = {}
+        for _, source in ipairs(sources) do
+          if source.item ~= item and #hints < MAX_ON_THE_WAY then
+            local tasks, seen = {}, {}
+            for _, spot in ipairs(source.spots) do
+              -- Distance from the spot to the line player -> target.
+              local t = ((spot[1] - n0) * dn + (spot[2] - w0) * dw) / (length * length)
+              t = math.max(0, math.min(1, t))
+              local en, ew = n0 + t * dn - spot[1], w0 + t * dw - spot[2]
+              if en * en + ew * ew <= corridor and not seen[spot[3]] then
+                seen[spot[3]] = true
+                tasks[#tasks + 1] = spot[3]
+              end
+            end
+            if #tasks > 0 then
+              hints[#hints + 1] = string.format(L.ON_THE_WAY, table.concat(tasks, ", "), source.title or "?")
+            end
+          end
+        end
+        if #hints > 0 then
+          target.onTheWay = table.concat(hints, "\n")
+          item.subLines = item.subLines or {}
+          for _, hint in ipairs(hints) do
+            item.subLines[#item.subLines + 1] = { text = hint, level = 1, onTheWay = true }
+          end
+        end
+      end
+    end
+  end
 end
 
 -- Reorders the far steps (all QUEST_FAR, so next to each other after the
@@ -731,6 +830,9 @@ function QuestAdvisor:Update()
         text = string.format(L.QA_COLLAPSED, table.concat(collapsed, ", ")),
       }
     end
+  end
+  if not inside then
+    QuestAdvisor.AddOnTheWay(items, location)
   end
   Pathwise:GetModule("NextSteps"):SetItems("quests", items)
   -- (For the hearthstone tip: how much there is to do in this zone.)

@@ -16,6 +16,8 @@ local MIN_WIDTH = 240
 local MIN_ROWS = 3  -- smallest height the grip allows
 local INDENT = 12 -- per sub-line level
 local TASK_COLOR = "|cff99e6ff"
+-- "On the way: ..." lines: softer, they're a side note.
+local ON_THE_WAY_COLOR = "|cffc8b98a"
 
 local frame
 local rows = {}
@@ -152,7 +154,9 @@ local function BuildLines(items)
     lines[#lines + 1] = { text = Theme.RecolorQuestNames(text), indent = 0, item = item, current = current }
     if current then
       for _, sub in ipairs(item.subLines) do
-        local subText = sub.task and (TASK_COLOR .. sub.text .. "|r") or Theme.RecolorQuestNames(sub.text)
+        local subText = sub.task and (TASK_COLOR .. sub.text .. "|r")
+          or sub.onTheWay and (ON_THE_WAY_COLOR .. sub.text .. "|r")
+          or Theme.RecolorQuestNames(sub.text)
         lines[#lines + 1] = { text = subText, indent = sub.level * INDENT, item = item, current = true }
       end
     end

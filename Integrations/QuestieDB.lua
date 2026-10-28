@@ -331,6 +331,14 @@ function QuestieData:QuestTasks(quest)
   return ok and tasks or nil
 end
 
+-- Each spawn point added since index `first` gets the task it's for (the
+-- "on the way" hints say what to do there).
+local function MarkTask(points, first, task)
+  for i = first, #points do
+    points[i].task = task
+  end
+end
+
 local function DoTarget(quest)
   local objectives = lib.Quest.Get(quest.questID, "objectives") or {}
   local points, tasks = {}, {}
@@ -339,17 +347,23 @@ local function DoTarget(quest)
   for _, objective in ipairs(objectives[1] or {}) do
     local name = objective[2] or lib.Npc.Get(objective[1], "name")
     if not IsFinished(quest, name) then
+      local first = #points + 1
       NpcPoints(points, { objective[1] })
       local npcName = lib.Npc.Get(objective[1], "name") or name
-      AddTask(tasks, CustomObjectiveText(quest, npcName) or string.format(L.TASK_KILL, npcName or "?"))
+      local task = CustomObjectiveText(quest, npcName) or string.format(L.TASK_KILL, npcName or "?")
+      AddTask(tasks, task)
+      MarkTask(points, first, task)
     end
   end
   -- [2] objects to use: { objectId, text?, index }
   for _, objective in ipairs(objectives[2] or {}) do
     local name = objective[2] or lib.Object.Get(objective[1], "name")
     if not IsFinished(quest, name) then
+      local first = #points + 1
       ObjectPoints(points, { objective[1] })
-      AddTask(tasks, string.format(L.TASK_USE, lib.Object.Get(objective[1], "name") or name or "?"))
+      local task = string.format(L.TASK_USE, lib.Object.Get(objective[1], "name") or name or "?")
+      AddTask(tasks, task)
+      MarkTask(points, first, task)
     end
   end
   -- [3] items to collect: { itemId, text?, index }, from NPCs or objects
@@ -358,13 +372,19 @@ local function DoTarget(quest)
     if not IsFinished(quest, objective[2] or itemName) then
       local npcDrops = lib.Item.Get(objective[1], "npcDrops")
       local objectDrops = lib.Item.Get(objective[1], "objectDrops")
+      local first = #points + 1
       NpcPoints(points, npcDrops, nil, itemName)
-      ObjectPoints(points, objectDrops, nil, itemName)
       if npcDrops and #npcDrops > 0 then
-        AddTask(tasks, string.format(L.TASK_LOOT, NpcNames(npcDrops), itemName or "?"))
+        local task = string.format(L.TASK_LOOT, NpcNames(npcDrops), itemName or "?")
+        AddTask(tasks, task)
+        MarkTask(points, first, task)
       end
+      first = #points + 1
+      ObjectPoints(points, objectDrops, nil, itemName)
       if objectDrops and #objectDrops > 0 then
-        AddTask(tasks, string.format(L.TASK_COLLECT, itemName or "?"))
+        local task = string.format(L.TASK_COLLECT, itemName or "?")
+        AddTask(tasks, task)
+        MarkTask(points, first, task)
       end
     end
   end
@@ -372,13 +392,18 @@ local function DoTarget(quest)
   for _, objective in ipairs(objectives[5] or {}) do
     local name = objective[3] or lib.Npc.Get(objective[2], "name")
     if not IsFinished(quest, name) then
+      local first = #points + 1
       NpcPoints(points, objective[1])
-      AddTask(tasks, string.format(L.TASK_KILL, lib.Npc.Get(objective[2], "name") or name or "?"))
+      local task = string.format(L.TASK_KILL, lib.Npc.Get(objective[2], "name") or name or "?")
+      AddTask(tasks, task)
+      MarkTask(points, first, task)
     end
   end
   local best = WithNames(Nearest(points), points)
   if best then
     best.tasks = tasks
+    -- Every spawn of what's left (the "on the way" hints for other steps).
+    best.spawnPoints = points
   end
   return best
 end

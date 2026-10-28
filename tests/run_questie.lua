@@ -87,6 +87,12 @@ check("item objective: nearest dropping NPC", venom.target and Near(venom.target
 local antidote = Item(917)
 check("several objectives: nearest of all", antidote.target and Near(antidote.target.x, 0.61) and Near(antidote.target.y, 0.32))
 check("item dropped by a same-named object: name not repeated", antidote.target.label == "Moonpetal Lily")
+local tasked = true
+for _, point in ipairs(antidote.target.spawnPoints or {}) do
+  tasked = tasked and point.task ~= nil
+end
+check("every spawn of what's left comes along, with its task (for the \"on the way\" hints)",
+  #(antidote.target.spawnPoints or {}) > 1 and tasked)
 check("arrow follows a QuestieDB target right after accepting", Pathwise:GetModule("Waypoints"):GetTarget() ~= nil)
 
 -- Reaching a spawn keeps the arrow there until progress happens.
