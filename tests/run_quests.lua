@@ -131,6 +131,21 @@ spots[4] = Spot(0.5, 0.5 + 200 / 3000)
 check("nearby first, then the far route",
   Order({ Quest(1, "A"), Quest(2, "B"), Quest(3, "C"), Quest(4, "Near") }) == "Near,A,C,B")
 
+-- A near turn-in waits while there's quest work close by (the screenshot:
+-- Turn in The Boar Hunter 109 m away, troggs and whelps all around).
+spots = { [1] = Spot(0.5, 0.5 - 120 / 3000), [2] = Spot(0.5 + 40 / 3000, 0.5), [3] = Spot(0.5 - 150 / 3000, 0.5) }
+check("near turn-in after the quest work close by",
+  Order({ Quest(1, "The Boar Hunter", true), Quest(2, "A New Threat"), Quest(3, "The Troll Cave") })
+    == "A New Threat,The Troll Cave,The Boar Hunter")
+check("nothing to do close by: the turn-in first, as before",
+  Order({ Quest(1, "The Boar Hunter", true) }) == "The Boar Hunter")
+spots[1] = Spot(0.5, 0.5 - 30 / 3000)
+check("its NPC right here (30 yd): handed in first", Order({ Quest(1, "The Boar Hunter", true), Quest(2, "A New Threat") })
+  == "The Boar Hunter,A New Threat")
+spots[1], spots[2] = Spot(0.5, 0.5 - 120 / 3000), Spot(0.5 + 500 / 3000, 0.5)
+check("the quest work far away: the turn-in first", Order({ Quest(1, "The Boar Hunter", true), Quest(2, "A New Threat") })
+  == "The Boar Hunter,A New Threat")
+
 ---------------------------------------------------------------------------
 section("Quests: live updates")
 

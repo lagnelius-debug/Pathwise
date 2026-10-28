@@ -29,6 +29,10 @@ local MOVE_CHECK_SECONDS = 5
 local lastPlanPosition -- { mapID, x, y } where the last plan was made
 local lastPickups = {} -- the quests to pick up suggested by the last plan
 
+-- A turn-in close by waits while there's quest work close by too (do it
+-- all, then hand everything in) - unless its NPC is within this distance.
+QuestAdvisor.TURN_IN_HERE_YARDS = 50
+
 -- Quests whose nearest objectives are this close to each other are done
 -- together as one step (e.g. Timberling Seeds and Timberling Sprouts).
 QuestAdvisor.TOGETHER_YARDS = 120
@@ -364,6 +368,23 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
       -- progress, then lowest level (easiest first).
       order = { distance or math.huge, here and 0 or 1, -(progress or 0), quest.level },
     }
+  end
+
+  -- Quest work close by: a near turn-in waits until it's done.
+  local workNear = false
+  for _, item in ipairs(items) do
+    if item.kind == "do" and item.distance and item.distance <= QuestAdvisor.NEAR_YARDS
+      and (item.priority == P.QUEST_NEAR or item.priority == P.QUEST_NEAR_ALMOST_DONE) then
+      workNear = true
+    end
+  end
+  if workNear then
+    for _, item in ipairs(items) do
+      if item.kind == "turnIn" and item.priority == P.QUEST_TURN_IN and item.distance
+        and item.distance > QuestAdvisor.TURN_IN_HERE_YARDS then
+        item.priority = P.QUEST_HERE
+      end
+    end
   end
 
   local Travel = Pathwise:GetModule("Travel")

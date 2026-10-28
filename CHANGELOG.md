@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.25.0
+
+- A turn-in close by now waits while there's quest work close by too
+  (mobs or objects of other quests within about 300 yards): do it all,
+  then hand everything in, instead of being sent to the quest giver while
+  you're standing among the mobs. A turn-in whose NPC is within about 50
+  yards still comes first, since you're right there.
+
 ## 0.24.0
 
 - The target button and the Pathwise macro go through the kinds of mobs
