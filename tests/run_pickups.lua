@@ -158,6 +158,12 @@ check("/pw why: needs a higher level now, suggested at the next", WoW.ChatContai
   and WoW.ChatContains("Level " .. (L + 1) .. ": suggested"))
 check("/pw why: Questie's own answer right now", WoW.ChatContains("Questie itself says it isn't available"))
 QuestieLoader = nil
+-- A quest hidden in Questie stays out, now or later.
+Questie = { db = { char = { hidden = { [7017] = true } } } }
+UpdateLog({})
+check("hidden in Questie: not among next level's quests", not table.concat(Item("level:next").detail, "|")
+  :find("Next Level", 1, true))
+Questie = nil
 WoW.ClearChat()
 WoW.Slash("why 7018")
 check("/pw why by ID: red now", WoW.ChatContains("Level " .. L .. ": too hard (red) or too easy (grey)")

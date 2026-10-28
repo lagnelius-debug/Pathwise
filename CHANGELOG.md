@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.5
+
+Fixes from a check of 0.28.3:
+
+- A quest you hid in Questie stays out of "More quests here at level ..."
+  too (0.28.3 stopped asking Questie about future levels, which also
+  skipped its hidden list).
+- `/pw why` shows a quest that scales with your level at your level, not
+  as `[-1]`.
+
 ## 0.28.4
 
 No changes in the game. Repository housekeeping:

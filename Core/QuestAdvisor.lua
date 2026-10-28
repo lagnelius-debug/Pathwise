@@ -1124,7 +1124,6 @@ Pathwise:RegisterCommand("units", function(args)
   end
 end, L.CMD_UNITS)
 
--- /pw pickups on|off: suggest quests to pick up (needs QuestieDB)
 -- /pw why <quest name or ID>: why the guide does or doesn't suggest
 -- picking up a quest, now and at the next levels.
 Pathwise:RegisterCommand("why", function(args)
@@ -1158,7 +1157,9 @@ Pathwise:RegisterCommand("why", function(args)
       where = entry.mapID and (Platform.GetMapName(entry.mapID) or "?") or L.WHY_NO_GIVER
     end
     local distance = entry.distance and Pathwise.FormatDistance(entry.distance) or "?"
-    Pathwise:Printf(L.WHY_HEADER, entry.level or 0, entry.title or "?", entry.id, entry.requiredLevel or 1,
+    -- (-1: a quest at the player's level.)
+    local questLevel = (entry.level == nil or entry.level == -1) and level or entry.level
+    Pathwise:Printf(L.WHY_HEADER, questLevel, entry.title or "?", entry.id, entry.requiredLevel or 1,
       entry.giver or "?", where, distance)
     for atLevel = level, level + QuestAdvisor.UPCOMING_LEVELS do
       local reason = entry.reasons[atLevel]
@@ -1170,6 +1171,7 @@ Pathwise:RegisterCommand("why", function(args)
   end
 end, L.CMD_WHY)
 
+-- /pw pickups on|off: suggest quests to pick up (needs QuestieDB)
 Pathwise:RegisterCommand("pickups", function(args)
   args = args:lower()
   if args == "on" or args == "off" then

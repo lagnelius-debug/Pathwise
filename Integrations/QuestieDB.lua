@@ -907,6 +907,15 @@ local function QuestieIsDoable(questID)
   return nil
 end
 
+-- True when the player hid the quest in Questie (its quest menu).
+-- Questie's internal saved data, read protected.
+local function QuestieHidden(questID)
+  local ok, hidden = pcall(function()
+    return _G.Questie.db.char.hidden[questID]
+  end)
+  return ok and hidden and true or false
+end
+
 local function DoneOrInLog(questID, isCompleted, inLog)
   return type(questID) == "number" and questID ~= 0 and (isCompleted(questID) or inLog[questID] == true)
 end
@@ -1003,8 +1012,9 @@ local function NotEligibleReason(candidate, ctx)
     return "skip"
   -- (Questie's own check uses the player's level as it is now - older
   -- versions reject quests that need a higher one - so it's only asked
-  -- about now, not about a level the player hasn't reached: ctx.future.)
-  elseif not ctx.future and QuestieIsDoable(candidate.id) == false then
+  -- about now, not about a level the player hasn't reached: ctx.future.
+  -- A quest hidden in Questie stays hidden either way.)
+  elseif (not ctx.future and QuestieIsDoable(candidate.id) == false) or QuestieHidden(candidate.id) then
     return "questie"
   end
   return nil
