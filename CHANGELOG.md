@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.4
+
+No changes in the game. Repository housekeeping:
+
+- Added a security policy (SECURITY.md): supported versions, the official
+  download sources, and how to report a security problem privately.
+- Dependabot now checks the GitHub Actions in the release workflow for
+  updates once a month.
+
 ## 0.28.3
 
 - "More quests here at level 7" no longer asks Questie whether a quest is

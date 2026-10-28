@@ -1,0 +1,8 @@
+# Keeps the GitHub Actions used by the release workflow up to date.
+# Place this file at .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

@@ -8,7 +8,7 @@ OUT=$(cd "$(dirname "$1")" && pwd)/$(basename "$1")
 STAGE=$(mktemp -d)
 git archive --format=tar --prefix=Pathwise/ HEAD | tar -x -C "$STAGE"
 rm -rf "$STAGE/Pathwise/tests" "$STAGE/Pathwise/docs" "$STAGE/Pathwise/tools" \
-  "$STAGE/Pathwise/.github" "$STAGE/Pathwise/CLAUDE.md"
+  "$STAGE/Pathwise/.github" "$STAGE/Pathwise/CLAUDE.md" "$STAGE/Pathwise/SECURITY.md"
 rm -f "$OUT"
 (cd "$STAGE" && zip -qr "$OUT" Pathwise)
 rm -rf "$STAGE"
