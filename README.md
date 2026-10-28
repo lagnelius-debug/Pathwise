@@ -99,6 +99,7 @@ Test with a fresh level 1 Night Elf Hunter.
 
 - [ ] Turning in a quest with several reward choices puts a green border and a `Best upgrade` label on the best one, and prints `Pathwise: Best reward: [item] (+X% upgrade).` in chat.
 - [ ] If no reward is an upgrade, the label says `Best to sell` and chat names the item with the highest vendor price.
+- [ ] A quest item you buy (Rhapsody Malt for Beer Basted Boar Ribs) reads `Buy Rhapsody Malt from Innkeeper Belm`, not "Kill", and the target button doesn't put a skull on the innkeeper.
 - [ ] Rewards that sell for exactly the same (e.g. 5 Tough Jerky and 5 Refreshing Spring Water) are all highlighted with `Same value`, and chat says to take whichever you like.
 - [ ] Pathwise never selects the reward itself.
 - [ ] The highlight disappears when the quest window closes. It doesn't show up on the next quest window.

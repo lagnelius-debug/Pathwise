@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.27.1
+
+- Quest items you buy are no longer "kills": QuestieDB lists some vendors
+  as droppers (Rhapsody Malt from Innkeeper Belm), so the guide said "Kill
+  Innkeeper Belm, Yanni Stoutheart for Rhapsody Malt". NPCs friendly to
+  you, and the item's vendors, now read "Buy Rhapsody Malt from Innkeeper
+  Belm, Yanni Stoutheart". The other faction's vendors are left out, and
+  the arrow keeps showing the distance to a vendor (it doesn't wander).
+- The target macro and button only put the skull on something you can
+  attack, not on a vendor or quest giver.
+
 ## 0.27.0
 
 - Quest rewards that sell for exactly the same (and no upgrade among

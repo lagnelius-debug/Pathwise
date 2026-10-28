@@ -18,7 +18,8 @@ local TargetMacro = Pathwise:NewModule("TargetMacro")
 TargetMacro.MACRO_NAME = "Pathwise"
 local ICON = "Ability_Hunter_SniperShot"
 local MAX_BODY = 255 -- the client's macro length limit
-local MARK_LINE = '/run if UnitExists("target") and not UnitIsDead("target") then SetRaidTarget("target",8) end'
+-- (Only on something to fight: not on a vendor or quest giver.)
+local MARK_LINE = '/run if UnitCanAttack("player","target") and not UnitIsDead("target") then SetRaidTarget("target",8) end'
 
 local lastBody
 local warnedFull = false

@@ -16,7 +16,7 @@ section("Macro: body")
 local body = TargetMacro.BuildBody({ "Webwood Spider", "Githyiss the Vile" })
 check("body: clear, least important first, most important last, skull mark",
   body == "/cleartarget\n/targetexact Githyiss the Vile\n/targetexact Webwood Spider\n"
-    .. '/run if UnitExists("target") and not UnitIsDead("target") then SetRaidTarget("target",8) end')
+    .. '/run if UnitCanAttack("player","target") and not UnitIsDead("target") then SetRaidTarget("target",8) end')
 check("body without names: harmless message", TargetMacro.BuildBody({}):find("^/run print") ~= nil)
 local many = {}
 for i = 1, 20 do many[i] = "A very long mob name number " .. i end

@@ -95,7 +95,7 @@ function Arrow:Update()
     return
   end
 
-  local roaming = not via and target.spawn and target.npcName ~= nil -- a mob's spawn spot
+  local roaming = not via and target.spawn and target.npcName ~= nil and not target.vendor -- a mob's spawn spot
   if via then
     -- On the way: no arrival here (the portal moves the player on).
     if distance <= Waypoints.ARRIVE_YARDS then

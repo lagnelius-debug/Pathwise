@@ -247,6 +247,42 @@ local function AddTask(tasks, text)
 end
 
 -- Up to MAX_DROPPER_NAMES NPC names, e.g. "Timberling" or "A, B".
+-- Faction letter QuestieDB uses in friendlyToFaction ("A", "H" or "AH").
+local function FactionLetter()
+  local faction = Pathwise:GetModule("Character"):GetSnapshot().faction
+  return faction == "Alliance" and "A" or faction == "Horde" and "H" or nil
+end
+
+-- Splits the NPCs an item comes from: droppers (mobs to kill) and sellers -
+-- NPCs friendly to the player (an innkeeper "dropping" Rhapsody Malt sells
+-- it) plus the item's vendors. Returns droppers, sellers.
+local function DroppersAndSellers(itemId, npcIds)
+  local letter = FactionLetter()
+  local droppers, sellers, seen = {}, {}, {}
+  local function Friendly(npcId)
+    local friendly = lib.Npc.Get(npcId, "friendlyToFaction")
+    return type(friendly) == "string" and letter ~= nil and friendly:find(letter, 1, true) ~= nil
+  end
+  -- (An older QuestieDB may not know "vendors".)
+  local ok, vendors = pcall(lib.Item.Get, itemId, "vendors")
+  for _, npcId in ipairs(ok and type(vendors) == "table" and vendors or {}) do
+    local friendly = lib.Npc.Get(npcId, "friendlyToFaction")
+    -- (The other faction's vendors are no use.)
+    if not seen[npcId] and (type(friendly) ~= "string" or Friendly(npcId)) then
+      seen[npcId] = true
+      sellers[#sellers + 1] = npcId
+    end
+  end
+  for _, npcId in ipairs(npcIds or {}) do
+    if not seen[npcId] then
+      seen[npcId] = true
+      local list = Friendly(npcId) and sellers or droppers
+      list[#list + 1] = npcId
+    end
+  end
+  return droppers, sellers
+end
+
 local function NpcNames(npcIds)
   local names = {}
   for _, npcId in ipairs(npcIds or {}) do
@@ -370,14 +406,25 @@ local function DoTarget(quest)
   for _, objective in ipairs(objectives[3] or {}) do
     local itemName = lib.Item.Get(objective[1], "name")
     if not IsFinished(quest, objective[2] or itemName) then
-      local npcDrops = lib.Item.Get(objective[1], "npcDrops")
+      local npcDrops, sellers = DroppersAndSellers(objective[1], lib.Item.Get(objective[1], "npcDrops"))
       local objectDrops = lib.Item.Get(objective[1], "objectDrops")
       local first = #points + 1
       NpcPoints(points, npcDrops, nil, itemName)
-      if npcDrops and #npcDrops > 0 then
+      if #npcDrops > 0 then
         local task = string.format(L.TASK_LOOT, NpcNames(npcDrops), itemName or "?")
         AddTask(tasks, task)
         MarkTask(points, first, task)
+      end
+      first = #points + 1
+      NpcPoints(points, sellers, nil, itemName)
+      if #sellers > 0 then
+        local task = string.format(L.TASK_BUY, itemName or "?", NpcNames(sellers))
+        AddTask(tasks, task)
+        MarkTask(points, first, task)
+        -- (A vendor stands still: the arrow keeps the distance.)
+        for i = first, #points do
+          points[i].vendor = true
+        end
       end
       first = #points + 1
       ObjectPoints(points, objectDrops, nil, itemName)
@@ -526,12 +573,6 @@ end
 -- Forgets the trainer list so the next lookup scans again.
 function QuestieData:ResetTrainers()
   trainerIndex, trainerScan = nil, nil
-end
-
--- Faction letter QuestieDB uses in friendlyToFaction ("A", "H" or "AH").
-local function FactionLetter()
-  local faction = Pathwise:GetModule("Character"):GetSnapshot().faction
-  return faction == "Alliance" and "A" or faction == "Horde" and "H" or nil
 end
 
 -- Returns a target at the nearest trainer (same continent, friendly) with

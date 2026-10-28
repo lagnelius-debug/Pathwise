@@ -234,6 +234,35 @@ UpdateLog({ { header = true, title = "Teldrassil" },
 local kill = Item(999)
 check("kill objective: creature spawns", kill.target and Near(kill.target.x, 0.45) and kill.target.label == "Young Nightsaber")
 
+-- Beer Basted Boar Ribs: Crag Boar Ribs drop from boars, Rhapsody Malt is
+-- "dropped" by the innkeeper (QuestieDB), who sells it.
+db.Quest[384] = { finishedBy = { { 1235 } }, objectives = { nil, nil, { { 2886, nil, 1 }, { 2894, nil, 2 } } } }
+db.Npc[1125] = { name = "Crag Boar", spawns = { [141] = { { 30, 30 } } } }
+db.Npc[1247] = { name = "Innkeeper Belm", friendlyToFaction = "A", spawns = { [141] = { { 59, 41 } } } }
+db.Npc[1464] = { name = "Yanni Stoutheart", friendlyToFaction = "A", spawns = { [141] = { { 70, 70 } } } }
+db.Npc[1465] = { name = "Horde Brewer", friendlyToFaction = "H", spawns = { [141] = { { 58, 40 } } } }
+db.Item[2886] = { name = "Crag Boar Rib", npcDrops = { 1125 } }
+db.Item[2894] = { name = "Rhapsody Malt", npcDrops = { 1247, 1464 }, vendors = { 1465, 1247 } }
+UpdateLog({ { header = true, title = "Teldrassil" },
+  { title = "Beer Basted Boar Ribs", level = 4, questID = 384,
+    objectives = { { text = "Crag Boar Rib: 0/6" }, { text = "Rhapsody Malt: 0/1" } } } })
+local ribs = Item(384)
+local tasks = table.concat(ribs.target.tasks or {}, " | ")
+check("a friendly NPC that \"drops\" the item sells it (" .. tasks .. ")",
+  tasks == "Kill Crag Boar for Crag Boar Rib | Buy Rhapsody Malt from Innkeeper Belm, Yanni Stoutheart")
+check("the innkeeper, nearest, is the arrow's target (a vendor: keeps the distance)", ribs.target.npcName == "Innkeeper Belm"
+  and ribs.target.vendor == true and ribs.target.label == "Rhapsody Malt (Innkeeper Belm)")
+local horde = false
+for _, point in ipairs(ribs.target.spawnPoints) do
+  horde = horde or point.npcName == "Horde Brewer"
+end
+check("the other faction's vendor is left out", not horde)
+db.Item[2894].vendors = nil
+db.Item[2894].npcDrops = { 1465 }
+UpdateLog(WoW.questLog)
+check("vendors unknown, a hostile NPC: still a kill", table.concat(Item(384).target.tasks, " | ")
+  == "Kill Crag Boar for Crag Boar Rib | Kill Horde Brewer for Rhapsody Malt")
+
 -- Unknown quest: falls back to learned locations
 Pathwise.db.questLocations[4242] = { pickup = { mapID = 1438, x = 0.1, y = 0.2 } }
 UpdateLog({ { header = true, title = "Teldrassil" },
