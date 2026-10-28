@@ -248,8 +248,8 @@ UpdateLog({ { header = true, title = "Teldrassil" },
     objectives = { { text = "Crag Boar Rib: 0/6" }, { text = "Rhapsody Malt: 0/1" } } } })
 local ribs = Item(384)
 local tasks = table.concat(ribs.target.tasks or {}, " | ")
-check("a friendly NPC that \"drops\" the item sells it (" .. tasks .. ")",
-  tasks == "Kill Crag Boar for Crag Boar Rib | Buy Rhapsody Malt from Innkeeper Belm, Yanni Stoutheart")
+check("the item's vendor: buy; another friendly NPC that \"drops\" it: get (" .. tasks .. ")",
+  tasks == "Kill Crag Boar for Crag Boar Rib | Buy Rhapsody Malt from Innkeeper Belm | Get Rhapsody Malt from Yanni Stoutheart")
 check("the innkeeper, nearest, is the arrow's target (a vendor: keeps the distance)", ribs.target.npcName == "Innkeeper Belm"
   and ribs.target.vendor == true and ribs.target.label == "Rhapsody Malt (Innkeeper Belm)")
 local horde = false

@@ -253,12 +253,13 @@ local function FactionLetter()
   return faction == "Alliance" and "A" or faction == "Horde" and "H" or nil
 end
 
--- Splits the NPCs an item comes from: droppers (mobs to kill) and sellers -
--- NPCs friendly to the player (an innkeeper "dropping" Rhapsody Malt sells
--- it) plus the item's vendors. Returns droppers, sellers.
+-- Splits the NPCs an item comes from: droppers (mobs to kill), the item's
+-- vendors (of the player's faction or neutral), and other NPCs friendly to
+-- the player, who hand it out (QuestieDB lists some vendors as droppers too:
+-- an innkeeper "dropping" Rhapsody Malt). Returns droppers, vendors, givers.
 local function DroppersAndSellers(itemId, npcIds)
   local letter = FactionLetter()
-  local droppers, sellers, seen = {}, {}, {}
+  local droppers, sellers, givers, seen = {}, {}, {}, {}
   local function Friendly(npcId)
     local friendly = lib.Npc.Get(npcId, "friendlyToFaction")
     return type(friendly) == "string" and letter ~= nil and friendly:find(letter, 1, true) ~= nil
@@ -276,11 +277,11 @@ local function DroppersAndSellers(itemId, npcIds)
   for _, npcId in ipairs(npcIds or {}) do
     if not seen[npcId] then
       seen[npcId] = true
-      local list = Friendly(npcId) and sellers or droppers
+      local list = Friendly(npcId) and givers or droppers
       list[#list + 1] = npcId
     end
   end
-  return droppers, sellers
+  return droppers, sellers, givers
 end
 
 local function NpcNames(npcIds)
@@ -406,7 +407,7 @@ local function DoTarget(quest)
   for _, objective in ipairs(objectives[3] or {}) do
     local itemName = lib.Item.Get(objective[1], "name")
     if not IsFinished(quest, objective[2] or itemName) then
-      local npcDrops, sellers = DroppersAndSellers(objective[1], lib.Item.Get(objective[1], "npcDrops"))
+      local npcDrops, sellers, givers = DroppersAndSellers(objective[1], lib.Item.Get(objective[1], "npcDrops"))
       local objectDrops = lib.Item.Get(objective[1], "objectDrops")
       local first = #points + 1
       NpcPoints(points, npcDrops, nil, itemName)
@@ -421,10 +422,18 @@ local function DoTarget(quest)
         local task = string.format(L.TASK_BUY, itemName or "?", NpcNames(sellers))
         AddTask(tasks, task)
         MarkTask(points, first, task)
-        -- (A vendor stands still: the arrow keeps the distance.)
-        for i = first, #points do
-          points[i].vendor = true
-        end
+      end
+      local firstGiver = #points + 1
+      NpcPoints(points, givers, nil, itemName)
+      if #givers > 0 then
+        local task = string.format(L.TASK_GET, itemName or "?", NpcNames(givers))
+        AddTask(tasks, task)
+        MarkTask(points, firstGiver, task)
+      end
+      -- (Vendors and other friendly NPCs stand still: the arrow keeps the
+      -- distance.)
+      for i = first, #points do
+        points[i].vendor = true
       end
       first = #points + 1
       ObjectPoints(points, objectDrops, nil, itemName)

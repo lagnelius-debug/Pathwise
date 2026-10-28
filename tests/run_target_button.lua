@@ -207,6 +207,7 @@ local whelp = SpawnAt(0.5, 0.45, "Frostmane Troll Whelp")
 local function Step(id)
   return { id = id or "focus:1", priority = 99, text = "Do together",
     target = { mapID = 1438, x = 0.5, y = 0.49, label = "Small Crag Boar +2 quests", spawn = true,
+      npcName = "Innkeeper Belm", vendor = true,
       names = { "Small Crag Boar", "Rockjaw Trogg", "Frostmane Troll Whelp" },
       spawnPoints = { SpawnAt(0.5, 0.49, "Small Crag Boar"), troggFar, troggNear, whelp } } }
 end
@@ -225,6 +226,8 @@ local label
 x, y, label = Points()
 check("a trogg targeted: the arrow goes to the nearest trogg spawn", Near(x, 0.52) and Near(y, 0.5)
   and label == "Rockjaw Trogg" and changes > 0)
+check("that spawn's own mob (a roaming spot, no vendor)", Waypoints:GetTarget().npcName == "Rockjaw Trogg"
+  and not Waypoints:GetTarget().vendor)
 check("the macro keeps the step's mobs", table.concat(Waypoints:GetTarget().names, ",")
   == "Small Crag Boar,Rockjaw Trogg,Frostmane Troll Whelp")
 

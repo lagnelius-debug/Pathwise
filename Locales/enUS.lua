@@ -280,6 +280,7 @@ L.TASK_KILL = "Kill %s"
 L.TASK_LOOT = "Kill %s for %s"
 L.TASK_COLLECT = "Collect %s"
 L.TASK_BUY = "Buy %s from %s"
+L.TASK_GET = "Get %s from %s"
 L.TASK_USE = "Use %s"
 L.TASK_TURN_IN = "Turn in at %s"
 -- Another quest's mobs or objects along the way: task, quest title.

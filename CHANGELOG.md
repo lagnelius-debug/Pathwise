@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.27.2
+
+Fixes from a check of the new features:
+
+- "Buy" is now only for the item's vendors. Another friendly NPC that
+  QuestieDB lists as a source reads "Get Rhapsody Malt from ..." (some hand
+  the item out rather than sell it).
+- The arrow on a targeted mob's spawn took the mob name and "vendor" mark
+  of the step's first spot: after targeting a mob in a step whose nearest
+  spot was a vendor, the arrow showed a distance for a roaming mob. It now
+  uses that spawn's own.
+
 ## 0.27.1
 
 - Quest items you buy are no longer "kills": QuestieDB lists some vendors

@@ -196,6 +196,8 @@ local function FocusTarget()
     end
     focused.mapID, focused.x, focused.y = point.mapID, point.x, point.y
     focused.label = point.label or auto.label
+    -- (That spawn's own NPC: a vendor keeps its distance, a mob doesn't.)
+    focused.npcName, focused.vendor = point.npcName, point.vendor
   end
 end
 
