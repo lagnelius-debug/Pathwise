@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.27.4
+
+Fix from a check of 0.27.3:
+
+- When QuestieDB doesn't say whether an NPC has a role (an older QuestieDB
+  or a missing entry), a mob it calls friendly to both factions is a kill
+  (with the target button and macro), and only an NPC of your own faction
+  counts as handing the item out.
+
 ## 0.27.3
 
 - Neutral mobs you kill for a quest item are "Kill" again, with the target

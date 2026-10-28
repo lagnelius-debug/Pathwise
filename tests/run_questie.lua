@@ -266,6 +266,13 @@ check("vendors unknown, a hostile NPC: still a kill", table.concat(Item(384).tar
   == "Kill Crag Boar, Neutral Boar for Crag Boar Rib | Kill Horde Brewer for Rhapsody Malt")
 -- A neutral mob QuestieDB calls friendly (no NPC role): a kill, with the
 -- target button and macro.
+db.Npc[1127] = { name = "Unflagged Boar", friendlyToFaction = "AH", spawns = { [141] = { { 90, 90 } } } }
+db.Npc[1128] = { name = "Unflagged Brewer", friendlyToFaction = "A", spawns = { [141] = { { 91, 91 } } } }
+db.Item[2894].npcDrops = { 1127, 1128 }
+UpdateLog(WoW.questLog)
+check("no NPC role known: neutral to both is a kill, own faction a giver", table.concat(Item(384).target.tasks, " | ")
+  == "Kill Crag Boar, Neutral Boar for Crag Boar Rib | Kill Unflagged Boar for Rhapsody Malt"
+    .. " | Get Rhapsody Malt from Unflagged Brewer")
 db.Item[2886].npcDrops = { 1126 }
 S.mapX, S.mapY = 0.31, 0.31
 UpdateLog(WoW.questLog)
