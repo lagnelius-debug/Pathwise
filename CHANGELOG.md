@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.23.1
+
+- "On the way" hints are now only in the To-do list, under the step the
+  arrow follows. The arrow keeps its short label (two hints under it were
+  too much text).
+
 ## 0.23.0
 
 - **On the way**: when the way to your next step passes the mobs or objects

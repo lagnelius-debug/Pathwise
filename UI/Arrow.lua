@@ -26,8 +26,6 @@ local ARROW_SIZE = 64
 -- beyond it the color goes through yellow (to the side) to red (behind).
 local ON_COURSE = 0.25
 local GREEN, YELLOW, RED = { 0.2, 1, 0.2 }, { 1, 0.85, 0.2 }, { 1, 0.25, 0.2 }
--- "On the way: ..." under the label (as in the To-do list).
-local ON_THE_WAY_COLOR = "|cffc8b98a"
 -- The "Next" link: soft gold, brighter on hover.
 local NEXT_DIM, NEXT_BRIGHT = { 0.85, 0.75, 0.5, 0.75 }, { 1, 0.85, 0.4 }
 
@@ -87,9 +85,6 @@ function Arrow:Update()
   if via then
     -- A portal or boat first: say which, with the destination underneath.
     frame.label:SetText((via.text or L[via.label]) .. "\n" .. string.format(L.TRAVEL_THEN, target.label or ""))
-  elseif target.onTheWay then
-    -- Another quest's mobs along the way, underneath in a softer color.
-    frame.label:SetText((target.label or "") .. "\n" .. ON_THE_WAY_COLOR .. target.onTheWay .. "|r")
   else
     frame.label:SetText(target.label or "")
   end

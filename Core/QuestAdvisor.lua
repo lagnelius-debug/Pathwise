@@ -437,14 +437,9 @@ local function Members(item)
   return item.members or { item }
 end
 
--- Sets target.onTheWay (text for the arrow) and adds the same lines under
--- each step that walks past another quest's spawns.
+-- Adds "On the way" lines under each step that walks past another quest's
+-- spawns (in the To-do list only; the arrow keeps its short label).
 function QuestAdvisor.AddOnTheWay(items, location)
-  for _, item in ipairs(items) do
-    if item.target then
-      item.target.onTheWay = nil
-    end
-  end
   if not (location and location.mapID and location.x) then
     return
   end
@@ -506,7 +501,6 @@ function QuestAdvisor.AddOnTheWay(items, location)
           end
         end
         if #hints > 0 then
-          target.onTheWay = table.concat(hints, "\n")
           item.subLines = item.subLines or {}
           for _, hint in ipairs(hints) do
             item.subLines[#item.subLines + 1] = { text = hint, level = 1, onTheWay = true }
