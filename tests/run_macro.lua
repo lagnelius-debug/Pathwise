@@ -32,6 +32,17 @@ check("and it fits the 255 character limit", #body <= 255)
 local groups = TargetMacro.Groups(seven)
 check("four groups, in order", #groups == 4 and groups[1].name == "Crag Boar" and groups[1].partial
   and groups[2].name == "Rockjaw Trogg" and groups[3].name == "Frostmane Troll Whelp" and not groups[3].partial)
+-- Your screenshot: Buzzbox 827's Crawler Legs drop from six crawlers.
+-- They all end in "Crawler": one line, the nearest of any of them.
+local crawlers = { "Young Reef Crawler", "Pygmy Tide Crawler", "Reef Crawler", "Tide Crawler", "Raging Reef Crawler",
+  "Encrusted Tide Crawler" }
+groups = TargetMacro.Groups(crawlers)
+check("names ending alike: one group (" .. tostring(groups[1] and groups[1].name) .. ")", #groups == 1
+  and groups[1].name == "Crawler" and groups[1].partial and #groups[1].members == 6)
+body = TargetMacro.BuildBody(crawlers)
+check("one /target Crawler line", body:find("/cleartarget\n/target Crawler\n/run", 1, true) ~= nil)
+check("different endings stay apart", #TargetMacro.Groups({ "Rockjaw Trogg", "Frostmane Troll Whelp" }) == 2)
+check("a short shared ending (under 4 letters) doesn't merge", #TargetMacro.Groups({ "Big Rat", "Old Rat" }) == 2)
 check("whole words only: Rat doesn't take in Pirate", not TargetMacro.Groups({ "Rat", "Pirate" })[1].partial
   and #TargetMacro.Groups({ "Rat", "Pirate" }) == 2)
 check("a name inside no other: exact as before", TargetMacro.BuildBody({ "Crag Boar", "Rockjaw Trogg" })

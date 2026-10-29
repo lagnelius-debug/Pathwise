@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.6
+
+- Target button and macro: mobs whose names end the same ("Pygmy Tide
+  Crawler", "Young Reef Crawler", "Reef Crawler", ...) now share one
+  `/target Crawler` line, which takes the nearest of all of them. Before,
+  "Reef Crawler" and "Tide Crawler" were separate lines and any Reef
+  Crawler in range won, so the Pygmy Tide Crawler right in front of you
+  (Buzzbox 827) couldn't be targeted. Shared endings under 4 letters don't
+  count.
+
 ## 0.28.5
 
 Fixes from a check of 0.28.3:

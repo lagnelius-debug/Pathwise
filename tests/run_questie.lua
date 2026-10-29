@@ -280,7 +280,8 @@ local boar = Item(384)
 check("a neutral mob (friendly to both, no NPC role): Kill, not Get", boar.target.tasks[1] == "Kill Neutral Boar for Crag Boar Rib")
 check("and the target button targets it", boar.target.npcName == "Neutral Boar" and not boar.target.vendor
   and _G.PathwiseTargetButton:IsShown()
-  and _G.PathwiseTargetButton:GetAttribute("macrotext"):find("/targetexact Neutral Boar", 1, true) ~= nil)
+  -- (With the Unflagged Boar of the other objective: any Boar.)
+  and _G.PathwiseTargetButton:GetAttribute("macrotext"):find("/target Boar\n", 1, true) ~= nil)
 S.mapX, S.mapY = 0.58, 0.40
 
 -- Unknown quest: falls back to learned locations

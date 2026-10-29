@@ -28,11 +28,34 @@ local warnedFull = false
 -- step's mobs: the next one in the list), or nil for the list's own order.
 local preferred
 
--- Names (most important first) -> groups, in that order: { name, partial }.
--- A name that another one contains ("Crag Boar" in "Large Crag Boar" and
--- "Small Crag Boar") stands for all of them: /target (not /targetexact)
--- matches part of a name and takes the nearest, whichever kind it is.
--- Second result: [name] = its group.
+-- A shared ending shorter than this ("Crawler" is fine) doesn't merge.
+local MIN_SHARED_ENDING = 4
+
+local function Words(text)
+  local words = {}
+  for word in text:gmatch("%S+") do
+    words[#words + 1] = word
+  end
+  return words
+end
+
+-- The whole words two names end in ("Reef Crawler", "Tide Crawler" ->
+-- "Crawler"), or "".
+local function SharedEnding(a, b)
+  local wordsA, wordsB = Words(a), Words(b)
+  local count = 0
+  while count < #wordsA and count < #wordsB and wordsA[#wordsA - count] == wordsB[#wordsB - count] do
+    count = count + 1
+  end
+  return table.concat(wordsA, " ", #wordsA - count + 1, #wordsA)
+end
+
+-- Names (most important first) -> groups, in that order: { name, partial,
+-- members }. A name that another one contains ("Crag Boar" in "Large Crag
+-- Boar" and "Small Crag Boar") stands for all of them, and so does the
+-- ending names share ("Pygmy Tide Crawler", "Young Reef Crawler" ->
+-- "Crawler"): /target (not /targetexact) matches part of a name and takes
+-- the nearest, whichever kind it is. Second result: [name] = its group.
 function TargetMacro.Groups(names)
   local keyOf = {}
   for _, name in ipairs(names or {}) do
@@ -46,19 +69,48 @@ function TargetMacro.Groups(names)
     end
     keyOf[name] = key
   end
-  local groups, groupOf = {}, {}
+  local groups, byKey = {}, {}
   for _, name in ipairs(names or {}) do
     local key = keyOf[name]
-    local group = groupOf[key]
+    local group = byKey[key]
     if not group then
-      group = { name = key, partial = false }
+      group = { name = key, partial = false, members = {} }
       groups[#groups + 1] = group
-      groupOf[key] = group
+      byKey[key] = group
     end
     if key ~= name then
       group.partial = true
     end
-    groupOf[name] = group
+    group.members[#group.members + 1] = name
+  end
+  -- Groups that end in the same words become one (the first keeps its
+  -- place).
+  local merged = true
+  while merged do
+    merged = false
+    for i = 1, #groups - 1 do
+      for j = i + 1, #groups do
+        local ending = SharedEnding(groups[i].name, groups[j].name)
+        if #ending >= MIN_SHARED_ENDING then
+          groups[i].name, groups[i].partial = ending, true
+          for _, member in ipairs(groups[j].members) do
+            table.insert(groups[i].members, member)
+          end
+          table.remove(groups, j)
+          merged = true
+          break
+        end
+      end
+      if merged then
+        break
+      end
+    end
+  end
+  local groupOf = {}
+  for _, group in ipairs(groups) do
+    for _, member in ipairs(group.members) do
+      groupOf[member] = group
+    end
   end
   return groups, groupOf
 end
@@ -75,17 +127,24 @@ local function GroupOfUnit(groups, groupOf, unitName)
   end
 end
 
--- Names (most important first) -> the same names starting at the one to go
--- for first.
+-- Names (most important first) -> the same names, those of the group to
+-- go for first leading.
 function TargetMacro.Ordered(names)
   if not names or not preferred then
     return names
   end
-  for i, name in ipairs(names) do
-    if name == preferred then
-      local ordered = {}
-      for k = 0, #names - 1 do
-        ordered[#ordered + 1] = names[(i - 1 + k) % #names + 1]
+  local groups = TargetMacro.Groups(names)
+  for _, group in ipairs(groups) do
+    if group.name == preferred then
+      local ordered, seen = {}, {}
+      for _, member in ipairs(group.members) do
+        ordered[#ordered + 1] = member
+        seen[member] = true
+      end
+      for _, name in ipairs(names) do
+        if not seen[name] then
+          ordered[#ordered + 1] = name
+        end
       end
       return ordered
     end
