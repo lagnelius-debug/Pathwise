@@ -19,3 +19,7 @@ After every change:
    `gh api repos/lagnelius-debug/Pathwise/releases --jq '.[0].tag_name'`.
    (This session type can't create releases or push tags itself - both
    are refused with 403 - which is why the workflow does it.)
+   The workflow also uploads a new release to CurseForge
+   (tools/curseforge_upload.sh) once the CURSEFORGE_API_TOKEN secret and
+   CURSEFORGE_PROJECT_ID variable are set; a skipped or failed upload shows
+   in the run's "Upload to CurseForge" step.

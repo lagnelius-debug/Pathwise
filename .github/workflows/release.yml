@@ -3,10 +3,19 @@
 # that has no release yet gets one; otherwise nothing happens. Can also be
 # started from the Actions tab (Release > Run workflow - replaces the zip of
 # an existing release) or by pushing a version tag (v0.2.0, ...).
+# A new release is also uploaded to CurseForge (tools/curseforge_upload.sh)
+# when the repository has the CURSEFORGE_API_TOKEN secret and the
+# CURSEFORGE_PROJECT_ID variable; Run workflow with "Upload this version to
+# CurseForge" ticked uploads the current version again.
 name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      curseforge:
+        description: Upload this version to CurseForge
+        type: boolean
+        default: false
   push:
     branches: [main]
     tags: ["v*"]
@@ -61,11 +70,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$TAG" > /dev/null 2>&1; then
-            # Same version released again (Run workflow, tag): replace the zip.
-            gh release upload "$TAG" "Pathwise-$VERSION.zip" --clobber
-            exit 0
-          fi
           # Notes: the tag message, else the release notes in CHANGELOG.md.
           NOTES=""
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then
@@ -75,6 +79,22 @@ jobs:
           if [ -z "$NOTES" ] && [ -f CHANGELOG.md ]; then
             NOTES=$(awk -v v="## $VERSION" '$0 == v {on = 1; next} /^## / {on = 0} on' CHANGELOG.md)
           fi
+          # (CurseForge gets the notes alone: it installs the zip itself.)
+          printf '%s\n' "${NOTES:-Pathwise $VERSION}" > changelog.md
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # Same version released again (Run workflow, tag): replace the zip.
+            gh release upload "$TAG" "Pathwise-$VERSION.zip" --clobber
+            exit 0
+          fi
+          echo "CREATED=1" >> "$GITHUB_ENV"
           printf '%s\n\nDownload **Pathwise-%s.zip** below (not "Source code"), unzip it into World of Warcraft/_classic_era_/Interface/AddOns, and check that the folder is named Pathwise.\n' \
             "$NOTES" "$VERSION" > notes.md
           gh release create "$TAG" "Pathwise-$VERSION.zip" --target "$GITHUB_SHA" --title "Pathwise $VERSION" --notes-file notes.md
+
+      # (A new release, or Run workflow with "Upload to CurseForge" ticked.)
+      - name: Upload to CurseForge
+        if: env.SKIP != '1' && (env.CREATED == '1' || inputs.curseforge)
+        env:
+          CF_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          CF_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+        run: tools/curseforge_upload.sh "Pathwise-$VERSION.zip" "$VERSION" Pathwise_Vanilla.toc changelog.md

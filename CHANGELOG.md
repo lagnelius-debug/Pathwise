@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.7
+
+No changes in the game. New releases now also go to CurseForge by
+themselves, tagged for Classic Era 1.15.9 (the version is read from the
+TOC), so the CurseForge app finds a compatible file.
+
 ## 0.28.6
 
 - Target button and macro: mobs whose names end the same ("Pygmy Tide

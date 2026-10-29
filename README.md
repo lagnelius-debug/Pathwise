@@ -24,6 +24,15 @@ A World of Warcraft addon that follows your character's progression and tells yo
 2. The TOC uses interface `11509`, verified in game on 2026-10-22. After a Classic Era patch, run `/dump select(4, GetBuildInfo())` and update `## Interface:` in `Pathwise_Vanilla.toc` if the number changed.
 3. Turn on Lua errors with `/console scriptErrors 1`, or install BugGrabber and BugSack.
 
+## Publishing
+
+Every push to main that bumps `## Version:` makes a GitHub release (`.github/workflows/release.yml`). The same zip then goes to CurseForge, tagged with the game version from `## Interface:` (11509 = 1.15.9, Classic Era), with the CHANGELOG.md section as its changelog (`tools/curseforge_upload.sh`). This needs, once, in the repository's Settings > Secrets and variables > Actions:
+
+- Secret `CURSEFORGE_API_TOKEN`: a token from CurseForge > My Account > API tokens.
+- Variable `CURSEFORGE_PROJECT_ID`: the Project ID from the project page's "About Project" box.
+
+Without them the upload is skipped. To upload the current version (e.g. after adding them), go to Actions > Release > Run workflow and tick "Upload this version to CurseForge". After a Classic Era patch, update `## Interface:` in both TOCs first: CurseForge needs to know that game version.
+
 ## Commands
 
 | Command | What it does |
