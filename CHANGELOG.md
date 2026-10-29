@@ -3,6 +3,11 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.29.1
+
+No changes in the game. The CurseForge upload reports why it failed (or
+that it worked) on the release run's summary page.
+
 ## 0.29.0
 
 No changes in the game. CurseForge uploads are marked **beta** while the

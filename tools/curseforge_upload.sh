@@ -13,6 +13,16 @@
 # uploading (CF_VERSIONS_FILE: a saved game versions list, for testing).
 set -euo pipefail
 
+# Stops with a message - in a GitHub Actions run also as an error
+# annotation on the run, readable without the full log.
+Fail() {
+  echo "$1" >&2
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "::error title=CurseForge upload::$(tr '\n' ' ' <<< "$1")"
+  fi
+  exit 1
+}
+
 ZIP=$1 VERSION=$2 TOC=$3 CHANGELOG=$4
 API=${CF_API_BASE:-https://wow.curseforge.com/api}
 if [ -z "${CF_PROJECT_ID:-}" ]; then
@@ -20,7 +30,11 @@ if [ -z "${CF_PROJECT_ID:-}" ]; then
 fi
 
 if [ -z "${CF_API_TOKEN:-}" ] || [ -z "${CF_PROJECT_ID:-}" ]; then
-  echo "CurseForge upload skipped: no CF_API_TOKEN, or no project ID (CF_PROJECT_ID or ## X-Curse-Project-ID: in $TOC)."
+  MESSAGE="CurseForge upload skipped: no CF_API_TOKEN, or no project ID (CF_PROJECT_ID or ## X-Curse-Project-ID: in $TOC)."
+  echo "$MESSAGE"
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "::notice title=CurseForge upload::$MESSAGE"
+  fi
   exit 0
 fi
 
@@ -32,13 +46,16 @@ GAME_VERSION="$((INTERFACE / 10000)).$((INTERFACE / 100 % 100)).$((INTERFACE % 1
 if [ -n "${CF_VERSIONS_FILE:-}" ]; then
   VERSIONS=$(cat "$CF_VERSIONS_FILE")
 else
-  VERSIONS=$(curl -sSf -H "X-Api-Token: $CF_API_TOKEN" "$API/game/versions")
+  VERSIONS=$(curl -sS -w '\n%{http_code}' -H "X-Api-Token: $CF_API_TOKEN" "$API/game/versions") \
+    || Fail "Couldn't reach CurseForge for its game versions."
+  if [ "$(tail -n1 <<< "$VERSIONS")" != "200" ]; then
+    Fail "CurseForge refused the game versions request (HTTP $(tail -n1 <<< "$VERSIONS")): $(sed '$d' <<< "$VERSIONS" | head -c 300). Is the CURSEFORGE_API_TOKEN secret right?"
+  fi
+  VERSIONS=$(sed '$d' <<< "$VERSIONS")
 fi
 GAME_VERSION_ID=$(jq -r --arg name "$GAME_VERSION" '[.[] | select(.name == $name)][0].id // empty' <<< "$VERSIONS")
 if [ -z "$GAME_VERSION_ID" ]; then
-  echo "CurseForge has no game version $GAME_VERSION (from ## Interface: $INTERFACE in $TOC)." >&2
-  echo "Close ones: $(jq -r --arg major "${GAME_VERSION%.*}" '[.[] | select(.name | startswith($major)) | .name] | join(", ")' <<< "$VERSIONS")" >&2
-  exit 1
+  Fail "CurseForge has no game version $GAME_VERSION (from ## Interface: $INTERFACE in $TOC). Close ones: $(jq -r --arg major "${GAME_VERSION%.*}" '[.[] | select(.name | startswith($major)) | .name] | join(", ")' <<< "$VERSIONS")"
 fi
 
 RELEASE_TYPE=${CF_RELEASE_TYPE:-}
@@ -47,7 +64,7 @@ if [ -z "$RELEASE_TYPE" ]; then
 fi
 case "$RELEASE_TYPE" in
   release|beta|alpha) ;;
-  *) echo "CF_RELEASE_TYPE must be release, beta or alpha (not \"$RELEASE_TYPE\")." >&2; exit 1 ;;
+  *) Fail "CF_RELEASE_TYPE must be release, beta or alpha (not \"$RELEASE_TYPE\")." ;;
 esac
 
 METADATA=$(jq -n \
@@ -64,11 +81,15 @@ if [ "${DRY_RUN:-}" = "1" ]; then
 fi
 
 RESPONSE=$(curl -sS -w '\n%{http_code}' -H "X-Api-Token: $CF_API_TOKEN" \
-  -F "metadata=$METADATA" -F "file=@$ZIP" "$API/projects/$CF_PROJECT_ID/upload-file")
+  -F "metadata=$METADATA" -F "file=@$ZIP" "$API/projects/$CF_PROJECT_ID/upload-file") \
+  || Fail "Couldn't reach CurseForge to upload."
 STATUS=$(tail -n1 <<< "$RESPONSE")
 BODY=$(sed '$d' <<< "$RESPONSE")
 if [ "$STATUS" != "200" ]; then
-  echo "CurseForge upload failed (HTTP $STATUS): $BODY" >&2
-  exit 1
+  Fail "CurseForge upload failed (HTTP $STATUS): $(head -c 500 <<< "$BODY")"
 fi
-echo "Uploaded $ZIP to CurseForge for $GAME_VERSION as $RELEASE_TYPE: file $(jq -r '.id // "?"' <<< "$BODY")."
+MESSAGE="Uploaded $ZIP to CurseForge for $GAME_VERSION as $RELEASE_TYPE: file $(jq -r '.id // "?"' <<< "$BODY")."
+echo "$MESSAGE"
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+  echo "::notice title=CurseForge upload::$MESSAGE"
+fi
