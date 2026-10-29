@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.9
+
+No changes in the game. The CurseForge project ID (1767676) is in the
+TOC, so new releases upload to CurseForge once the API token is set on
+GitHub.
+
 ## 0.28.8
 
 No changes in the game. The CurseForge upload can read the project ID from
