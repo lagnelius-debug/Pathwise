@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.29.0
+
+No changes in the game. CurseForge uploads are marked **beta** while the
+version is below 1.0 (still in development); from 1.0 on they're
+releases.
+
 ## 0.28.9
 
 No changes in the game. The CurseForge project ID (1767676) is in the

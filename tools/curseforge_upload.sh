@@ -7,7 +7,9 @@
 # Needs CF_API_TOKEN (CurseForge > account settings > API tokens) and the
 # project ID: CF_PROJECT_ID, else the TOC's "## X-Curse-Project-ID:" (the
 # "Project ID" on the project page). Without them it says so and does
-# nothing. DRY_RUN=1 prints what would be sent instead of
+# nothing. Versions before 1.0 go up as beta, later ones as release
+# (CF_RELEASE_TYPE: release, beta or alpha overrides it).
+# DRY_RUN=1 prints what would be sent instead of
 # uploading (CF_VERSIONS_FILE: a saved game versions list, for testing).
 set -euo pipefail
 
@@ -39,11 +41,21 @@ if [ -z "$GAME_VERSION_ID" ]; then
   exit 1
 fi
 
+RELEASE_TYPE=${CF_RELEASE_TYPE:-}
+if [ -z "$RELEASE_TYPE" ]; then
+  if [ "${VERSION%%.*}" = "0" ]; then RELEASE_TYPE=beta; else RELEASE_TYPE=release; fi
+fi
+case "$RELEASE_TYPE" in
+  release|beta|alpha) ;;
+  *) echo "CF_RELEASE_TYPE must be release, beta or alpha (not \"$RELEASE_TYPE\")." >&2; exit 1 ;;
+esac
+
 METADATA=$(jq -n \
   --arg changelog "$(cat "$CHANGELOG")" \
   --arg name "Pathwise $VERSION" \
   --argjson gameVersion "$GAME_VERSION_ID" \
-  '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: [$gameVersion], releaseType: "release"}')
+  --arg releaseType "$RELEASE_TYPE" \
+  '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: [$gameVersion], releaseType: $releaseType}')
 
 if [ "${DRY_RUN:-}" = "1" ]; then
   echo "Would upload $ZIP to project $CF_PROJECT_ID for $GAME_VERSION (id $GAME_VERSION_ID):"
@@ -59,4 +71,4 @@ if [ "$STATUS" != "200" ]; then
   echo "CurseForge upload failed (HTTP $STATUS): $BODY" >&2
   exit 1
 fi
-echo "Uploaded $ZIP to CurseForge for $GAME_VERSION: file $(jq -r '.id // "?"' <<< "$BODY")."
+echo "Uploaded $ZIP to CurseForge for $GAME_VERSION as $RELEASE_TYPE: file $(jq -r '.id // "?"' <<< "$BODY")."
