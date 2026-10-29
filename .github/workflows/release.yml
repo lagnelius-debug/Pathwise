@@ -4,8 +4,9 @@
 # started from the Actions tab (Release > Run workflow - replaces the zip of
 # an existing release) or by pushing a version tag (v0.2.0, ...).
 # A new release is also uploaded to CurseForge (tools/curseforge_upload.sh)
-# when the repository has the CURSEFORGE_API_TOKEN secret and the
-# CURSEFORGE_PROJECT_ID variable; Run workflow with "Upload this version to
+# when the repository has the CURSEFORGE_API_TOKEN secret (the project ID
+# is "## X-Curse-Project-ID:" in the TOC, or a CURSEFORGE_PROJECT_ID
+# variable or secret); Run workflow with "Upload this version to
 # CurseForge" ticked uploads the current version again.
 name: Release
 
@@ -96,5 +97,5 @@ jobs:
         if: env.SKIP != '1' && (env.CREATED == '1' || inputs.curseforge)
         env:
           CF_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
-          CF_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          CF_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID || secrets.CURSEFORGE_PROJECT_ID }}
         run: tools/curseforge_upload.sh "Pathwise-$VERSION.zip" "$VERSION" Pathwise_Vanilla.toc changelog.md

@@ -20,6 +20,6 @@ After every change:
    (This session type can't create releases or push tags itself - both
    are refused with 403 - which is why the workflow does it.)
    The workflow also uploads a new release to CurseForge
-   (tools/curseforge_upload.sh) once the CURSEFORGE_API_TOKEN secret and
-   CURSEFORGE_PROJECT_ID variable are set; a skipped or failed upload shows
-   in the run's "Upload to CurseForge" step.
+   (tools/curseforge_upload.sh) once the CURSEFORGE_API_TOKEN secret is
+   set (project ID: "## X-Curse-Project-ID:" in the TOCs); a skipped or
+   failed upload shows in the run's "Upload to CurseForge" step.

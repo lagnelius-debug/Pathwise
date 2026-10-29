@@ -29,7 +29,8 @@ A World of Warcraft addon that follows your character's progression and tells yo
 Every push to main that bumps `## Version:` makes a GitHub release (`.github/workflows/release.yml`). The same zip then goes to CurseForge, tagged with the game version from `## Interface:` (11509 = 1.15.9, Classic Era), with the CHANGELOG.md section as its changelog (`tools/curseforge_upload.sh`). This needs, once, in the repository's Settings > Secrets and variables > Actions:
 
 - Secret `CURSEFORGE_API_TOKEN`: a token from CurseForge > My Account > API tokens.
-- Variable `CURSEFORGE_PROJECT_ID`: the Project ID from the project page's "About Project" box.
+
+The project ID (from the project page's "About Project" box) is `## X-Curse-Project-ID:` in both TOCs; a `CURSEFORGE_PROJECT_ID` variable or secret overrides it.
 
 Without them the upload is skipped. To upload the current version (e.g. after adding them), go to Actions > Release > Run workflow and tick "Upload this version to CurseForge". After a Classic Era patch, update `## Interface:` in both TOCs first: CurseForge needs to know that game version.
 

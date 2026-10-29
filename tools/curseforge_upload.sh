@@ -4,17 +4,21 @@
 #
 #   tools/curseforge_upload.sh <zip> <version> <toc> <changelog.md>
 #
-# Needs CF_API_TOKEN (CurseForge > account settings > API tokens) and
-# CF_PROJECT_ID (the "Project ID" on the project page). Without them it
-# says so and does nothing. DRY_RUN=1 prints what would be sent instead of
+# Needs CF_API_TOKEN (CurseForge > account settings > API tokens) and the
+# project ID: CF_PROJECT_ID, else the TOC's "## X-Curse-Project-ID:" (the
+# "Project ID" on the project page). Without them it says so and does
+# nothing. DRY_RUN=1 prints what would be sent instead of
 # uploading (CF_VERSIONS_FILE: a saved game versions list, for testing).
 set -euo pipefail
 
 ZIP=$1 VERSION=$2 TOC=$3 CHANGELOG=$4
 API=${CF_API_BASE:-https://wow.curseforge.com/api}
+if [ -z "${CF_PROJECT_ID:-}" ]; then
+  CF_PROJECT_ID=$(sed -n 's/^## X-Curse-Project-ID: *//p' "$TOC" | tr -d '\r ')
+fi
 
 if [ -z "${CF_API_TOKEN:-}" ] || [ -z "${CF_PROJECT_ID:-}" ]; then
-  echo "CurseForge upload skipped: CF_API_TOKEN or CF_PROJECT_ID isn't set."
+  echo "CurseForge upload skipped: no CF_API_TOKEN, or no project ID (CF_PROJECT_ID or ## X-Curse-Project-ID: in $TOC)."
   exit 0
 fi
 

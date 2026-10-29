@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.28.8
+
+No changes in the game. The CurseForge upload can read the project ID from
+the TOC (`## X-Curse-Project-ID:`), so only the API token has to be set
+on GitHub (as the CURSEFORGE_API_TOKEN secret).
+
 ## 0.28.7
 
 No changes in the game. New releases now also go to CurseForge by
