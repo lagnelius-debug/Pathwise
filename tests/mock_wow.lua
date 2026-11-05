@@ -414,6 +414,10 @@ WoW.items = {
   [6123] = { name = "Novice's Robe", equipLoc = "INVTYPE_ROBE", classID = 4, subclassID = 1, stats = {} },
   [12345] = { name = "Uncached Axe", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 0,
               stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.0 } },
+  -- Your screenshot: only armor apart.
+  [9040] = { name = "Frayed Cloak", equipLoc = "INVTYPE_CLOAK", classID = 4, subclassID = 1, stats = { RESISTANCE0_NAME = 5 } },
+  [9041] = { name = "Worn Hide Cloak", equipLoc = "INVTYPE_CLOAK", classID = 4, subclassID = 1, stats = { RESISTANCE0_NAME = 9 } },
+  [9042] = { name = "Another Frayed Cloak", equipLoc = "INVTYPE_CLOAK", classID = 4, subclassID = 1, stats = { RESISTANCE0_NAME = 5 } },
   [148] = { name = "Rugged Trapper's Boots", equipLoc = "INVTYPE_FEET", classID = 4, subclassID = 2, stats = {} },
   [2309] = { name = "Ragged Leather Boots", equipLoc = "INVTYPE_FEET", classID = 4, subclassID = 2,
              stats = { RESISTANCE0_NAME = 16 } },

@@ -175,3 +175,21 @@ check("/pw stats keys", WoW.ChatContains("ITEM_MOD_AGILITY_SHORT = 2") and WoW.C
 WoW.ClearChat()
 WoW.Slash("stats")
 check("/pw stats usage", WoW.ChatContains("Usage: /pw stats"))
+
+---------------------------------------------------------------------------
+section("M2: small differences")
+
+-- Your screenshot: Worn Hide Cloak (9 armor) over Frayed Cloak (5 armor)
+-- said "about the same" - next to the bow's damage, 4 armor is under 1% of
+-- all gear, but it's still better.
+Equip(15, 9040)
+WoW.RunTimers()
+check("4 more armor: a small upgrade (" .. tostring(WoW.HoverItem(9041)) .. ")", WoW.HoverItem(9041) == "Pathwise: small upgrade")
+local compare = GearScore:Compare(WoW.ItemLink(9041))
+check("counts as an upgrade (for the reward picker too)", compare.kind == "upgrade" and compare.small)
+check("an equal item: about the same", WoW.HoverItem(9042) == "Pathwise: about the same")
+Equip(15, 9041)
+WoW.RunTimers()
+check("4 less: a small downgrade", WoW.HoverItem(9040) == "Pathwise: small downgrade")
+Equip(15, nil)
+WoW.RunTimers()

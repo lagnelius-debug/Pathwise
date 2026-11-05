@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.31.2
+
+- Gear tooltips: an item that's only a little better now says "small
+  upgrade" instead of "about the same" (and a little worse: "small
+  downgrade"). A cloak with 4 more armor counts for under 1% of all your
+  gear next to a weapon's damage, so it was called "about the same", though
+  it's still better. "About the same" is now only for a real tie. The
+  reward picker also counts such small upgrades.
+
 ## 0.31.1
 
 - WoW Forever: no second "Sell price" line in item tooltips - Forever's

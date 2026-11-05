@@ -37,6 +37,8 @@ function Tooltip.FormatResult(result)
       text = string.format(L.TOOLTIP_UPGRADE_EMPTY_PERCENT, result.percent)
     elseif result.empty then
       text = L.TOOLTIP_UPGRADE_EMPTY
+    elseif result.small then
+      text = L.TOOLTIP_UPGRADE_SMALL
     elseif result.percent then
       text = string.format(L.TOOLTIP_UPGRADE_PERCENT, result.percent)
     else
@@ -44,7 +46,9 @@ function Tooltip.FormatResult(result)
     end
   elseif kind == "downgrade" then
     color = COLOR_DOWN
-    if result.percent then
+    if result.small then
+      text = L.TOOLTIP_DOWNGRADE_SMALL
+    elseif result.percent then
       text = string.format(L.TOOLTIP_DOWNGRADE_PERCENT, -result.percent)
     else
       text = L.TOOLTIP_DOWNGRADE

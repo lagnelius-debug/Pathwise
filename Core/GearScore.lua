@@ -12,8 +12,12 @@ local Data = Pathwise.Data
 
 local GearScore = Pathwise:NewModule("GearScore")
 
--- Differences smaller than this (in percent) count as "about the same".
-local SAME_THRESHOLD_PERCENT = 1
+-- Any score difference counts (a cloak with 4 more armor is better, even
+-- when it's a tiny share of all gear next to a weapon's damage); under this
+-- (in percent) it's a "small" upgrade or downgrade (result.small).
+local SMALL_PERCENT = 1
+-- Differences below this are rounding: "about the same".
+local TIE = 1e-9
 
 -- An item usable from a later level only counts as an "upgrade later" if
 -- that level is at most this far away; by then better gear comes along
@@ -262,15 +266,14 @@ function GearScore:Compare(link)
   end
   if empty then
     result.kind = "upgrade"
-  elseif result.percent and math.abs(result.percent) < SAME_THRESHOLD_PERCENT then
-    result.kind = "same"
-  elseif diff > 0 then
+  elseif diff > TIE then
     result.kind = "upgrade"
-  elseif diff < 0 then
+  elseif diff < -TIE then
     result.kind = "downgrade"
   else
     result.kind = "same"
   end
+  result.small = not empty and result.percent ~= nil and math.abs(result.percent) < SMALL_PERCENT
   return result
 end
 

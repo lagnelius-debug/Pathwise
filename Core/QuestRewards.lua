@@ -93,7 +93,7 @@ local function Announce(recommendation, link)
   end
   local compare = recommendation.compare
   if recommendation.reason == "UPGRADE" then
-    if compare.percent then
+    if compare.percent and not compare.small then
       Pathwise:Printf(L.QUEST_BEST_UPGRADE_PERCENT, link, compare.percent)
     else
       Pathwise:Printf(L.QUEST_BEST_UPGRADE, link)
