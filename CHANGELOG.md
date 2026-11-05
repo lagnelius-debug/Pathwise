@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.32.1
+
+- Quests where you go somewhere or do something there (place an owl,
+  explore a spot, talk to someone) no longer say "Kill <name>". Some quests
+  count those spots with an invisible marker NPC - in "Eyes of the
+  Sentinels" (WoW Forever) it's named "Credit", so the guide said "Kill
+  Credit". Now the step uses the quest log's own words (or "Go to the
+  marked spot" / "Talk to <name>"), the arrow points at the next spot not
+  done yet, and there's no target macro for it.
+
 ## 0.32.0
 
 - WoW Forever: talent advice works there now. Pathwise reads Forever's

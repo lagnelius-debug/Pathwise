@@ -619,16 +619,17 @@ local function GetObjectives(logIndex, questID)
     return objectives
   end
   for i = 1, (GetNumQuestLeaderBoards and GetNumQuestLeaderBoards(logIndex) or 0) do
-    local text, _, finished = GetQuestLogLeaderBoard(i, logIndex)
+    local text, objectiveType, finished = GetQuestLogLeaderBoard(i, logIndex)
     local have, need = ParseProgress(text)
-    objectives[i] = { text = text, finished = finished and true or false, have = have, need = need }
+    objectives[i] = { text = text, type = objectiveType, finished = finished and true or false, have = have, need = need }
   end
   return objectives
 end
 
 -- Returns quests, collapsedHeaders.
 -- quests: { { questID, title, level, zone, suggestedGroup, complete,
---             failed, objectives = { { text, finished, have, need } } } }
+--             failed, objectives = { { text, type, finished, have, need } } } }
+-- (type: "monster", "item", "object", "event", ...)
 -- zone is the quest log header the quest is listed under (localized; usually
 -- the zone name). Quests under a header the player collapsed are not
 -- returned by the API; we don't expand headers because that would change

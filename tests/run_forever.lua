@@ -59,7 +59,8 @@ C_QuestLog = {
     local list = {}
     for i, o in ipairs(Entry(questID) and Entry(questID).objectives or {}) do
       local have, need = o.text:match("(%d+)/(%d+)")
-      list[i] = { text = o.text, finished = o.finished or false, numFulfilled = tonumber(have), numRequired = tonumber(need) }
+      list[i] = { text = o.text, type = o.type or "monster", finished = o.finished or false,
+        numFulfilled = tonumber(have), numRequired = tonumber(need) }
     end
     return list
   end,

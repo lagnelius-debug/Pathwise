@@ -253,7 +253,8 @@ local function GetObjectives(questID)
     if not have then
       have, need = ParseProgress(objective.text)
     end
-    objectives[i] = { text = objective.text, finished = objective.finished and true or false, have = have, need = need }
+    objectives[i] = { text = objective.text, type = objective.type, finished = objective.finished and true or false,
+      have = have, need = need }
   end
   return objectives
 end

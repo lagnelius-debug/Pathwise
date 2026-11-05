@@ -703,6 +703,8 @@ local function InsidePlan(dungeon, quests, level, greenRange)
           or #task.npcs > 0 and table.concat(task.npcs, ", ", 1, math.min(#task.npcs, 2))
         local line = from and string.format(L.INSIDE_LOOT_FROM, task.item, from) or string.format(L.INSIDE_LOOT, task.item)
         table.insert(bossIndex and forBoss or forOther, { index = bossIndex, text = line })
+      elseif task.kind == "event" then
+        table.insert(forOther, { text = task.text })
       else
         table.insert(forOther, { text = string.format(L.INSIDE_USE, task.object or "?") })
       end

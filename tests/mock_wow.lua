@@ -627,7 +627,7 @@ function GetNumQuestLeaderBoards(i)
 end
 function GetQuestLogLeaderBoard(j, i)
   local o = WoW.questLog[i].objectives[j]
-  return o.text, "monster", o.finished
+  return o.text, o.type or "monster", o.finished
 end
 
 ---------------------------------------------------------------------------

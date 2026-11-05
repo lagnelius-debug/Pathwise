@@ -296,6 +296,58 @@ if questie:IsAvailable() then
   local tasks = {}
   for _, line in ipairs(quest and quest.subLines or {}) do tasks[#tasks + 1] = line.text end
   check("taming quest task uses the quest's wording", table.concat(tasks, ",") == "Tame a Webwood Lurker")
+
+  -- Reported on Forever: "Eyes of the Sentinels" (place owls at four spots)
+  -- said "Kill Credit". Its creature objectives are invisible "Credit"
+  -- markers that QuestieDB marks as events (icon 3), not kills.
+  local q2, n2 = LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get
+  LibQuestieDB.Quest.Get = function(id, key)
+    if id == 98067 and key == "objectives" then
+      return { { { 270418, nil, 3 }, { 270419, nil, 3 }, { 270420, nil, 3 } } }
+    end
+    if id == 98067 and (key == "startedBy" or key == "finishedBy") then return { { 3601 } } end
+    return q2(id, key)
+  end
+  local creditSpots = { [270418] = { 30, 20 }, [270419] = { 58, 63 }, [270420] = { 70, 20 } }
+  LibQuestieDB.Npc.Get = function(id, key)
+    if creditSpots[id] then return ({ name = "Credit", spawns = { [141] = { creditSpots[id] } } })[key] end
+    return n2(id, key)
+  end
+  local function EventStep(objectives)
+    WoW.questLog = { { header = true, title = "Darnassus" },
+      { title = "Eyes of the Sentinels", level = 11, questID = 98067, objectives = objectives } }
+    WoW.FireEvent("QUEST_LOG_UPDATE")
+    WoW.RunTimers()
+    local step = Item("quest:98067")
+    local lines = {}
+    for _, line in ipairs(step and step.subLines or {}) do lines[#lines + 1] = line.text end
+    return step, table.concat(lines, ",")
+  end
+  local step, lines = EventStep({ { text = "Cenarion Hold depths: 1/1", finished = true },
+    { text = "Darnassus Bank: 0/1" }, { text = "City Gate: 0/1" } })
+  check("event objectives: the quest log's words, not \"Kill Credit\": " .. lines,
+    lines == "Darnassus Bank,City Gate")
+  check("event objectives: the arrow goes to an open spot, no NPC to target",
+    step and step.target and step.target.x == 0.58 and #(step.target.names or {}) == 0)
+  local tasks = questie:QuestTasks(Pathwise.Platform.GetQuestLog()[1])
+  check("event objectives in the dungeon tasks too", tasks and #tasks == 2 and tasks[1].kind == "event"
+    and tasks[1].text == "Darnassus Bank")
+  step, lines = EventStep({ { text = "Credit slain: 1/1", finished = true }, { text = "Credit slain: 0/1" },
+    { text = "Credit slain: 1/1", finished = true } })
+  check("event objectives the log only calls \"Credit\": go to the marked spot: " .. lines,
+    lines == "Go to the marked spot" and step.target and step.target.x == 0.58)
+  local q3 = LibQuestieDB.Quest.Get
+  LibQuestieDB.Quest.Get = function(id, key)
+    if id == 98067 and key == "objectives" then return { { { 270419, nil, 5 } } } end
+    return q3(id, key)
+  end
+  step, lines = EventStep({ { text = "Sentinel Owl: 0/1", type = "item" } })
+  check("a talk objective with no quest log line: talk to the NPC: " .. lines, lines == "Talk to Credit")
+  LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get = q2, n2
+  WoW.questLog = { { header = true, title = "Hunter" },
+    { title = "Taming the Beast", level = 10, questID = 6063, objectives = { { text = "Tame a Webwood Lurker: 0/1" } } } }
+  WoW.FireEvent("QUEST_LOG_UPDATE")
+  WoW.RunTimers()
 end
 -- A later quest of the chain (different ID, same title) counts too.
 WoW.questLog[2].questID = 6101
