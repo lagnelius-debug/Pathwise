@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.5
+
+No changes in the game. CurseForge uploads are tagged with every game
+version of the right number (1.15.9, 1.60.1), whichever kind of game
+CurseForge files it under, and the upload reports which kinds those are.
+
 ## 0.30.4
 
 - WoW Forever: the Training panel (spells to learn at your trainer now,

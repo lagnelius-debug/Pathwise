@@ -60,25 +60,42 @@ else
   fi
   VERSIONS=$(sed '$d' <<< "$VERSIONS")
 fi
+# The kinds of game version ("WoW Classic Era", ...), to report what each
+# tag is; not needed for the upload.
+if [ -n "${CF_VERSION_TYPES_FILE:-}" ]; then
+  TYPES=$(cat "$CF_VERSION_TYPES_FILE")
+elif [ -n "${CF_VERSIONS_FILE:-}" ]; then
+  TYPES="[]"
+else
+  TYPES=$(curl -sSf -H "X-Api-Token: $CF_API_TOKEN" "$API/game/version-types" 2>/dev/null || echo "[]")
+fi
 # Interface number -> game version: 11509 -> 1.15.9 (major, two-digit
 # minor, two-digit patch). Each TOC's (and each of a TOC's interfaces).
 GAME_VERSIONS=() GAME_VERSION_IDS=()
 for TOC_FILE in ${TOCS//,/ }; do
   for INTERFACE in $(sed -n 's/^## Interface: *//p' "$TOC_FILE" | tr -d '\r ' | tr ',' ' '); do
     GAME_VERSION="$((INTERFACE / 10000)).$((INTERFACE / 100 % 100)).$((INTERFACE % 100))"
-    ID=$(jq -r --arg name "$GAME_VERSION" '[.[] | select(.name == $name)][0].id // empty' <<< "$VERSIONS")
-    if [ -z "$ID" ]; then
+    # (Every game version of that name: the same number can exist for more
+    # than one kind of game.)
+    IDS=$(jq -r --arg name "$GAME_VERSION" '[.[] | select(.name == $name) | .id] | join(" ")' <<< "$VERSIONS")
+    if [ -z "$IDS" ]; then
       Warn "CurseForge has no game version $GAME_VERSION (from ## Interface: $INTERFACE in $TOC_FILE); left out. Close ones: $(jq -r --arg major "${GAME_VERSION%.*}" '[.[] | select(.name | startswith($major)) | .name] | join(", ")' <<< "$VERSIONS")"
-    elif [[ " ${GAME_VERSION_IDS[*]} " != *" $ID "* ]]; then
-      GAME_VERSIONS+=("$GAME_VERSION")
-      GAME_VERSION_IDS+=("$ID")
+    else
+      for ID in $IDS; do
+        if [[ " ${GAME_VERSION_IDS[*]} " != *" $ID "* ]]; then
+          KIND=$(jq -r --argjson id "$ID" --argjson types "$TYPES" \
+            '([.[] | select(.id == $id)][0].gameVersionTypeID) as $type | ([$types[] | select(.id == $type)][0].name // ("type " + ($type | tostring)))' <<< "$VERSIONS")
+          GAME_VERSIONS+=("$GAME_VERSION ($KIND)")
+          GAME_VERSION_IDS+=("$ID")
+        fi
+      done
     fi
   done
 done
 if [ ${#GAME_VERSION_IDS[@]} -eq 0 ]; then
   Fail "CurseForge knows none of the game versions in $TOCS."
 fi
-GAME_VERSION=$(IFS=,; echo "${GAME_VERSIONS[*]}")
+GAME_VERSION=$(IFS=,; echo "${GAME_VERSIONS[*]}" | sed 's/,/, /g')
 
 RELEASE_TYPE=${CF_RELEASE_TYPE:-}
 if [ -z "$RELEASE_TYPE" ]; then
