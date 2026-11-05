@@ -59,7 +59,9 @@ local function CreateButton()
   border:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
 
   button:SetScript("OnClick", function(_, mouseButton)
-    if mouseButton == "RightButton" then
+    if mouseButton == "LeftButton" and IsShiftKeyDown and IsShiftKeyDown() then
+      Pathwise:GetModule("BugReportFrame"):Open()
+    elseif mouseButton == "RightButton" then
       Pathwise:GetModule("SettingsPanel"):Open()
     else
       Pathwise:GetModule("NextStepsFrame"):Toggle()
@@ -76,6 +78,7 @@ local function CreateButton()
     GameTooltip:SetText("Pathwise")
     GameTooltip:AddLine(L.MINIMAP_TOOLTIP_LEFT, 1, 1, 1)
     GameTooltip:AddLine(L.MINIMAP_TOOLTIP_RIGHT, 1, 1, 1)
+    GameTooltip:AddLine(L.MINIMAP_TOOLTIP_BUG, 1, 1, 1)
     GameTooltip:AddLine(L.MINIMAP_TOOLTIP_DRAG, 0.7, 0.7, 0.7)
     GameTooltip:Show()
   end)

@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.33.1
+
+- The bug report is easier to find: a "Report a problem..." button at the
+  top of Pathwise's settings (right-click the minimap button), and
+  Shift-click on the minimap button. /pw bug still works too.
+
 ## 0.33.0
 
 - WoW Forever: the dungeon guide knows Forever's new dungeons - The Hall

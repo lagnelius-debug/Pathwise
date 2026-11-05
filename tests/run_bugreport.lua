@@ -34,6 +34,21 @@ check("read-only: typing puts the report back", box:GetText() == report)
 box._scripts.OnEscapePressed(box)
 check("Escape closes the window", not frame:IsShown())
 
+-- Also from the settings window and the minimap button (Shift-click).
+_G.PathwiseSettingsBugReport:Click()
+check("the settings window's \"Report a problem\" button opens it", frame:IsShown())
+frame:Hide()
+local minimapButton = _G.PathwiseMinimapButton
+IsShiftKeyDown = function() return true end
+minimapButton._scripts.OnClick(minimapButton, "LeftButton")
+check("Shift-click on the minimap button opens it", frame:IsShown())
+frame:Hide()
+IsShiftKeyDown = function() return false end
+minimapButton._scripts.OnClick(minimapButton, "LeftButton")
+check("a plain click still toggles the To-do window, not the report", not frame:IsShown())
+minimapButton._scripts.OnClick(minimapButton, "LeftButton")
+IsShiftKeyDown = nil
+
 -- Only the last 5 errors are kept.
 for i = 1, 7 do
   Pathwise.Platform.SafeCall(function() error("error " .. i) end)

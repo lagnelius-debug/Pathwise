@@ -123,6 +123,15 @@ local function CreatePanel()
   title:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
   title:SetText(L.SETTINGS_TITLE)
 
+  -- Report a problem (also /pw bug and Shift-click on the minimap button).
+  local bug = CreateFrame("Button", "PathwiseSettingsBugReport", panel, "UIPanelButtonTemplate")
+  bug:SetSize(150, 22)
+  bug:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -16, -14)
+  bug:SetText(L.SETTINGS_BUG_REPORT)
+  bug:SetScript("OnClick", function()
+    Pathwise:GetModule("BugReportFrame"):Open()
+  end)
+
   -- General
   local general = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
   general:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -20)
