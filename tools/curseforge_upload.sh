@@ -97,6 +97,9 @@ if [ ${#GAME_VERSION_IDS[@]} -eq 0 ]; then
 fi
 GAME_VERSION=$(IFS=,; echo "${GAME_VERSIONS[*]}" | sed 's/,/, /g')
 
+# QuestieDB (CurseForge project "questiedb") is a required dependency there:
+# the CurseForge app installs it with Pathwise. (In the game it's optional:
+# Pathwise runs without it, with less to show.)
 RELEASE_TYPE=${CF_RELEASE_TYPE:-}
 if [ -z "$RELEASE_TYPE" ]; then
   if [ "${VERSION%%.*}" = "0" ]; then RELEASE_TYPE=beta; else RELEASE_TYPE=release; fi
@@ -111,7 +114,8 @@ METADATA=$(jq -n \
   --arg name "Pathwise $VERSION" \
   --argjson gameVersions "[$(IFS=,; echo "${GAME_VERSION_IDS[*]}")]" \
   --arg releaseType "$RELEASE_TYPE" \
-  '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: $gameVersions, releaseType: $releaseType}')
+  '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: $gameVersions,
+    releaseType: $releaseType, relations: {projects: [{slug: "questiedb", type: "requiredDependency"}]}}')
 
 if [ "${DRY_RUN:-}" = "1" ]; then
   echo "Would upload $ZIP to project $CF_PROJECT_ID for $GAME_VERSION:"

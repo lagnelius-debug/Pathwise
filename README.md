@@ -31,7 +31,7 @@ Every push to main that bumps `## Version:` makes a GitHub release (`.github/wor
 
 - Secret `CURSEFORGE_API_TOKEN`: a token from CurseForge > My Account > API tokens.
 
-The project ID (from the project page's "About Project" box) is `## X-Curse-Project-ID:` in both TOCs; a `CURSEFORGE_PROJECT_ID` variable or secret overrides it. Versions before 1.0 go up as **beta**, 1.0 and later as **release**; a `CURSEFORGE_RELEASE_TYPE` variable (`release`, `beta` or `alpha`) overrides that.
+QuestieDB is declared a required dependency on CurseForge (project `questiedb`), so the app installs it with Pathwise. The project ID (from the project page's "About Project" box) is `## X-Curse-Project-ID:` in both TOCs; a `CURSEFORGE_PROJECT_ID` variable or secret overrides it. Versions before 1.0 go up as **beta**, 1.0 and later as **release**; a `CURSEFORGE_RELEASE_TYPE` variable (`release`, `beta` or `alpha`) overrides that.
 
 Without them the upload is skipped. To upload the current version (e.g. after adding them), go to Actions > Release > Run workflow and tick "Upload this version to CurseForge". After a Classic Era patch, update `## Interface:` in both TOCs first: CurseForge needs to know that game version.
 

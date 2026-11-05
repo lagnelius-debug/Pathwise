@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.7
+
+No changes in the game. On CurseForge, QuestieDB is now a required
+dependency of Pathwise: the CurseForge app installs it together with
+Pathwise, so the quest guide has its quest data from the start. (Questie
+itself isn't needed.)
+
 ## 0.30.6
 
 Fix from a bug check:
