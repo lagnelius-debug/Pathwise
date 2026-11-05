@@ -312,6 +312,22 @@ ammoNeeded = true
 check("ammo needed: the warning as on Classic Era", Platform.AmmoNeeded() and HasAmmoStep())
 S.inventory[18] = nil
 
+-- No ranged slot (like the modern game): ranged weapons go in the main hand.
+local rangedShown = true
+C_PaperDollInfo.IsRangedSlotShown = function() return rangedShown end
+local bow = Platform.GetItemInfo(2504)
+check("with a ranged slot: a bow goes there", bow.slots[1] == 18 and #bow.slots == 1)
+rangedShown = false
+bow = Platform.GetItemInfo(2504)
+check("without one: main hand, two-handed", bow.slots[1] == Platform.SLOT_MAINHAND and #bow.slots == 1 and bow.isTwoHand
+  and bow.isRanged)
+local notRanged
+for id, data in pairs(WoW.items) do
+  if data.equipLoc == "INVTYPE_HEAD" then notRanged = id break end
+end
+check("other items unchanged", Platform.GetItemInfo(notRanged).slots[1] == 1)
+rangedShown = true
+
 ---------------------------------------------------------------------------
 
 check("no errors (" .. tostring(WoW.errors[1]) .. ")", #WoW.errors == 0)

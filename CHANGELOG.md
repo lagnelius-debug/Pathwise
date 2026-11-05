@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.6
+
+Fix from a bug check:
+
+- WoW Forever: when the game has no ranged slot (its character sheet can
+  hide it, like the modern game), the gear advice compares bows, guns,
+  crossbows, wands and thrown weapons with your main-hand weapon, as
+  two-handers. Before, it compared them with the missing ranged slot, so
+  every one looked like an upgrade.
+
 ## 0.30.5
 
 No changes in the game. CurseForge uploads are tagged with every game

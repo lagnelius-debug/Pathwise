@@ -175,6 +175,25 @@ function Platform.GetQuestGreenRange(playerLevel)
 end
 
 ---------------------------------------------------------------------------
+-- Items: the ranged slot
+---------------------------------------------------------------------------
+
+-- Forever's character sheet can do without a ranged slot (like the modern
+-- game): then bows, guns, crossbows, wands and thrown weapons go in the main
+-- hand, two-handed, and are compared with what's there.
+local RANGED_EQUIP_LOCS = { INVTYPE_RANGED = true, INVTYPE_RANGEDRIGHT = true, INVTYPE_THROWN = true }
+local classicGetItemInfo = Platform.GetItemInfo
+function Platform.GetItemInfo(item)
+  local info = classicGetItemInfo(item)
+  if info and RANGED_EQUIP_LOCS[info.equipLoc] and C_PaperDollInfo and C_PaperDollInfo.IsRangedSlotShown
+    and C_PaperDollInfo.IsRangedSlotShown() == false then
+    info.slots = { Platform.SLOT_MAINHAND }
+    info.isTwoHand = true
+  end
+  return info
+end
+
+---------------------------------------------------------------------------
 -- Hunter: ammo and pet (C_PaperDollInfo, C_PetInfo, the pet spellbook)
 ---------------------------------------------------------------------------
 
