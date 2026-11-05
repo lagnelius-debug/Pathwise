@@ -128,6 +128,9 @@ local EVENT_SECTIONS = {
   CHARACTER_POINTS_CHANGED = "talents",
   -- May not exist in Classic Era; a failed registration is harmless.
   PLAYER_TALENT_UPDATE = "talents",
+  -- WoW Forever's trait talents: applied changes, a switched spec.
+  TRAIT_CONFIG_UPDATED = "talents",
+  ACTIVE_COMBAT_CONFIG_CHANGED = "talents",
   SKILL_LINES_CHANGED = "skills",
   ZONE_CHANGED_NEW_AREA = "zone",
   ZONE_CHANGED = "zone",

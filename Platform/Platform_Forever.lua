@@ -23,15 +23,146 @@ Platform.flavor = "Forever"
 -- Talents and Beast Training
 ---------------------------------------------------------------------------
 
--- Forever's talents are trait trees (C_Traits), not Classic's talent tabs:
--- Pathwise's talent builds don't apply. No trees and no unspent points:
--- the talent advice stays quiet.
-function Platform.GetTalentTrees()
-  return {}
+-- Forever's talents are a trait tree (C_Traits) with one group of nodes
+-- per talent tree (Beast Mastery, Marksmanship, Survival), as the Camelot
+-- ClassTalentsFrame shows them. Rows and columns aren't Classic's, so
+-- Pathwise's builds find their talents by name here (TalentsMatchByName).
+
+-- The player's talent config and its tree, as the talent window picks them.
+local function TalentConfig()
+  if not (C_Traits and C_Traits.GetConfigInfo) then
+    return nil
+  end
+  local configID = C_ClassTalents and C_ClassTalents.GetActiveConfigID and C_ClassTalents.GetActiveConfigID()
+  if not configID and C_SpecializationInfo and C_SpecializationInfo.GetCombatConfigIDForSpecGroup then
+    local group = C_SpecializationInfo.GetActiveSpecGroup and C_SpecializationInfo.GetActiveSpecGroup() or 1
+    configID = C_SpecializationInfo.GetCombatConfigIDForSpecGroup(group)
+  end
+  local info = configID and C_Traits.GetConfigInfo(configID)
+  local treeID = info and info.treeIDs and info.treeIDs[1]
+  if treeID then
+    return configID, treeID
+  end
 end
 
+-- A node's talent name: its spell's, or the definition's own.
+local function NodeName(configID, node)
+  local entryID = node.activeEntry and node.activeEntry.entryID or (node.entryIDs and node.entryIDs[1])
+  local entry = entryID and C_Traits.GetEntryInfo and C_Traits.GetEntryInfo(configID, entryID)
+  local definition = entry and entry.definitionID and C_Traits.GetDefinitionInfo
+    and C_Traits.GetDefinitionInfo(entry.definitionID)
+  if not definition then
+    return nil
+  end
+  if definition.overrideName and definition.overrideName ~= "" then
+    return definition.overrideName
+  end
+  return definition.spellID and Platform.GetSpellName(definition.spellID)
+end
+
+-- Numbers each distinct value 1, 2, ... in ascending order.
+local function Ranks(values)
+  local sorted, seen = {}, {}
+  for _, value in ipairs(values) do
+    if not seen[value] then
+      seen[value] = true
+      sorted[#sorted + 1] = value
+    end
+  end
+  table.sort(sorted)
+  local rank = {}
+  for i, value in ipairs(sorted) do
+    rank[value] = i
+  end
+  return rank
+end
+
+-- Same shape as Platform_Classic's: trees in the window's order, each
+-- talent with its row (tier) and column within its tree, the committed
+-- rank (not what's only clicked and not applied yet), its node and whether
+-- the game lets it take a point now (available: with points to spend, the
+-- game's own check; without, whether its row and the talents before it are
+-- open).
+function Platform.GetTalentTrees()
+  local trees = {}
+  local configID, treeID = TalentConfig()
+  if not configID or not (C_Traits.GetGroupDisplayInfoByTreeID and C_Traits.GetTreeNodes and C_Traits.GetNodeInfo) then
+    return trees
+  end
+  local hasPoints = Platform.GetUnspentTalentPoints() > 0
+  local groups = {}
+  for _, display in ipairs(C_Traits.GetGroupDisplayInfoByTreeID(treeID) or {}) do
+    groups[#groups + 1] = display
+  end
+  table.sort(groups, function(a, b)
+    return (a.orderIndex or 0) < (b.orderIndex or 0)
+  end)
+  local treeOfGroup = {}
+  for i, display in ipairs(groups) do
+    trees[i] = { index = i, name = display.displayName, points = 0, talents = {} }
+    treeOfGroup[display.groupID] = trees[i]
+  end
+  for _, nodeID in ipairs(C_Traits.GetTreeNodes(treeID) or {}) do
+    local node = C_Traits.GetNodeInfo(configID, nodeID)
+    local tree
+    for _, groupID in ipairs(node and node.groupIDs or {}) do
+      tree = tree or treeOfGroup[groupID]
+    end
+    local name = tree and node.isVisible ~= false and NodeName(configID, node)
+    if name then
+      local rank = node.activeRank or node.ranksPurchased or 0
+      local available
+      if hasPoints and node.canPurchaseRank ~= nil then
+        available = node.canPurchaseRank
+      else
+        available = node.isAvailable ~= false and node.meetsEdgeRequirements ~= false
+      end
+      tree.talents[#tree.talents + 1] = {
+        index = #tree.talents + 1,
+        name = name,
+        posX = node.posX or 0,
+        posY = node.posY or 0,
+        rank = rank,
+        maxRank = node.maxRanks or 0,
+        nodeID = nodeID,
+        tab = tree.index,
+        available = available and true or false,
+      }
+      tree.points = tree.points + rank
+    end
+  end
+  for _, tree in ipairs(trees) do
+    local xs, ys = {}, {}
+    for _, talent in ipairs(tree.talents) do
+      xs[#xs + 1], ys[#ys + 1] = talent.posX, talent.posY
+    end
+    local column, tier = Ranks(xs), Ranks(ys)
+    for _, talent in ipairs(tree.talents) do
+      talent.column, talent.tier = column[talent.posX], tier[talent.posY]
+    end
+  end
+  return trees
+end
+
+-- The "Unspent Talents" number of the talent window (applied changes only).
 function Platform.GetUnspentTalentPoints()
+  local configID, treeID = TalentConfig()
+  if configID and C_Traits.GetTreeCurrencyInfo then
+    local currency = (C_Traits.GetTreeCurrencyInfo(configID, treeID, true) or {})[1]
+    if currency and type(currency.quantity) == "number" then
+      return currency.quantity
+    end
+  end
+  if C_ClassTalents and C_ClassTalents.HasUnspentTalentPoints then
+    local _, classPoints, specPoints = C_ClassTalents.HasUnspentTalentPoints()
+    return (classPoints or 0) + (specPoints or 0)
+  end
   return 0
+end
+
+-- Builds find talents by name: Forever's rows and columns are its own.
+function Platform.TalentsMatchByName()
+  return true
 end
 
 -- There's no Beast Training craft window (the pet ability guide reads it).

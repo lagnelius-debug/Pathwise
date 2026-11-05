@@ -278,8 +278,24 @@ function Talents:GetBuild()
 end
 
 -- The client's talent at a pick's position (tab, tier, column), or by its
--- English name as a fallback.
+-- English name as a fallback. Where the game's trees aren't laid out like
+-- Classic's (Forever), by name only: the pick's tree first, then the others.
 local function FindTalent(trees, pick)
+  if Platform.TalentsMatchByName() then
+    local first = trees[pick[1]]
+    for pass = 1, 2 do
+      for _, tree in ipairs(trees) do
+        if (pass == 1) == (tree == first) then
+          for _, talent in ipairs(tree.talents) do
+            if talent.name == pick[5] then
+              return talent
+            end
+          end
+        end
+      end
+    end
+    return nil
+  end
   local tree = trees[pick[1]]
   if not tree then
     return nil
@@ -300,8 +316,11 @@ end
 -- Returns a list of { pick, talent, rank, maxRank, name, open } (rank = the
 -- rank this point brings the talent to; open = its tier is reachable), at
 -- most `limit` long. Points whose tier isn't open yet are listed after the
--- open ones.
+-- open ones. Where talents are matched by name, picks the game doesn't have
+-- are left out, and a talent the game says can take a point (available)
+-- is open.
 function Talents.UpcomingPoints(trees, build, limit)
+  local byName = Platform.TalentsMatchByName()
   local open, closed = {}, {}
   local spentInTree = {}
   for i, tree in ipairs(trees) do
@@ -320,9 +339,15 @@ function Talents.UpcomingPoints(trees, build, limit)
     local key = pick[1] .. ":" .. pick[2] .. ":" .. pick[3]
     local before = plannedBefore[key] or 0
     plannedBefore[key] = before + pick[4]
-    for rank = before + 1, before + pick[4] do
+    local tab = talent and talent.tab or pick[1]
+    for rank = before + 1, (talent or not byName) and before + pick[4] or before do
       if rank > have then
-        local tierOpen = (spentInTree[pick[1]] or 0) >= (pick[2] - 1) * 5
+        local tierOpen
+        if talent and talent.available ~= nil then
+          tierOpen = talent.available
+        else
+          tierOpen = (spentInTree[tab] or 0) >= ((talent and talent.tier or pick[2]) - 1) * 5
+        end
         local point = {
           pick = pick,
           talent = talent,
@@ -334,7 +359,7 @@ function Talents.UpcomingPoints(trees, build, limit)
         table.insert(tierOpen and open or closed, point)
         if tierOpen then
           -- Planning ahead: this point opens later tiers of its tree.
-          spentInTree[pick[1]] = (spentInTree[pick[1]] or 0) + 1
+          spentInTree[tab] = (spentInTree[tab] or 0) + 1
         end
       end
     end
@@ -375,16 +400,47 @@ local function PointText(point)
   return string.format(L.TALENT_POINT, point.name, point.rank, point.maxRank)
 end
 
+-- How many of a build's talents (by name) the client's trees have, of how
+-- many.
+function Talents.BuildCoverage(trees, build)
+  local found, total, seen = 0, 0, {}
+  for _, pick in ipairs(build.picks) do
+    if not seen[pick[5]] then
+      seen[pick[5]] = true
+      total = total + 1
+      if FindTalent(trees, pick) then
+        found = found + 1
+      end
+    end
+  end
+  return found, total
+end
+
+-- Where talents are matched by name, a build with fewer than this share of
+-- its talents in the game's trees isn't used: the trees are too different
+-- (or the client isn't in English).
+local MIN_BUILD_COVERAGE = 0.5
+
+-- Returns the upcoming points, the build - or {}, nil and the build that
+-- doesn't fit the game's talents.
 function Talents:GetUpcoming(limit)
   local build = self:GetBuild()
   if not build then
     return {}, nil
   end
-  return Talents.UpcomingPoints(GetSnapshot().talents.trees, build, limit or PREVIEW_PICKS), build
+  local trees = GetSnapshot().talents.trees
+  if Platform.TalentsMatchByName() then
+    local found, total = Talents.BuildCoverage(trees, build)
+    if found == 0 or found < total * MIN_BUILD_COVERAGE then
+      return {}, nil, build
+    end
+  end
+  return Talents.UpcomingPoints(trees, build, limit or PREVIEW_PICKS), build
 end
 
 -- The talent to put the next point into, for highlighting it in the
--- talent window: { tab, index, name, rank, maxRank }, or nil when there's no
+-- talent window: { tab, index, nodeID, name, rank, maxRank } (nodeID: the
+-- trait node, on Forever), or nil when there's no
 -- unspent point, no build, or the next build point can't be taken yet.
 function Talents:GetNextPoint()
   if not Pathwise.db.talentAdvice or (GetSnapshot().talents.unspent or 0) <= 0 then
@@ -395,8 +451,9 @@ function Talents:GetNextPoint()
     return nil
   end
   return {
-    tab = point.pick[1],
+    tab = point.talent.tab or point.pick[1],
     index = point.talent.index,
+    nodeID = point.talent.nodeID,
     name = point.name,
     rank = point.rank,
     maxRank = point.maxRank,
@@ -414,9 +471,17 @@ function Talents:UpdateAdvice(allowAnnounce)
   end
   local snapshot = GetSnapshot()
   local unspent = snapshot.talents.unspent or 0
-  local upcoming, build = self:GetUpcoming(PREVIEW_PICKS)
+  local upcoming, build, unmatched = self:GetUpcoming(PREVIEW_PICKS)
   local items = {}
-  if unspent > 0 and #upcoming > 0 then
+  if unspent > 0 and not build then
+    -- No build to follow: just the reminder.
+    items[1] = {
+      id = "talent",
+      priority = NextSteps.PRIORITY.TALENT,
+      text = string.format(unspent == 1 and L.TALENT_SPEND_ONE_ANY or L.TALENT_SPEND_ANY, unspent),
+      detail = { unmatched and string.format(L.TALENT_BUILD_UNMATCHED, unmatched.name) or L.TALENT_NO_BUILD },
+    }
+  elseif unspent > 0 and #upcoming > 0 then
     local detail = { build.name }
     for i, point in ipairs(upcoming) do
       detail[#detail + 1] = string.format("%d. %s", i, PointText(point))
@@ -433,7 +498,9 @@ function Talents:UpdateAdvice(allowAnnounce)
       Pathwise:Printf(L.TALENT_ANNOUNCE, PointText(upcoming[1]))
     end
   end
-  if build then
+  -- (Not where talents are matched by name: talents a build doesn't name
+  -- may just be the game's own, and unlearning works differently there.)
+  if build and not Platform.TalentsMatchByName() then
     local off = Talents.OffBuildPoints(snapshot.talents.trees, build)
     if off >= RESPEC_THRESHOLD then
       items[#items + 1] = {
@@ -462,6 +529,20 @@ local function PrintCheck()
   end
   local trees = GetSnapshot().talents.trees
   local problems = 0
+  if Platform.TalentsMatchByName() then
+    -- Positions are the game's own here; what matters is the names.
+    local seen = {}
+    for _, pick in ipairs(build.picks) do
+      if not seen[pick[5]] and not FindTalent(trees, pick) then
+        problems = problems + 1
+        Pathwise:PrintLine("  " .. string.format(L.TALENT_CHECK_MISSING, pick[5], pick[1]))
+      end
+      seen[pick[5]] = true
+    end
+    local found, total = Talents.BuildCoverage(trees, build)
+    Pathwise:Printf(L.TALENT_CHECK_NAMES, build.name, found, total)
+    return
+  end
   for _, pick in ipairs(build.picks) do
     local talent = FindTalent(trees, pick)
     local atPosition = talent and talent.tier == pick[2] and talent.column == pick[3]
@@ -479,9 +560,9 @@ Pathwise:RegisterCommand("talents", function(args)
     PrintCheck()
     return
   end
-  local upcoming, build = Talents:GetUpcoming(PREVIEW_PICKS)
+  local upcoming, build, unmatched = Talents:GetUpcoming(PREVIEW_PICKS)
   if not build then
-    Pathwise:Print(L.TALENT_NO_BUILD)
+    Pathwise:Print(unmatched and string.format(L.TALENT_BUILD_UNMATCHED, unmatched.name) or L.TALENT_NO_BUILD)
     return
   end
   Pathwise:Printf(L.TALENT_HEADER, build.name, GetSnapshot().talents.unspent or 0)

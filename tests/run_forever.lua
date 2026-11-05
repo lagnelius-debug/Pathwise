@@ -190,7 +190,7 @@ check("coin text from C_CurrencyInfo", Platform.CoinText(12345) == "coins:12345"
 check("free bag slots from C_Container", Platform.GetFreeBagSlots() == 40)
 
 ---------------------------------------------------------------------------
--- Talents and Beast Training: not Classic's, left alone
+-- Talents before the trait API is there; no Beast Training window
 
 S.level = 20
 WoW.FireEvent("PLAYER_LEVEL_UP", 20)
@@ -199,7 +199,7 @@ local talentSteps = 0
 for _, item in ipairs(Pathwise:GetModule("NextSteps"):GetItems()) do
   if item.id:find("talent") then talentSteps = talentSteps + 1 end
 end
-check("no talent trees and no unspent points: no talent steps", #Platform.GetTalentTrees() == 0
+check("no trait talent API: no talent trees and no unspent points, no talent steps", #Platform.GetTalentTrees() == 0
   and Platform.GetUnspentTalentPoints() == 0 and talentSteps == 0)
 check("no Beast Training window", Platform.GetBeastTraining() == nil)
 
@@ -289,6 +289,145 @@ check("the tab closes it", not trainingPanel:IsShown() and Pathwise.db.trainerPa
 trainingTab:Click()
 check("and opens it again", trainingPanel:IsShown())
 PlayerSpellsFrame:Hide()
+
+---------------------------------------------------------------------------
+-- Talents: a trait tree (C_ClassTalents, C_Traits), one node group per
+-- talent tree. Rows and columns aren't Classic's: builds go by name.
+
+-- nodes: { [nodeID] = { group, x, y, name, rank, max, staged, available } }
+local traitNodes, unspentTalents = {}, 2
+local function TraitTree(spec)
+  traitNodes = {}
+  for i, n in ipairs(spec) do
+    traitNodes[1000 + i] = { group = n[1], x = n[2], y = n[3], name = n[4], rank = n[5] or 0, max = n[6] or 5,
+      staged = n[7], available = n[8] ~= false }
+  end
+end
+C_ClassTalents = {
+  GetActiveConfigID = function() return 77 end,
+  HasUnspentTalentPoints = function() return unspentTalents > 0, unspentTalents, 0 end,
+}
+C_Traits = {
+  GetConfigInfo = function(configID) return configID == 77 and { ID = 77, treeIDs = { 900 } } or nil end,
+  -- (Out of window order on purpose: orderIndex sorts them.)
+  GetGroupDisplayInfoByTreeID = function()
+    return { { groupID = 12, orderIndex = 2, displayName = "Marksmanship" },
+      { groupID = 11, orderIndex = 1, displayName = "Beast Mastery" },
+      { groupID = 13, orderIndex = 3, displayName = "Survival" } }
+  end,
+  GetTreeNodes = function()
+    local ids = {}
+    for id in pairs(traitNodes) do ids[#ids + 1] = id end
+    table.sort(ids)
+    return ids
+  end,
+  GetNodeInfo = function(_, nodeID)
+    local n = traitNodes[nodeID]
+    return { ID = nodeID, posX = n.x, posY = n.y, groupIDs = { 5, n.group }, entryIDs = { nodeID * 10 },
+      activeRank = n.rank, ranksPurchased = n.rank, currentRank = n.rank + (n.staged or 0), maxRanks = n.max,
+      isVisible = true, isAvailable = true, meetsEdgeRequirements = true,
+      canPurchaseRank = n.available and n.rank < n.max }
+  end,
+  GetEntryInfo = function(_, entryID) return { definitionID = entryID + 1 } end,
+  GetDefinitionInfo = function(definitionID)
+    return { overrideName = traitNodes[(definitionID - 1) / 10].name }
+  end,
+  GetTreeCurrencyInfo = function(_, _, excludeStaged)
+    return { { traitCurrencyID = 1, quantity = unspentTalents, spent = 0 } }
+  end,
+}
+
+-- Forever's own layout: in row 1, Endurance Training sits where Classic
+-- has Improved Aspect of the Hawk; Thick Hide moved to Marksmanship.
+TraitTree({
+  { 11, 600, 100, "Endurance Training" }, { 11, 1200, 100, "Improved Aspect of the Hawk", 2, 5, 1 },
+  { 11, 300, 100, "Improved Revive Pet", 0, 2 },
+  { 11, 600, 400, "Bestial Swiftness", 0, 1, nil, false }, { 11, 1200, 400, "Unleashed Fury", 0, 5, nil, false },
+  { 11, 900, 700, "Ferocity", 0, 5, nil, false }, { 11, 900, 1000, "Intimidation", 0, 1, nil, false },
+  { 11, 900, 1300, "Bestial Wrath", 0, 1, nil, false },
+  { 12, 600, 100, "Efficiency" }, { 12, 900, 100, "Lethal Shots" }, { 12, 300, 100, "Improved Concussive Shot" },
+  { 12, 600, 400, "Thick Hide", 0, 3, nil, false },
+  { 13, 600, 100, "Monster Slaying" }, { 13, 900, 100, "Humanoid Slaying" },
+})
+WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
+WoW.RunTimers()
+local trees = Platform.GetTalentTrees()
+local hawk, thickHide
+for _, tree in ipairs(trees) do
+  for _, talent in ipairs(tree.talents) do
+    if talent.name == "Improved Aspect of the Hawk" then hawk = talent end
+    if talent.name == "Thick Hide" then thickHide = talent end
+  end
+end
+check("talent trees in the window's order", #trees == 3 and trees[1].name == "Beast Mastery"
+  and trees[2].name == "Marksmanship" and trees[3].name == "Survival")
+check("a talent's row and column within its tree, its applied rank (not the clicked one)", hawk and hawk.tier == 1
+  and hawk.column == 4 and hawk.rank == 2 and hawk.maxRank == 5 and hawk.tab == 1 and trees[1].points == 2)
+check("rows from the node height", thickHide and thickHide.tier == 2 and thickHide.tab == 2 and not thickHide.available)
+check("unspent points from the tree currency", Platform.GetUnspentTalentPoints() == 2)
+
+local Talents = Pathwise:GetModule("Talents")
+local function TalentItems()
+  local found = {}
+  for _, item in ipairs(Pathwise:GetModule("NextSteps"):GetItems()) do
+    if item.id:find("talent") then found[#found + 1] = item end
+  end
+  return found
+end
+local items = TalentItems()
+check("the build's next talent, found by name: " .. tostring(items[1] and items[1].text),
+  #items == 1 and items[1].text:find("Improved Aspect of the Hawk (3/5)", 1, true) ~= nil)
+local upcoming = Talents:GetUpcoming(5)
+local upcomingNames = {}
+for i, point in ipairs(upcoming) do upcomingNames[i] = point.name end
+check("talents the game doesn't have are left out, ones it won't take yet come last: "
+  .. table.concat(upcomingNames, ", "), upcoming[3] and upcoming[3].name == "Improved Aspect of the Hawk"
+  and upcoming[4] and upcoming[4].name == "Endurance Training" and upcoming[4].open
+  and not table.concat(upcomingNames, ","):find("Spirit Bond", 1, true))
+local nextPoint = Talents:GetNextPoint()
+check("next point: its trait node", nextPoint and nextPoint.nodeID == 1002 and nextPoint.tab == 1
+  and nextPoint.rank == 3)
+
+-- The talent window: Forever's PlayerSpellsFrame.TalentsFrame, a button per node.
+local talentButtons = {}
+PlayerSpellsFrame.TalentsFrame = CreateFrame("Frame", nil, PlayerSpellsFrame)
+function PlayerSpellsFrame.TalentsFrame:GetTalentButtonByNodeID(nodeID)
+  talentButtons[nodeID] = talentButtons[nodeID] or CreateFrame("Button", nil, self)
+  return talentButtons[nodeID]
+end
+local createFrame, glows = CreateFrame, {}
+CreateFrame = function(kind, name, parent, ...)
+  local frame = createFrame(kind, name, parent, ...)
+  if parent == PlayerSpellsFrame.TalentsFrame and kind == "Frame" then glows[#glows + 1] = frame end
+  return frame
+end
+WoW.FireEvent("ADDON_LOADED", "Blizzard_PlayerSpells")
+CreateFrame = createFrame
+PlayerSpellsFrame:Show()
+PlayerSpellsFrame.TalentsFrame:Show()
+Pathwise:GetModule("TalentHighlight"):Update()
+local glowOn
+for _, glow in ipairs(glows) do
+  if glow:IsShown() then glowOn = glow:GetParent() end
+end
+check("the talent window glows on the next talent's button", glowOn ~= nil and glowOn == talentButtons[1002])
+PlayerSpellsFrame:Hide()
+
+-- A tree too different from the build (or names in another language):
+-- just the reminder, and no "unlearn" advice.
+TraitTree({ { 11, 600, 100, "Verbesserter Aspekt des Falken" }, { 11, 900, 100, "Ausdauertraining", 3, 5 },
+  { 12, 600, 100, "Effizienz", 4, 5 }, { 13, 600, 100, "Monstertöten", 5, 5 } })
+WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
+WoW.RunTimers()
+items = TalentItems()
+check("a build that doesn't fit: \"Spend 2 talent points\", and why", #items == 1
+  and items[1].text == "Spend 2 talent points" and items[1].detail[1]:find("don't match", 1, true) ~= nil)
+check("a build that doesn't fit: no next point to glow", Talents:GetNextPoint() == nil)
+unspentTalents = 0
+WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
+check("all points spent: no talent step", #TalentItems() == 0)
+C_ClassTalents, C_Traits, traitNodes = nil, nil, {}
+WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
 
 ---------------------------------------------------------------------------
 -- Ammo: Forever can do without

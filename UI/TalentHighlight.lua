@@ -10,18 +10,22 @@ local addonName, Pathwise = ...
 -- TalentFrameTab1..3, refreshed by TalentFrame_Update); later Classic
 -- flavors use PlayerTalentFrame. Both are checked at runtime. Button N shows
 -- talent N of the selected tree (GetTalentInfo order).
+-- WoW Forever's talent window is PlayerSpellsFrame.TalentsFrame
+-- (Blizzard_PlayerSpells) with all trees at once: the glow goes on the
+-- button of the talent's trait node (GetTalentButtonByNodeID).
 
 local L = Pathwise.L
 
 local TalentHighlight = Pathwise:NewModule("TalentHighlight")
 
-local TALENT_ADDON = "Blizzard_TalentUI"
+local TALENT_ADDONS = { Blizzard_TalentUI = true, Blizzard_PlayerSpells = true }
 local FRAME_NAMES = { "TalentFrame", "PlayerTalentFrame" }
 local MAX_BUTTONS = 40
 local GLOW_TEXTURE = "Interface\\Buttons\\UI-ActionButton-Border"
 local GOLD = { 1, 0.82, 0.1 }
 
 local talentFrame, frameName
+local byNode -- Forever's talent window: buttons by trait node
 local glow, tabGlow
 local glowButton -- the button the glow is on, for the tooltip line
 local hookedButtons = {}
@@ -97,7 +101,17 @@ function TalentHighlight:Update()
   if not point or not talentFrame:IsShown() then
     return
   end
-  if SelectedTab() == point.tab then
+  if byNode then
+    local button = point.nodeID and talentFrame:GetTalentButtonByNodeID(point.nodeID)
+    if button and button:IsShown() then
+      glowButton = button
+      PlaceGlow(glow, button)
+      if not hookedButtons[button] then
+        hookedButtons[button] = true
+        button:HookScript("OnEnter", OnButtonEnter)
+      end
+    end
+  elseif SelectedTab() == point.tab then
     local button = _G[frameName .. "Talent" .. point.index]
     if button and button:IsShown() then
       glowButton = button
@@ -123,12 +137,30 @@ local function Attach()
     end
   end
   if not talentFrame then
+    local talents = PlayerSpellsFrame and PlayerSpellsFrame.TalentsFrame
+    if type(talents) == "table" and talents.GetTalentButtonByNodeID then
+      talentFrame, frameName, byNode = talents, "PlayerSpellsFrame.TalentsFrame", true
+    end
+  end
+  if not talentFrame then
     return false
   end
   glow = CreateGlow(1.8)
   tabGlow = CreateGlow(1.3)
   local function Refresh()
     TalentHighlight:Update()
+  end
+  if byNode then
+    -- Buttons come from a pool and are laid out again when the tree or the
+    -- points change: placed anew after each.
+    for _, method in ipairs({ "LoadTalentTreeInternal", "UpdateTreeCurrencyInfo" }) do
+      if type(talentFrame[method]) == "function" then
+        hooksecurefunc(talentFrame, method, Refresh)
+      end
+    end
+    talentFrame:HookScript("OnShow", Refresh)
+    TalentHighlight:Debugf("Talent highlight attached to %s.", frameName)
+    return true
   end
   local updateName = frameName .. "_Update"
   if type(_G[updateName]) == "function" then
@@ -147,7 +179,7 @@ local function Attach()
 end
 
 function TalentHighlight:OnAddonLoaded(_, name)
-  if name == TALENT_ADDON and Attach() then
+  if TALENT_ADDONS[name] and Attach() then
     self:UnregisterEvent("ADDON_LOADED")
     self:Update()
   end

@@ -427,6 +427,11 @@ L.TALENT_BUILD_DONE = "The build is complete."
 L.TALENT_NO_BUILD = "No talent build for your class yet."
 L.TALENT_CHECK_MISMATCH = "%s expected at tree %d, tier %d, column %d; the game has %s at tier %d, column %d"
 L.TALENT_CHECK_RESULT = "Checked %d talent picks: %d mismatches."
+L.TALENT_CHECK_MISSING = "%s (tree %d) isn't one of the game's talents"
+L.TALENT_CHECK_NAMES = "%s: %d of its %d talents are in the game's trees."
+L.TALENT_SPEND_ONE_ANY = "Spend %d talent point"
+L.TALENT_SPEND_ANY = "Spend %d talent points"
+L.TALENT_BUILD_UNMATCHED = "Your game's talent trees don't match Pathwise's %s build, so it can't pick talents for you here. '/pw talents check' shows what's different."
 
 -- Hunter module
 L.CMD_AMMO = "show ammo and its warning levels ('/pw ammo 200 50' sets them)"

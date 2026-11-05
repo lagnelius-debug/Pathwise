@@ -376,6 +376,12 @@ function Platform.GetUnspentTalentPoints()
   return nil
 end
 
+-- Classic's builds name each talent by its tree, tier and column, which
+-- also works on clients in other languages; Forever matches names instead.
+function Platform.TalentsMatchByName()
+  return false
+end
+
 ---------------------------------------------------------------------------
 -- Skills (professions, weapon skills, ...)
 ---------------------------------------------------------------------------

@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.32.0
+
+- WoW Forever: talent advice works there now. Pathwise reads Forever's
+  talent window (its new trait trees), so the To-do list shows
+  "Spend 1 talent point: <talent>" again, the next talent glows in the
+  talent window, and your path (Beast Mastery, Marksmanship, ...) follows
+  your talents. Forever's rows and columns aren't Classic's, so the build's
+  talents are found by name; talents Forever doesn't have are skipped. If
+  your trees don't match the build well enough (or your game isn't in
+  English), the To-do list just says "Spend 2 talent points".
+  `/pw talents check` lists which build talents Forever doesn't have.
+
 ## 0.31.2
 
 - Gear tooltips: an item that's only a little better now says "small
