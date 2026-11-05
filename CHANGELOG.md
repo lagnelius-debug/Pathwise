@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.33.0
+
+- WoW Forever: the dungeon guide knows Forever's new dungeons - The Hall
+  of Thanes (Alliance, beneath Ironforge), Ruins of Lordaeron, Excavation
+  Site: Wetlands and City of Dalaran. They're in the dungeon list in level
+  order, the arrow leads to their entrances, their quests count as dungeon
+  quests, and inside, the guide lists the quest bosses (Rath'mael, The
+  Baron, Durgen Dirgehammer, ...). Their level ranges are estimated from
+  their quests, and the order of the bosses isn't known yet, so they're
+  listed as "Boss: <name>" without "Boss 2 of 5".
+
 ## 0.32.2
 
 - "Speak with" quests that QuestieDB marks as an event at a real NPC (the

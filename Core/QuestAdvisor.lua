@@ -739,8 +739,10 @@ local function InsidePlan(dungeon, quests, level, greenRange)
   local items = {}
   for index, boss in ipairs(dungeon.bosses or {}) do
     if bosses[index] then
-      items[#items + 1] = { id = "inside:boss:" .. index, priority = P.QUEST_NEAR,
-        text = string.format(L.INSIDE_BOSS, index, #dungeon.bosses, boss[1], boss[2]), subLines = bosses[index] }
+      -- (Without a known order and place: just the boss.)
+      local text = dungeon.bossOrder == false and string.format(L.INSIDE_BOSS_ANY, boss[1])
+        or string.format(L.INSIDE_BOSS, index, #dungeon.bosses, boss[1], boss[2])
+      items[#items + 1] = { id = "inside:boss:" .. index, priority = P.QUEST_NEAR, text = text, subLines = bosses[index] }
     end
   end
   for _, entry in ipairs(along) do

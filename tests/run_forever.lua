@@ -239,6 +239,21 @@ check("Stratholme's entrance on Forever's Eastern Plaguelands map", entrance and
     or Near(entrance.x, 0.479 * 0.8997577709204458 - 0.016464926382438023)))
 QuestieData.AreaToUiMap = areaToUiMap
 
+-- Forever's new dungeons: in the list, in level order, known inside.
+local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+local names, ordered, previous = {}, true, 0
+for _, dungeon in ipairs(DungeonGuide.List()) do
+  names[dungeon.name] = dungeon
+  ordered = ordered and dungeon.min >= previous
+  previous = dungeon.min
+end
+check("Forever's dungeons in the list, in level order", names["The Hall of Thanes"] and names["Ruins of Lordaeron"]
+  and names["Excavation Site: Wetlands"] and names["City of Dalaran"] and ordered)
+IsInInstance = function() return true, "party" end
+GetInstanceInfo = function() return "Ruins of Lordaeron", "party", 1, "Normal", 5, 0, false, 2999 end
+check("inside the Ruins of Lordaeron: known by its instance", DungeonGuide:GetInside() == names["Ruins of Lordaeron"])
+IsInInstance, GetInstanceInfo = nil, nil
+
 ---------------------------------------------------------------------------
 -- Secret values in combat
 

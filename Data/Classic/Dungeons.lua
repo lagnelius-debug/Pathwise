@@ -294,3 +294,56 @@ Pathwise.Data.Dungeons = {
     },
   },
 }
+
+-- WoW Forever's new dungeons, added to the list there (in level order).
+-- Area IDs, entrances and instance IDs are from QuestieDB's Forever data
+-- (support/Forever/Zones/dungeons.lua, instanceIdToAreaId); the bosses are
+-- the ones its Forever quests name. Not known yet: the order of the bosses
+-- (bossOrder = false: listed without "Boss 2 of 5" and where) and the
+-- official level ranges - these are estimated from the quests' levels.
+if Pathwise.Platform.flavor == "Forever" then
+  local forever = {
+    {
+      id = 16919, name = "The Hall of Thanes", min = 12, max = 18, faction = "Alliance", instance = 3065,
+      entrances = { { 1537, 27.63, 47.83 } },
+      bossOrder = false,
+      bosses = {
+        { "Durgen Dirgehammer" },
+      },
+    },
+    {
+      id = 16611, name = "Ruins of Lordaeron", min = 18, max = 25, instance = 2999,
+      entrances = { { 1497, 72.48, 11.33 } },
+      bossOrder = false,
+      bosses = {
+        { "Rath'mael" },
+        { "The Baron" },
+      },
+    },
+    {
+      id = 16732, name = "Excavation Site: Wetlands", min = 26, max = 33, instance = 2998,
+      entrances = { { 11, 47.79, 56.16 } },
+    },
+    {
+      id = 16544, name = "City of Dalaran", min = 30, max = 37, instance = 2959,
+      entrances = { { 36, 8.46, 59.21 } },
+      bossOrder = false,
+      bosses = {
+        { "Arcanic Enigma" },
+        { "Atrexis the Grave Knight" },
+        { "Shade of the Archmage" },
+      },
+    },
+  }
+  local list = Pathwise.Data.Dungeons
+  for _, dungeon in ipairs(forever) do
+    local at = #list + 1
+    for i, other in ipairs(list) do
+      if other.min > dungeon.min then
+        at = i
+        break
+      end
+    end
+    table.insert(list, at, dungeon)
+  end
+end

@@ -289,3 +289,10 @@ LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Quest.GetAllIds = que
 C_QuestLog = nil
 QuestieData:ResetPickups()
 UpdateLog({})
+
+local foreverOnly = false
+for _, dungeon in ipairs(Pathwise.Data.Dungeons) do
+  if dungeon.name == "Ruins of Lordaeron" or dungeon.name == "The Hall of Thanes" then foreverOnly = true end
+end
+check("Forever's new dungeons aren't in Classic Era's list", not foreverOnly)
+
