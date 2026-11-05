@@ -703,3 +703,39 @@ Pathwise.Data.TalentBuilds = {
     },
   },
 }
+
+-- WoW Forever's own builds. Forever's talent trees are laid out
+-- differently from Classic's, so these give each talent's place in
+-- Forever's grid (gamePositions: tier = row, column = column, as the
+-- talent window shows them; Pathwise reads the grid from the trait tree),
+-- and the game supplies the talent's name. The names here are only
+-- labels; "?" where a talent isn't known from Classic.
+if Pathwise.Platform.flavor == "Forever" then
+  local hunter = Pathwise.Data.TalentBuilds.HUNTER
+  -- Beast Mastery, 31/16/4 (the player's chosen build). Pet and hawk
+  -- first, Bestial Wrath at 40, then Marksmanship and a little Survival.
+  hunter.builds.BM_FOREVER = {
+    name = "Beast Mastery (31/16/4)",
+    gamePositions = true,
+    picks = {
+      { 1, 1, 3, 3, "Improved Aspect of the Hawk" }, -- 10-12
+      { 1, 1, 2, 5, "Endurance Training" },          -- 13-17
+      { 1, 2, 1, 2, "?" },                           -- 18-19
+      { 1, 3, 3, 5, "Unleashed Fury" },              -- 20-24
+      { 1, 3, 2, 1, "?" },                           -- 25 (leads to Intimidation)
+      { 1, 4, 3, 5, "Ferocity" },                    -- 26-30
+      { 1, 4, 4, 1, "Bestial Swiftness" },           -- 31
+      { 1, 5, 2, 1, "Intimidation" },                -- 32
+      { 1, 5, 4, 2, "Bestial Discipline" },          -- 33-34
+      { 1, 6, 3, 5, "Frenzy" },                      -- 35-39
+      { 1, 7, 2, 1, "Bestial Wrath" },               -- 40
+      { 2, 1, 3, 5, "?" },                           -- 41-45
+      { 2, 2, 3, 5, "?" },                           -- 46-50
+      { 2, 2, 1, 3, "?" },                           -- 51-53
+      { 2, 2, 2, 2, "?" },                           -- 54-55
+      { 2, 4, 2, 1, "Aimed Shot" },                  -- 56
+      { 3, 1, 2, 4, "?" },                           -- 57-60
+    },
+  }
+  hunter.bySpec.BEAST_MASTERY = "BM_FOREVER"
+end

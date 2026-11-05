@@ -279,9 +279,14 @@ end
 
 -- The client's talent at a pick's position (tab, tier, column), or by its
 -- English name as a fallback. Where the game's trees aren't laid out like
--- Classic's (Forever), by name only: the pick's tree first, then the others.
-local function FindTalent(trees, pick)
-  if Platform.TalentsMatchByName() then
+-- Classic's (Forever), by name only: the pick's tree first, then the others -
+-- unless the build gives the game's own positions (gamePositions).
+local function ByName(build)
+  return Platform.TalentsMatchByName() and not (build and build.gamePositions)
+end
+
+local function FindTalent(trees, pick, build)
+  if ByName(build) then
     local first = trees[pick[1]]
     for pass = 1, 2 do
       for _, tree in ipairs(trees) do
@@ -320,7 +325,7 @@ end
 -- are left out, and a talent the game says can take a point (available)
 -- is open.
 function Talents.UpcomingPoints(trees, build, limit)
-  local byName = Platform.TalentsMatchByName()
+  local byName = ByName(build)
   local open, closed = {}, {}
   local spentInTree = {}
   for i, tree in ipairs(trees) do
@@ -334,7 +339,7 @@ function Talents.UpcomingPoints(trees, build, limit)
     plannedTotal[key] = (plannedTotal[key] or 0) + pick[4]
   end
   for _, pick in ipairs(build.picks) do
-    local talent = FindTalent(trees, pick)
+    local talent = FindTalent(trees, pick, build)
     local have = talent and talent.rank or 0
     local key = pick[1] .. ":" .. pick[2] .. ":" .. pick[3]
     local before = plannedBefore[key] or 0
@@ -379,7 +384,7 @@ end
 function Talents.OffBuildPoints(trees, build)
   local planned = {} -- [talent table] = ranks the build wants
   for _, pick in ipairs(build.picks) do
-    local talent = FindTalent(trees, pick)
+    local talent = FindTalent(trees, pick, build)
     if talent then
       planned[talent] = (planned[talent] or 0) + pick[4]
     end
@@ -408,7 +413,7 @@ function Talents.BuildCoverage(trees, build)
     if not seen[pick[5]] then
       seen[pick[5]] = true
       total = total + 1
-      if FindTalent(trees, pick) then
+      if FindTalent(trees, pick, build) then
         found = found + 1
       end
     end
@@ -429,7 +434,7 @@ function Talents:GetUpcoming(limit)
     return {}, nil
   end
   local trees = GetSnapshot().talents.trees
-  if Platform.TalentsMatchByName() then
+  if ByName(build) then
     local found, total = Talents.BuildCoverage(trees, build)
     if found == 0 or found < total * MIN_BUILD_COVERAGE then
       return {}, nil, build
@@ -529,11 +534,11 @@ local function PrintCheck()
   end
   local trees = GetSnapshot().talents.trees
   local problems = 0
-  if Platform.TalentsMatchByName() then
+  if ByName(build) then
     -- Positions are the game's own here; what matters is the names.
     local seen = {}
     for _, pick in ipairs(build.picks) do
-      if not seen[pick[5]] and not FindTalent(trees, pick) then
+      if not seen[pick[5]] and not FindTalent(trees, pick, build) then
         problems = problems + 1
         Pathwise:PrintLine("  " .. string.format(L.TALENT_CHECK_MISSING, pick[5], pick[1]))
       end
@@ -544,7 +549,7 @@ local function PrintCheck()
     return
   end
   for _, pick in ipairs(build.picks) do
-    local talent = FindTalent(trees, pick)
+    local talent = FindTalent(trees, pick, build)
     local atPosition = talent and talent.tier == pick[2] and talent.column == pick[3]
     if not talent or not atPosition or talent.name ~= pick[5] then
       problems = problems + 1

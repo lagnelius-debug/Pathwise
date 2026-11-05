@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.34.0
+
+- WoW Forever: a Beast Mastery talent build made for Forever's trees
+  (31/16/4), used when your path is Beast Mastery. It goes by where each
+  talent sits in Forever's talent window, and the game supplies the
+  names. Order: Improved Aspect of the Hawk 3, then the pet talents,
+  Bestial Wrath at 40, then Marksmanship (Aimed Shot at 56) and 4 points
+  in Survival. `/pw talents` lists the next points; `/pw talents check`
+  shows the names the game has at each spot.
+
 ## 0.33.3
 
 - Target macro back for quests where you use something on a creature or

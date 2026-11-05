@@ -369,6 +369,8 @@ TraitTree({
   { 12, 600, 400, "Thick Hide", 0, 3, nil, false },
   { 13, 600, 100, "Monster Slaying" }, { 13, 900, 100, "Humanoid Slaying" },
 })
+-- (The Leveling path: Classic's build, matched by name.)
+Pathwise.charDB.goal = "LEVELING"
 WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
 WoW.RunTimers()
 local trees = Platform.GetTalentTrees()
@@ -433,6 +435,42 @@ end
 check("the talent window glows on the next talent's button, with a \"Next point\" tag", glowOn ~= nil
   and glowOn.tag and glowOn.tag.text:GetText() == "Next point")
 PlayerSpellsFrame:Hide()
+
+-- The Beast Mastery path: Forever's own build, by the game's grid. Rows
+-- and columns as in the talent window (a node's posY/posX, a few units off
+-- in places); the names here aren't Classic's.
+Pathwise.charDB.goal = "BEAST_MASTERY"
+TraitTree({
+  { 11, 1200, 100, "Wild Endurance", 5, 5 }, { 11, 1803, 100, "Hawk Mastery", 3, 5 },
+  { 11, 600, 400, "Golden Bond", 0, 2 }, { 11, 1200, 397, "Grey One" }, { 11, 1800, 400, "Grey Two" },
+  { 11, 600, 700, "Grey Three" }, { 11, 1200, 700, "Pack Leader", 0, 1 }, { 11, 1800, 700, "Fury" },
+  { 11, 600, 1000, "Grey Four" }, { 11, 1800, 1000, "Ferocity" }, { 11, 2400, 1000, "Swiftness", 0, 1 },
+  { 11, 1200, 1300, "Intimidation", 0, 1 }, { 11, 2400, 1300, "Discipline", 0, 2 },
+  { 11, 1800, 1600, "Frenzy" }, { 11, 1200, 1900, "Bestial Wrath", 0, 1 },
+  { 12, 600, 100, "Mark One" }, { 12, 1800, 100, "Mark Three" }, { 12, 600, 400, "Mark Four", 0, 3 },
+  { 12, 1200, 400, "Mark Five" }, { 12, 1800, 400, "Mark Six" }, { 12, 1200, 1000, "Aimed Shot", 0, 1 },
+  { 12, 2400, 700, "Mark Seven" }, { 13, 1200, 100, "Wild One" }, { 13, 1800, 100, "Wild Two" },
+  { 13, 600, 400, "Wild Three" }, { 13, 2400, 400, "Wild Four" },
+})
+unspentTalents = 1
+WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
+WoW.RunTimers()
+local build = Talents:GetBuild()
+items = TalentItems()
+check("Beast Mastery path on Forever: Forever's own build", build and build.gamePositions
+  and build.name == "Beast Mastery (31/16/4)")
+check("Forever's build by the grid, with the game's names: " .. tostring(items[1] and items[1].text),
+  items[1] and items[1].text == "Spend 1 talent point: Golden Bond (1/2)")
+upcoming = Talents:GetUpcoming(20)
+local order = {}
+for i, point in ipairs(upcoming) do order[i] = point.name .. " " .. point.rank end
+check("then the build's order: " .. table.concat(order, ", "), order[3] == "Fury 1" and order[8] == "Pack Leader 1"
+  and order[9] == "Ferocity 1")
+local total = 0
+for _, pick in ipairs(build.picks) do total = total + pick[4] end
+check("Forever's Beast Mastery build: 31/16/4, 51 points", total == 51)
+Pathwise.charDB.goal = nil
+unspentTalents = 2
 
 -- A tree too different from the build (or names in another language):
 -- just the reminder, and no "unlearn" advice.

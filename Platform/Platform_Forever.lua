@@ -60,6 +60,8 @@ local function NodeName(configID, node)
   return definition.spellID and Platform.GetSpellName(definition.spellID)
 end
 
+local GRID_ROUNDING = 50
+
 -- Numbers each distinct value 1, 2, ... in ascending order.
 local function Ranks(values)
   local sorted, seen = {}, {}
@@ -120,8 +122,9 @@ function Platform.GetTalentTrees()
       tree.talents[#tree.talents + 1] = {
         index = #tree.talents + 1,
         name = name,
-        posX = node.posX or 0,
-        posY = node.posY or 0,
+        -- (Rounded: nodes of one row or column can be a few units apart.)
+        posX = math.floor((node.posX or 0) / GRID_ROUNDING + 0.5),
+        posY = math.floor((node.posY or 0) / GRID_ROUNDING + 0.5),
         rank = rank,
         maxRank = node.maxRanks or 0,
         nodeID = nodeID,
