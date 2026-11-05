@@ -3,6 +3,11 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.33.2
+
+- The To-do window has a small bug icon in its bottom-left corner: click
+  it to report a problem (the same window as /pw bug).
+
 ## 0.33.1
 
 - The bug report is easier to find: a "Report a problem..." button at the

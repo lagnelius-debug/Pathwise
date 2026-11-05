@@ -66,7 +66,7 @@ Without them the upload is skipped. To upload the current version (e.g. after ad
 | `/pw flights` | List the flight points Pathwise knows for this character (talk to a flight master to update them) |
 | `/pw hearth on\|off` | Suggest setting your hearthstone in the zone you're questing in |
 | `/pw pickups on\|off` | Suggest quests to pick up nearby (needs QuestieDB) |
-| `/pw bug` | Report a problem (also the "Report a problem..." button in the settings, or Shift-click on the minimap button): shows a report (versions, game, character, place, To-do steps, recent errors) to copy into the GitHub bug form, and the link to it |
+| `/pw bug` | Report a problem (also the bug icon in the To-do window's bottom-left corner, the "Report a problem..." button in the settings, or Shift-click on the minimap button): shows a report (versions, game, character, place, To-do steps, recent errors) to copy into the GitHub bug form, and the link to it |
 | `/pw why <quest name or ID>` | Why the guide does or doesn't suggest picking up a quest, now and at your next two levels (needs QuestieDB) |
 | `/pw units meters\|yards` | Show distances in meters (default) or yards |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |

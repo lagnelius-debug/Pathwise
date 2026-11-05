@@ -351,8 +351,34 @@ local function CreateWindow()
     GameTooltip:Hide()
   end)
   frame.dungeons = dungeons
+  -- Report a problem: a small bug in the bottom-left corner (the Insect
+  -- Swarm icon, in every client).
+  local bug = CreateFrame("Button", "PathwiseNextStepsBugReport", frame.footer)
+  bug:SetSize(14, 14)
+  bug:SetPoint("LEFT", frame.footer, "LEFT", 0, 0)
+  local bugIcon = bug:CreateTexture(nil, "ARTWORK")
+  bugIcon:SetAllPoints(bug)
+  bugIcon:SetTexture("Interface\\Icons\\Spell_Nature_InsectSwarm")
+  bugIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+  bug:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+  bug:SetScript("OnClick", function()
+    Pathwise:GetModule("BugReportFrame"):Open()
+  end)
+  bug:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText(L.BUGREPORT_TITLE)
+    GameTooltip:AddLine(L.NS_BUG_TOOLTIP, 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  bug:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+  end)
+  frame.bug = bug
+
   -- The step count and zone stop at the buttons ("..." when too long).
   local footerText = frame.footer.text
+  footerText:ClearAllPoints()
+  footerText:SetPoint("LEFT", bug, "RIGHT", 5, 0)
   footerText:SetPoint("RIGHT", dungeons, "LEFT", -8, 0)
   footerText:SetJustifyH("LEFT")
   if footerText.SetWordWrap then

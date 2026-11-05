@@ -35,6 +35,10 @@ box._scripts.OnEscapePressed(box)
 check("Escape closes the window", not frame:IsShown())
 
 -- Also from the settings window and the minimap button (Shift-click).
+_G.PathwiseNextStepsBugReport:Click()
+check("the bug button in the To-do window's corner opens it", frame:IsShown()
+  and _G.PathwiseNextStepsBugReport:GetPoint(1) == "LEFT")
+frame:Hide()
 _G.PathwiseSettingsBugReport:Click()
 check("the settings window's \"Report a problem\" button opens it", frame:IsShown())
 frame:Hide()
