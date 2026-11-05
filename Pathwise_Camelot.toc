@@ -1,0 +1,94 @@
+## Interface: 16001
+## Title: Pathwise
+## Notes: Follows your character's progression and tells you what to do next.
+## Author: noelagnelius
+## X-Curse-Project-ID: 1767676
+## Version: 0.30.0
+## OptionalDeps: QuestieDB
+## X-License: GPL-3.0-or-later
+## SavedVariables: PathwiseDB
+## SavedVariablesPerCharacter: PathwiseCharDB
+
+# WoW Forever (1.60.1, interface 16001; the client's internal name is
+# Camelot). Pathwise_Camelot.toc is an identical copy, for clients that
+# look for that suffix. This file is Pathwise_Vanilla.toc with this
+# interface, these comments and Platform_Forever.lua after
+# Platform_Classic.lua (tests/run.lua checks this).
+
+# Load order matters:
+#  0. Libs        - LibStub, LibTameable-1.0 (Classic Era data only)
+#  1. Locales     - string table (Pathwise.L)
+#  2. Platform    - the only layer that calls flavor-specific WoW API
+#  3. Core/Init   - namespace, saved variables, events, callbacks, commands
+#  4. Data        - plain Lua tables for this flavor
+#  5. Core        - logic modules (never call WoW API directly)
+#  6. Classes     - class modules (they check the class themselves)
+#  7. Integrations- optional data from other addons (QuestieDB)
+#  8. UI          - frames, popups, slash command binding
+
+Libs\LibStub\LibStub.lua
+Libs\LibTameable-1.0\LibTameable-1.0.lua
+Libs\LibTameable-1.0\Data\Era.lua
+Libs\LibTameable-1.0\Data\EraFood.lua
+
+Locales\enUS.lua
+
+Platform\Platform_Classic.lua
+Platform\Platform_Forever.lua
+
+Core\Init.lua
+
+Data\Classic\ClassSpecs.lua
+Data\Classic\StatWeights.lua
+Data\Classic\ClassGear.lua
+Data\Classic\ClassSpells.lua
+Data\Classic\SpellPriority.lua
+Data\Classic\TalentBuilds.lua
+Data\Classic\HunterData.lua
+Data\Classic\ClassQuests.lua
+Data\Classic\Dungeons.lua
+Data\Classic\Professions.lua
+Data\Classic\Zones.lua
+Data\Classic\Travel.lua
+
+Core\Character.lua
+Core\Talents.lua
+Core\GearScore.lua
+Core\QuestRewards.lua
+Core\NextSteps.lua
+Core\Trainer.lua
+Core\QuestLocations.lua
+Core\QuestAdvisor.lua
+Core\AutoAccept.lua
+Core\DungeonGuide.lua
+Core\Flights.lua
+Core\Travel.lua
+Core\Waypoints.lua
+Core\TargetMacro.lua
+Core\Professions.lua
+Core\Hearthstone.lua
+
+Classes\Hunter.lua
+Classes\PetGuide.lua
+Classes\ClassQuests.lua
+
+Integrations\QuestieDB.lua
+
+UI\ThemeData.lua
+UI\Theme.lua
+UI\GoalPrompt.lua
+UI\SellPrice.lua
+UI\Tooltip.lua
+UI\ProfessionTooltip.lua
+UI\QuestRewardUI.lua
+UI\TrainerPanel.lua
+UI\TalentHighlight.lua
+UI\NextStepsFrame.lua
+UI\DungeonPicker.lua
+UI\Arrow.lua
+UI\TargetButton.lua
+UI\Settings.lua
+UI\FeaturesPanel.lua
+UI\MinimapButton.lua
+UI\SlashCommands.lua
+UI\Bindings.lua
