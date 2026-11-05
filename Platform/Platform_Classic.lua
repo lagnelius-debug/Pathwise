@@ -975,6 +975,12 @@ function Platform.MapPoint(mapID, x, y)
   return x, y
 end
 
+-- Whether the game's own item tooltips show the sell price (Classic Era:
+-- only at a merchant, so Pathwise adds it).
+function Platform.TooltipsShowSellPrice()
+  return false
+end
+
 -- Money with coin icons ("1[g] 20[s]"), or nil when the client can't.
 function Platform.CoinText(copper)
   local getText = (C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString) or GetCoinTextureString

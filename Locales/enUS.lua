@@ -12,6 +12,9 @@ Pathwise.L = L
 
 -- General
 L.LOADED = "v%s loaded. Type /pw help for commands."
+L.GUARD_STOPPED = "|cffff4040%s hit an error and is off until you /reload.|r Type /pw bug to report it."
+L.GUARD_ITEM_TOOLTIP = "Pathwise's item tooltip line"
+L.GUARD_UNIT_TOOLTIP = "Pathwise's skinning tooltip line"
 L.MODULE_ERROR = "|cffff4040Error in module %s (%s).|r Type /console scriptErrors 1 and /reload to see it, or /pw bug to report it."
 L.UNKNOWN_COMMAND = "Unknown command '%s'."
 L.HELP_HEADER = "Commands (/pathwise or /pw):"

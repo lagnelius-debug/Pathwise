@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.31.1
+
+- WoW Forever: no second "Sell price" line in item tooltips - Forever's
+  tooltips show the sell price themselves.
+- Tooltip lines can't flood errors any more: an open tooltip refreshes 5
+  times a second, so an error in Pathwise's tooltip line came back 5 times
+  a second (with the game's error popup). Now, after 3 errors, the line
+  switches off until /reload, with one chat message, and the error shows
+  in /pw bug.
+
 ## 0.31.0
 
 - **/pw bug**: a bug report from the game. It opens a window with the

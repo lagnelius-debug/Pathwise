@@ -172,6 +172,30 @@ function Pathwise.FormatDistance(yards)
   return string.format(L.DISTANCE_METERS, math.floor(yards * METERS_PER_YARD + 0.5))
 end
 
+-- Wraps a hook the game calls often (tooltip lines: up to 5 times a second
+-- while a tooltip is open): errors go through Platform.SafeCall (kept for
+-- /pw bug), and after `maxFailures` of them the hook stops for the session
+-- with one chat line, instead of an endless error flood. Returns the
+-- wrapped function, which returns fn's first result (nil once stopped).
+function Pathwise.Guard(name, fn, maxFailures)
+  local failures = 0
+  maxFailures = maxFailures or 3
+  return function(...)
+    if failures >= maxFailures then
+      return nil
+    end
+    local ok, result = Platform.SafeCall(fn, ...)
+    if ok then
+      return result
+    end
+    failures = failures + 1
+    if failures == maxFailures then
+      Pathwise:Printf(L.GUARD_STOPPED, name)
+    end
+    return nil
+  end
+end
+
 function Pathwise.FormatMoney(copper)
   copper = copper or 0
   local gold = math.floor(copper / 10000)

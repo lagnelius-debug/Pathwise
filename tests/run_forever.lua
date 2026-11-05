@@ -330,6 +330,36 @@ rangedShown = true
 
 ---------------------------------------------------------------------------
 
+-- Item tooltips: Forever shows the sell price itself.
+local sellItem
+for id, data in pairs(WoW.items) do
+  if (data.sell or 1) > 0 and data.equipLoc == "INVTYPE_HEAD" then sellItem = id break end
+end
+local function Hover()
+  GameTooltip:ClearLines()
+  GameTooltip._link = WoW.ItemLink(sellItem)
+  GameTooltip:AddLine(WoW.items[sellItem].name)
+  tooltipPosts[Enum.TooltipDataType.Item](GameTooltip)
+  return table.concat(WoW.TooltipLines(GameTooltip), "|")
+end
+local lines = Hover()
+check("no second sell price line (" .. lines .. ")", not lines:find("Sell price", 1, true))
+
+-- A failing tooltip line stops after 3 errors (the tooltip refreshes 5
+-- times a second), with one chat line; the errors go to /pw bug.
+local GearScore = Pathwise:GetModule("GearScore")
+local compare = GearScore.Compare
+GearScore.Compare = function() error("compare broke") end
+local errorsBefore = #WoW.errors
+WoW.ClearChat()
+for _ = 1, 10 do Hover() end
+check("errors stop after 3 (" .. (#WoW.errors - errorsBefore) .. ")", #WoW.errors == errorsBefore + 3)
+check("one chat line says so", WoW.ChatContains("Pathwise's item tooltip line hit an error and is off until you /reload"))
+local recent = Platform.GetRecentErrors()
+check("the error is kept for /pw bug", recent[#recent].message:find("compare broke", 1, true) ~= nil)
+for _ = 1, 3 do table.remove(WoW.errors) end
+GearScore.Compare = compare
+
 WoW.Slash("bug")
 local bugReport = Pathwise:GetModule("BugReportFrame"):GetReportText()
 check("/pw bug: the report says Forever", bugReport:find("on Forever\n", 1, true) ~= nil

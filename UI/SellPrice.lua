@@ -40,7 +40,7 @@ end
 
 -- Adds the line; returns true if one was added.
 function SellPrice.AddLine(tooltip)
-  if not SellPrice.enabled or not Pathwise.db.sellPrice then
+  if not SellPrice.enabled or not Pathwise.db.sellPrice or Platform.TooltipsShowSellPrice() then
     return false
   end
   if MerchantFrame and MerchantFrame:IsShown() then

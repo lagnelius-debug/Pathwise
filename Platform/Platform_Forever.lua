@@ -175,6 +175,15 @@ function Platform.GetQuestGreenRange(playerLevel)
 end
 
 ---------------------------------------------------------------------------
+-- Items: tooltips and the ranged slot
+---------------------------------------------------------------------------
+
+-- Forever's item tooltips show "Sell Price" themselves.
+function Platform.TooltipsShowSellPrice()
+  return true
+end
+
+---------------------------------------------------------------------------
 -- Items: the ranged slot
 ---------------------------------------------------------------------------
 
