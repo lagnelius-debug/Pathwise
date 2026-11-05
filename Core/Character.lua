@@ -119,6 +119,8 @@ end
 ---------------------------------------------------------------------------
 
 -- Which snapshot section each event refreshes.
+local LEVEL_UP_TALENT_DELAY = 2
+
 local EVENT_SECTIONS = {
   PLAYER_ENTERING_WORLD = "all",
   PLAYER_LEVEL_UP = "level",
@@ -130,6 +132,8 @@ local EVENT_SECTIONS = {
   PLAYER_TALENT_UPDATE = "talents",
   -- WoW Forever's trait talents: applied changes, a switched spec.
   TRAIT_CONFIG_UPDATED = "talents",
+  -- (Its "Unspent Talents" changes a moment after a level-up.)
+  TRAIT_TREE_CURRENCY_INFO_UPDATED = "talents",
   ACTIVE_COMBAT_CONFIG_CHANGED = "talents",
   SKILL_LINES_CHANGED = "skills",
   ZONE_CHANGED_NEW_AREA = "zone",
@@ -170,6 +174,12 @@ function Character:OnEvent(event, ...)
     self:Debugf("Level up: %d", snapshot.level)
     Pathwise:FireCallback("CHARACTER_UPDATED", snapshot, section)
     Pathwise:FireCallback("LEVEL_UP", snapshot.level)
+    -- The new talent point can reach the client a moment later (WoW
+    -- Forever's talent currency): read the talents again.
+    Platform.After(LEVEL_UP_TALENT_DELAY, function()
+      Character:Refresh("talents")
+      Pathwise:FireCallback("CHARACTER_UPDATED", snapshot, "talents")
+    end)
     return
   end
   self:Refresh(section)

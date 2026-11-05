@@ -357,8 +357,25 @@ if questie:IsAvailable() then
     return n3(id, key)
   end
   step, lines = EventStep({ { text = "Nadyia Maneweaver: 0/1" } })
-  check("an event at a trainer: talk to her, no target macro: " .. lines, lines == "Talk to Nadyia Maneweaver"
-    and step.target and #(step.target.names or {}) == 0)
+  check("an event at a trainer: talk to her (a real NPC: in the macro): " .. lines, lines == "Talk to Nadyia Maneweaver"
+    and step.target and step.target.names and step.target.names[1] == "Nadyia Maneweaver")
+
+  -- Reported on Forever: no target macro for the Rabid Thistle Bear of the
+  -- taming quest - QuestieDB marks it "interact" (use the Taming Rod on it).
+  -- Forever's quest log also puts the count first.
+  LibQuestieDB.Quest.Get = function(id, key)
+    if id == 98067 and key == "objectives" then return { { { 2164, nil, 17 } } } end
+    return q3(id, key)
+  end
+  local n4 = LibQuestieDB.Npc.Get
+  LibQuestieDB.Npc.Get = function(id, key)
+    if id == 2164 then return ({ name = "Rabid Thistle Bear", spawns = { [141] = { { 40, 60 } } } })[key] end
+    return n4(id, key)
+  end
+  step, lines = EventStep({ { text = "Rabid Thistle Bear captured: 0/1" } })
+  check("an interact objective on a beast: the log's words, and the beast in the target macro: " .. lines,
+    lines == "Rabid Thistle Bear captured" and step.target and step.target.names
+    and step.target.names[1] == "Rabid Thistle Bear")
   LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get = q2, n2
   WoW.questLog = { { header = true, title = "Hunter" },
     { title = "Taming the Beast", level = 10, questID = 6063, objectives = { { text = "Tame a Webwood Lurker: 0/1" } } } }

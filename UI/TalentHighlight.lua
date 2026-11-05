@@ -41,22 +41,58 @@ local function Pulse(frame)
   group:SetLooping("BOUNCE")
   local fade = group:CreateAnimation("Alpha")
   fade:SetFromAlpha(1)
-  fade:SetToAlpha(0.35)
-  fade:SetDuration(0.7)
+  fade:SetToAlpha(0.6)
+  fade:SetDuration(0.6)
   group:Play()
 end
 
--- A glow frame: the action-button border texture, gold, additive.
-local function CreateGlow(scale)
+-- Bobs a frame up and down.
+local function Bob(frame)
+  if not frame.CreateAnimationGroup then
+    return
+  end
+  local group = frame:CreateAnimationGroup()
+  if not group then
+    return
+  end
+  group:SetLooping("BOUNCE")
+  local move = group:CreateAnimation("Translation")
+  if move and move.SetOffset then
+    move:SetOffset(0, 6)
+    move:SetDuration(0.5)
+    group:Play()
+  end
+end
+
+-- A glow frame: the action-button border texture, gold, additive - twice,
+-- so it stands out on the bright talent backgrounds. With a label: a
+-- "Next point" tag bobbing above it.
+local function CreateGlow(scale, label)
   local frame = CreateFrame("Frame", nil, talentFrame)
-  local texture = frame:CreateTexture(nil, "OVERLAY")
-  texture:SetTexture(GLOW_TEXTURE)
-  texture:SetBlendMode("ADD")
-  texture:SetVertexColor(GOLD[1], GOLD[2], GOLD[3])
-  texture:SetAllPoints(frame)
+  for _ = 1, 2 do
+    local texture = frame:CreateTexture(nil, "OVERLAY")
+    texture:SetTexture(GLOW_TEXTURE)
+    texture:SetBlendMode("ADD")
+    texture:SetVertexColor(GOLD[1], GOLD[2], GOLD[3])
+    texture:SetAllPoints(frame)
+  end
   frame.scale = scale
   frame:Hide()
   Pulse(frame)
+  if label then
+    local tag = CreateFrame("Frame", nil, frame)
+    tag:SetSize(120, 20)
+    tag:SetPoint("BOTTOM", frame, "TOP", 0, -6)
+    tag.text = tag:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    tag.text:SetPoint("CENTER", tag, "CENTER", 0, 0)
+    tag.text:SetText(label)
+    tag.text:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+    if tag.text.SetShadowOffset then
+      tag.text:SetShadowOffset(1, -1)
+    end
+    Bob(tag)
+    frame.tag = tag
+  end
   return frame
 end
 
@@ -145,7 +181,7 @@ local function Attach()
   if not talentFrame then
     return false
   end
-  glow = CreateGlow(1.8)
+  glow = CreateGlow(2, L.TALENT_HIGHLIGHT_LABEL)
   tabGlow = CreateGlow(1.3)
   local function Refresh()
     TalentHighlight:Update()
@@ -159,6 +195,18 @@ local function Attach()
       end
     end
     talentFrame:HookScript("OnShow", Refresh)
+    -- And twice a second while the window is open: its buttons come and go
+    -- (pooled, laid out after it shows), so a glow placed too early would
+    -- be lost.
+    local ticker = CreateFrame("Frame", nil, talentFrame)
+    local elapsed = 0
+    ticker:SetScript("OnUpdate", function(_, delta)
+      elapsed = elapsed + (delta or 0)
+      if elapsed >= 0.5 then
+        elapsed = 0
+        Refresh()
+      end
+    end)
     TalentHighlight:Debugf("Talent highlight attached to %s.", frameName)
     return true
   end

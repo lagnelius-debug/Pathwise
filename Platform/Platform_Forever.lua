@@ -246,6 +246,20 @@ local function ParseProgress(text)
   return tonumber(have), tonumber(need)
 end
 
+-- The modern client puts the count first ("0/1 Rabid Thistle Bear
+-- captured"); Classic's way, which the rest of Pathwise reads, puts it last
+-- ("Rabid Thistle Bear captured: 0/1").
+function Platform.ClassicObjectiveText(text)
+  if type(text) ~= "string" then
+    return text
+  end
+  local have, need, rest = text:match("^%s*(%d+)%s*/%s*(%d+)%s+(.-)%s*$")
+  if have and rest ~= "" then
+    return rest .. ": " .. have .. "/" .. need
+  end
+  return text
+end
+
 local function GetObjectives(questID)
   local objectives = {}
   for i, objective in ipairs(C_QuestLog.GetQuestObjectives and C_QuestLog.GetQuestObjectives(questID) or {}) do
@@ -253,8 +267,8 @@ local function GetObjectives(questID)
     if not have then
       have, need = ParseProgress(objective.text)
     end
-    objectives[i] = { text = objective.text, type = objective.type, finished = objective.finished and true or false,
-      have = have, need = need }
+    objectives[i] = { text = Platform.ClassicObjectiveText(objective.text), type = objective.type,
+      finished = objective.finished and true or false, have = have, need = need }
   end
   return objectives
 end

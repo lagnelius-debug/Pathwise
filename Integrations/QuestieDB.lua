@@ -241,6 +241,21 @@ end
 -- event at a real NPC - one with a role (trainer, vendor, gossip: npcFlags),
 -- not an invisible credit marker.
 local ICON_TALK = 5
+
+-- Invisible quest-credit markers ("Credit", "... Kill Credit", "... Bunny",
+-- "... Trigger"): nothing to target there. Other NPCs of such objectives
+-- are real (a beast to tame, someone to talk to): the target macro gets
+-- them.
+local MARKER_WORDS = { "Credit", "Bunny", "Trigger", "Invisible", "Marker" }
+local function IsMarker(name)
+  for _, word in ipairs(MARKER_WORDS) do
+    if name:find(word, 1, true) then
+      return true
+    end
+  end
+  return false
+end
+
 local function EventObjective(quest, k, count, text, npcId, icon)
   local npcName = lib.Npc.Get(npcId, "name")
   local talk = icon == ICON_TALK
@@ -261,6 +276,14 @@ local function EventObjective(quest, k, count, text, npcId, icon)
   end
   local fallback = talk and npcName and string.format(L.TASK_TALK, npcName) or L.TASK_EVENT
   return logText or text or fallback, finished
+end
+
+-- The name for the target macro of an objective's NPC, or nil for a marker.
+local function TargetName(npcId)
+  local name = lib.Npc.Get(npcId, "name")
+  if name and not IsMarker(name) then
+    return name
+  end
 end
 
 -- NPC names for the target macro: the chosen point's NPC first, then the
@@ -465,7 +488,7 @@ local function DoTarget(quest)
     if not finished then
       for _, npcId in ipairs(npcIds) do
         local first = #points + 1
-        AddSpawns(points, lib.Npc.Get(npcId, "spawns"), task)
+        AddSpawns(points, lib.Npc.Get(npcId, "spawns"), task, TargetName(npcId))
         MarkTask(points, first, task)
       end
       AddTask(tasks, task)

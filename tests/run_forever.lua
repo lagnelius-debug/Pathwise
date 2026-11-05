@@ -168,6 +168,10 @@ check("the guide shows them (" .. table.concat(texts, " / ") .. ")",
   table.concat(texts, "|"):find("Turn in: [5] The Balance of Nature", 1, true) ~= nil
   and table.concat(texts, "|"):find("Webwood Venom", 1, true) ~= nil)
 check("green range from C_QuestLog.GetTrivialRange", Platform.GetQuestGreenRange(10) == 7)
+-- The modern client's objective text has the count first.
+check("count-first objective text in Classic's order", Platform.ClassicObjectiveText("0/1 Rabid Thistle Bear captured")
+  == "Rabid Thistle Bear captured: 0/1" and Platform.ClassicObjectiveText("Nightsaber slain: 7/7") == "Nightsaber slain: 7/7"
+  and Platform.ClassicObjectiveText("Find Ardin Grassman") == "Find Ardin Grassman")
 completed[456] = true
 check("completed quests from C_QuestLog", Platform.IsQuestCompleted(456) and not Platform.IsQuestCompleted(916))
 
@@ -424,9 +428,10 @@ PlayerSpellsFrame.TalentsFrame:Show()
 Pathwise:GetModule("TalentHighlight"):Update()
 local glowOn
 for _, glow in ipairs(glows) do
-  if glow:IsShown() then glowOn = glow:GetParent() end
+  if glow:IsShown() and glow:GetParent() == talentButtons[1002] then glowOn = glow end
 end
-check("the talent window glows on the next talent's button", glowOn ~= nil and glowOn == talentButtons[1002])
+check("the talent window glows on the next talent's button, with a \"Next point\" tag", glowOn ~= nil
+  and glowOn.tag and glowOn.tag.text:GetText() == "Next point")
 PlayerSpellsFrame:Hide()
 
 -- A tree too different from the build (or names in another language):
@@ -442,6 +447,12 @@ check("a build that doesn't fit: no next point to glow", Talents:GetNextPoint() 
 unspentTalents = 0
 WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
 check("all points spent: no talent step", #TalentItems() == 0)
+-- At a level-up the new point arrives a moment later, with its own event.
+unspentTalents = 1
+WoW.FireEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED", 900)
+check("a point that arrives after the level-up: the talent step comes back", #TalentItems() == 1)
+unspentTalents = 0
+WoW.FireEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED", 900)
 C_ClassTalents, C_Traits, traitNodes = nil, nil, {}
 WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
 

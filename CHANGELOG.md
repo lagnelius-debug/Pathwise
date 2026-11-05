@@ -3,6 +3,23 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.33.3
+
+- Target macro back for quests where you use something on a creature or
+  talk to someone (the hunter taming quests: "Rabid Thistle Bear
+  captured"). 0.32.1 had left out every NPC of such objectives; now only
+  invisible quest markers ("Credit") are left out.
+- WoW Forever: quest objectives are read in Classic's order ("Rabid
+  Thistle Bear captured: 0/1" - Forever writes "0/1 Rabid Thistle Bear
+  captured"), so finished objectives are recognized again.
+- WoW Forever: the talent advice after a level-up. The new point reaches
+  the game a moment after the level-up, and Pathwise didn't notice it -
+  no To-do step and no highlight until something else changed. Now it
+  does.
+- Talent window highlight easier to see: a stronger glow and a bobbing
+  "Next point" tag above the talent, kept in place while the window is
+  open.
+
 ## 0.33.2
 
 - The To-do window has a small bug icon in its bottom-left corner: click
