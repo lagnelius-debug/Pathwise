@@ -102,8 +102,10 @@ if [ "${DRY_RUN:-}" = "1" ]; then
   exit 0
 fi
 
+# (--form-string: the metadata as it is - with -F, curl reads a ";" in the
+# changelog as the start of an option and cuts the JSON short.)
 RESPONSE=$(curl -sS -w '\n%{http_code}' -H "X-Api-Token: $CF_API_TOKEN" \
-  -F "metadata=$METADATA" -F "file=@$ZIP" "$API/projects/$CF_PROJECT_ID/upload-file") \
+  --form-string "metadata=$METADATA" -F "file=@$ZIP" "$API/projects/$CF_PROJECT_ID/upload-file") \
   || Fail "Couldn't reach CurseForge to upload."
 STATUS=$(tail -n1 <<< "$RESPONSE")
 BODY=$(sed '$d' <<< "$RESPONSE")

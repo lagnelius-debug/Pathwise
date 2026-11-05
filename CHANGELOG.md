@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.1
+
+No changes in the game. Fixes the CurseForge upload of release notes
+with a ";" in them (0.29.0 and 0.30.0 weren't uploaded because of it):
+the upload tool cut them short.
+
 ## 0.30.0
 
 - **WoW Forever**: Pathwise now loads on WoW Forever (1.60.1). Forever has
