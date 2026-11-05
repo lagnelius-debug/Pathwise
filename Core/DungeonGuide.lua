@@ -164,8 +164,9 @@ function DungeonGuide:EntranceTarget(dungeon)
   for _, entrance in ipairs(dungeon.entrances) do
     local entranceMap = QuestieData:AreaToUiMap(entrance[1])
     if entranceMap then
-      local target = { mapID = entranceMap, x = entrance[2] / 100, y = entrance[3] / 100,
-        label = string.format(L.DUNGEON_ENTRANCE_LABEL, dungeon.name) }
+      -- (Entrances are written for Classic Era's maps.)
+      local ex, ey = Platform.MapPoint(entranceMap, entrance[2] / 100, entrance[3] / 100)
+      local target = { mapID = entranceMap, x = ex, y = ey, label = string.format(L.DUNGEON_ENTRANCE_LABEL, dungeon.name) }
       local distance = mapID and Waypoints.TravelDistance(mapID, x, y, target.mapID, target.x, target.y, true)
       if not best or (distance and (not bestDistance or distance < bestDistance)) then
         best, bestDistance = target, distance

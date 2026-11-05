@@ -29,6 +29,25 @@ local broken = Pathwise:NewModule("BrokenTestModule")
 function broken:OnEnable() error("boom") end
 local function ReadFile(path) local f = assert(io.open(path)); local s = f:read("*a"); f:close(); return s end
 check("Pathwise.toc matches Pathwise_Vanilla.toc", ReadFile("./Pathwise.toc") == ReadFile("./Pathwise_Vanilla.toc"))
+-- WoW Forever: Pathwise_Camelot.toc is a copy of Pathwise_Forever.toc,
+-- which is the Vanilla TOC with its interface, its own comments and
+-- Platform_Forever.lua after Platform_Classic.lua.
+check("Pathwise_Camelot.toc matches Pathwise_Forever.toc", ReadFile("./Pathwise_Camelot.toc") == ReadFile("./Pathwise_Forever.toc"))
+local function TocLines(path)
+  local lines = {}
+  for line in io.lines(path) do
+    if line ~= "" and not line:match("^# ") and line ~= "#" and not line:match("^## Interface:")
+      and line ~= "Platform\\Platform_Forever.lua" then
+      lines[#lines + 1] = line
+    end
+  end
+  return table.concat(lines, "\n")
+end
+check("Pathwise_Forever.toc lists what Pathwise_Vanilla.toc does", TocLines("./Pathwise_Forever.toc") == TocLines("./Pathwise_Vanilla.toc")
+  and ReadFile("./Pathwise_Forever.toc"):find("Platform\\Platform_Classic.lua\r?\nPlatform\\Platform_Forever.lua") ~= nil
+  and ReadFile("./Pathwise_Forever.toc"):find("## Interface: 16001", 1, true) == 1)
+check("Classic Era: the Classic platform", Pathwise.Platform.flavor == "Classic"
+  and select(1, Pathwise.Platform.MapPoint(1453, 0.75, 0.28)) == 0.75)
 check("namespace has Platform", Pathwise.Platform ~= nil)
 check("slash command bound", SlashCmdList.PATHWISE ~= nil and SLASH_PATHWISE2 == "/pw")
 
@@ -127,6 +146,24 @@ section("No unexpected errors")
 check("only the intentional BrokenTestModule error was reported", #WoW.errors == 1)
 for i = 2, #WoW.errors do
   print("  error: " .. tostring(WoW.errors[i]))
+end
+
+-- WoW Forever runs in its own Lua process (fresh globals).
+section("WoW Forever")
+local interpreter = arg and arg[-1] or "lua5.1"
+local forever = io.popen(interpreter .. " tests/run_forever.lua 2>&1")
+local foreverOutput = forever:read("*a")
+forever:close()
+local foreverPassed, foreverFailed = foreverOutput:match("(%d+) passed, (%d+) failed%s*$")
+for line in foreverOutput:gmatch("[^\n]+") do
+  if not line:match("^%d+ passed, %d+ failed$") then
+    print(line)
+  end
+end
+if foreverPassed then
+  passed, failed = passed + tonumber(foreverPassed), failed + tonumber(foreverFailed)
+else
+  check("tests/run_forever.lua ran to the end", false)
 end
 
 print(string.format("%d passed, %d failed", passed, failed))

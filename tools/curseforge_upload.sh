@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# Uploads a release zip to CurseForge, tagged with the game version the TOC
-# is built for (## Interface: 11509 -> 1.15.9, WoW Classic Era).
+# Uploads a release zip to CurseForge, tagged with the game versions the
+# TOCs are built for (## Interface: 11509 -> 1.15.9, WoW Classic Era;
+# 16001 -> 1.60.1, WoW Forever).
 #
-#   tools/curseforge_upload.sh <zip> <version> <toc> <changelog.md>
+#   tools/curseforge_upload.sh <zip> <version> <toc[,toc...]> <changelog.md>
+#
+# A game version CurseForge doesn't list (yet) is left out with a warning;
+# with none it knows, the upload fails.
 #
 # Needs CF_API_TOKEN (CurseForge > account settings > API tokens) and the
 # project ID: CF_PROJECT_ID, else the TOC's "## X-Curse-Project-ID:" (the
@@ -23,7 +27,8 @@ Fail() {
   exit 1
 }
 
-ZIP=$1 VERSION=$2 TOC=$3 CHANGELOG=$4
+ZIP=$1 VERSION=$2 TOCS=$3 CHANGELOG=$4
+TOC=${TOCS%%,*}
 API=${CF_API_BASE:-https://wow.curseforge.com/api}
 if [ -z "${CF_PROJECT_ID:-}" ]; then
   CF_PROJECT_ID=$(sed -n 's/^## X-Curse-Project-ID: *//p' "$TOC" | tr -d '\r ')
@@ -38,10 +43,12 @@ if [ -z "${CF_API_TOKEN:-}" ] || [ -z "${CF_PROJECT_ID:-}" ]; then
   exit 0
 fi
 
-# Interface number -> game version: 11509 -> 1.15.9 (major, two-digit
-# minor, two-digit patch).
-INTERFACE=$(sed -n 's/^## Interface: *//p' "$TOC" | tr -d '\r' | cut -d, -f1)
-GAME_VERSION="$((INTERFACE / 10000)).$((INTERFACE / 100 % 100)).$((INTERFACE % 100))"
+Warn() {
+  echo "$1" >&2
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "::warning title=CurseForge upload::$1"
+  fi
+}
 
 if [ -n "${CF_VERSIONS_FILE:-}" ]; then
   VERSIONS=$(cat "$CF_VERSIONS_FILE")
@@ -53,10 +60,25 @@ else
   fi
   VERSIONS=$(sed '$d' <<< "$VERSIONS")
 fi
-GAME_VERSION_ID=$(jq -r --arg name "$GAME_VERSION" '[.[] | select(.name == $name)][0].id // empty' <<< "$VERSIONS")
-if [ -z "$GAME_VERSION_ID" ]; then
-  Fail "CurseForge has no game version $GAME_VERSION (from ## Interface: $INTERFACE in $TOC). Close ones: $(jq -r --arg major "${GAME_VERSION%.*}" '[.[] | select(.name | startswith($major)) | .name] | join(", ")' <<< "$VERSIONS")"
+# Interface number -> game version: 11509 -> 1.15.9 (major, two-digit
+# minor, two-digit patch). Each TOC's (and each of a TOC's interfaces).
+GAME_VERSIONS=() GAME_VERSION_IDS=()
+for TOC_FILE in ${TOCS//,/ }; do
+  for INTERFACE in $(sed -n 's/^## Interface: *//p' "$TOC_FILE" | tr -d '\r ' | tr ',' ' '); do
+    GAME_VERSION="$((INTERFACE / 10000)).$((INTERFACE / 100 % 100)).$((INTERFACE % 100))"
+    ID=$(jq -r --arg name "$GAME_VERSION" '[.[] | select(.name == $name)][0].id // empty' <<< "$VERSIONS")
+    if [ -z "$ID" ]; then
+      Warn "CurseForge has no game version $GAME_VERSION (from ## Interface: $INTERFACE in $TOC_FILE); left out. Close ones: $(jq -r --arg major "${GAME_VERSION%.*}" '[.[] | select(.name | startswith($major)) | .name] | join(", ")' <<< "$VERSIONS")"
+    elif [[ " ${GAME_VERSION_IDS[*]} " != *" $ID "* ]]; then
+      GAME_VERSIONS+=("$GAME_VERSION")
+      GAME_VERSION_IDS+=("$ID")
+    fi
+  done
+done
+if [ ${#GAME_VERSION_IDS[@]} -eq 0 ]; then
+  Fail "CurseForge knows none of the game versions in $TOCS."
 fi
+GAME_VERSION=$(IFS=,; echo "${GAME_VERSIONS[*]}")
 
 RELEASE_TYPE=${CF_RELEASE_TYPE:-}
 if [ -z "$RELEASE_TYPE" ]; then
@@ -70,12 +92,12 @@ esac
 METADATA=$(jq -n \
   --arg changelog "$(cat "$CHANGELOG")" \
   --arg name "Pathwise $VERSION" \
-  --argjson gameVersion "$GAME_VERSION_ID" \
+  --argjson gameVersions "[$(IFS=,; echo "${GAME_VERSION_IDS[*]}")]" \
   --arg releaseType "$RELEASE_TYPE" \
-  '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: [$gameVersion], releaseType: $releaseType}')
+  '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: $gameVersions, releaseType: $releaseType}')
 
 if [ "${DRY_RUN:-}" = "1" ]; then
-  echo "Would upload $ZIP to project $CF_PROJECT_ID for $GAME_VERSION (id $GAME_VERSION_ID):"
+  echo "Would upload $ZIP to project $CF_PROJECT_ID for $GAME_VERSION:"
   echo "$METADATA"
   exit 0
 fi

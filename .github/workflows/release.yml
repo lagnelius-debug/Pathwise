@@ -88,7 +88,7 @@ jobs:
             exit 0
           fi
           echo "CREATED=1" >> "$GITHUB_ENV"
-          printf '%s\n\nDownload **Pathwise-%s.zip** below (not "Source code"), unzip it into World of Warcraft/_classic_era_/Interface/AddOns, and check that the folder is named Pathwise.\n' \
+          printf '%s\n\nDownload **Pathwise-%s.zip** below (not "Source code"), unzip it into the Interface/AddOns folder of WoW Classic Era (_classic_era_) or WoW Forever, and check that the folder is named Pathwise.\n' \
             "$NOTES" "$VERSION" > notes.md
           gh release create "$TAG" "Pathwise-$VERSION.zip" --target "$GITHUB_SHA" --title "Pathwise $VERSION" --notes-file notes.md
 
@@ -99,4 +99,4 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
           CF_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID || secrets.CURSEFORGE_PROJECT_ID }}
           CF_RELEASE_TYPE: ${{ vars.CURSEFORGE_RELEASE_TYPE }}
-        run: tools/curseforge_upload.sh "Pathwise-$VERSION.zip" "$VERSION" Pathwise_Vanilla.toc changelog.md
+        run: tools/curseforge_upload.sh "Pathwise-$VERSION.zip" "$VERSION" Pathwise_Vanilla.toc,Pathwise_Forever.toc changelog.md

@@ -3,6 +3,29 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.0
+
+- **WoW Forever**: Pathwise now loads on WoW Forever (1.60.1). Forever has
+  Classic Era's world and quests on the modern client, so it gets its own
+  TOC (`Pathwise_Forever.toc`, plus an identical `Pathwise_Camelot.toc`)
+  and platform file that reads the quest log, skills, spells, items and
+  the hunter pet through the modern API. The quest guide, arrow, pickups,
+  auto-accept and turn-in, reward picker, target button and macro, dungeon
+  guide and hearthstone tips work as on Classic Era. Four zone maps
+  (Mulgore, Eastern Plaguelands, Redridge Mountains, Stormwind City) are
+  framed differently on Forever; Pathwise's dungeon entrances there are
+  converted (Stratholme, the Stockade).
+- Not on Forever (yet): the talent advisor (Forever's talents are new
+  trait trees) and the hunter pet ability guide (there's no Beast Training
+  window). Trainer reminders use Classic Era's spell list: tell me where
+  they don't match Forever.
+- In combat on Forever, the game can hide a unit's name or level ("secret"
+  values); Pathwise treats those as unknown instead of erroring.
+- CurseForge uploads are tagged for both Classic Era (1.15.9) and Forever
+  (1.60.1).
+- This is built against Blizzard's Forever 1.60.1 UI source and passes the
+  offline tests, but hasn't been tried in the game yet.
+
 ## 0.29.1
 
 No changes in the game. The CurseForge upload reports why it failed (or

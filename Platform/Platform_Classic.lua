@@ -4,8 +4,9 @@ local addonName, Pathwise = ...
 --
 -- This is the ONLY file that calls flavor-specific WoW API. Everything here
 -- returns plain Lua values/tables in Pathwise's own format, so Core never has
--- to know which client it is running in. A future Platform_Forever.lua must
--- implement the same functions.
+-- to know which client it is running in. On WoW Forever,
+-- Platform_Forever.lua loads after this file and replaces the functions
+-- that differ there.
 --
 -- Where an API might not exist (or behaves differently between client
 -- builds), check at runtime instead of assuming.
@@ -108,6 +109,16 @@ function Platform.InCombat()
     return InCombatLockdown() and true or false
   end
   return UnitAffectingCombat("player") and true or false
+end
+
+-- Modern clients (WoW Forever) can hand out "secret" values in combat:
+-- they can't be compared or used as table keys. Such a value counts as
+-- unknown (nil).
+local function Readable(value)
+  if issecretvalue and issecretvalue(value) then
+    return nil
+  end
+  return value
 end
 
 ---------------------------------------------------------------------------
@@ -907,7 +918,7 @@ end
 -- Name of the NPC the player is talking to (quest giver dialogs), or nil.
 function Platform.GetInteractionNPCName()
   if UnitExists("npc") then
-    return UnitName("npc")
+    return Readable(UnitName("npc"))
   end
 end
 
@@ -915,8 +926,24 @@ end
 -- second: true when it's dead.
 function Platform.GetTargetNPCName()
   if UnitExists("target") and not (UnitIsPlayer and UnitIsPlayer("target")) then
-    return UnitName("target"), UnitIsDead and UnitIsDead("target") or false
+    local name = Readable(UnitName("target"))
+    if name then
+      return name, UnitIsDead and Readable(UnitIsDead("target")) or false
+    end
   end
+end
+
+-- A point written for Classic Era's maps (x, y 0-1) on this client's map
+-- of the same ID. Classic Era: unchanged (Platform_Forever.lua converts the
+-- zones whose map frame differs there).
+function Platform.MapPoint(mapID, x, y)
+  return x, y
+end
+
+-- Money with coin icons ("1[g] 20[s]"), or nil when the client can't.
+function Platform.CoinText(copper)
+  local getText = (C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString) or GetCoinTextureString
+  return getText and getText(copper) or nil
 end
 
 function Platform.GetMapName(mapID)
@@ -986,14 +1013,19 @@ end
 
 -- { level, creatureType, isPlayer } for a unit, or nil. creatureType is the
 -- client's (localized) name, e.g. "Beast"; level -1 means "??".
+-- (nil while the client keeps a value secret, e.g. in combat on Forever.)
 function Platform.GetUnitCreature(unit)
   if not unit or not UnitExists(unit) then
     return nil
   end
+  local level = Readable(UnitLevel(unit))
+  if not level then
+    return nil
+  end
   return {
-    level = UnitLevel(unit),
-    creatureType = UnitCreatureType and UnitCreatureType(unit),
-    isPlayer = UnitIsPlayer and UnitIsPlayer(unit) and true or false,
+    level = level,
+    creatureType = UnitCreatureType and Readable(UnitCreatureType(unit)),
+    isPlayer = UnitIsPlayer and Readable(UnitIsPlayer(unit)) and true or false,
   }
 end
 

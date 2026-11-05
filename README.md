@@ -2,7 +2,8 @@
 
 A World of Warcraft addon that follows your character's progression and tells you what to do next. The full design is in [docs/PATHWISE_DESIGN.md](docs/PATHWISE_DESIGN.md).
 
-**Target:** WoW Classic Era. **Status:**
+**Target:** WoW Classic Era, and WoW Forever (1.60.1) since 0.30.0. **Status:**
+- WoW Forever: Pathwise loads there with its own TOC (`Pathwise_Forever.toc`, and an identical `Pathwise_Camelot.toc`) and `Platform/Platform_Forever.lua`, which reads the quest log, skills, spells and the hunter pet through Forever's modern (retail-style) API. Built against Blizzard's Forever 1.60.1 UI source and passing the offline tests (`tests/run_forever.lua`), not yet tested in game. Not on Forever: the talent advisor (Forever's talents are new trait trees) and the pet ability guide (no Beast Training window). Trainer spells and talent-free class data are Classic Era's and still need checking there.
 - M0 (skeleton) and M1 (character tracker, spec detection, goal prompt) are tested in game on Classic Era 1.15.9 with a level 1 Night Elf Hunter.
 - M2 (gear advisor and tooltip line) is working in game; a few checks are still open (see below).
 - M3 (quest reward picker) is working in game.
@@ -20,7 +21,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 
 ## Install
 
-1. Download the newest `Pathwise-<version>.zip` from [Releases](https://github.com/lagnelius-debug/Pathwise/releases/latest) (the zip under "Assets", not "Source code"). Unzip it into `World of Warcraft/_classic_era_/Interface/AddOns/`. The folder must be named `Pathwise` and contain `Pathwise_Vanilla.toc` directly.
+1. Download the newest `Pathwise-<version>.zip` from [Releases](https://github.com/lagnelius-debug/Pathwise/releases/latest) (the zip under "Assets", not "Source code"). Unzip it into `World of Warcraft/_classic_era_/Interface/AddOns/` (Classic Era), or into the `Interface/AddOns/` folder of your WoW Forever installation. The folder must be named `Pathwise` and contain the `.toc` files directly.
 2. The TOC uses interface `11509`, verified in game on 2026-10-22. After a Classic Era patch, run `/dump select(4, GetBuildInfo())` and update `## Interface:` in `Pathwise_Vanilla.toc` if the number changed.
 3. Turn on Lua errors with `/console scriptErrors 1`, or install BugGrabber and BugSack.
 

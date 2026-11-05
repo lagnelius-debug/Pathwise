@@ -23,10 +23,7 @@ local tab, panel, scrollFrame, scrollChild
 local rows = {}
 
 local function MoneyText(copper)
-  if GetCoinTextureString then
-    return GetCoinTextureString(copper)
-  end
-  return Pathwise.FormatMoney(copper)
+  return Pathwise.Platform.CoinText(copper) or Pathwise.FormatMoney(copper)
 end
 
 local function GetTrainer()
