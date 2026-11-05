@@ -12,7 +12,7 @@ Pathwise.L = L
 
 -- General
 L.LOADED = "v%s loaded. Type /pw help for commands."
-L.MODULE_ERROR = "|cffff4040Error in module %s (%s).|r Type /console scriptErrors 1 and /reload to see it."
+L.MODULE_ERROR = "|cffff4040Error in module %s (%s).|r Type /console scriptErrors 1 and /reload to see it, or /pw bug to report it."
 L.UNKNOWN_COMMAND = "Unknown command '%s'."
 L.HELP_HEADER = "Commands (/pathwise or /pw):"
 L.NEXT_STEPS_NOT_READY = "The Next Steps panel is not built yet (milestone M7)."
@@ -245,6 +245,11 @@ L.ZONE_DETAIL = "Ask a guard or a flight master the way, or look at the world ma
 -- Nothing to do yet, but quests here open up at a higher level.
 L.UPCOMING = "More quests here at level %d: %s"
 -- /pw why <quest>
+-- /pw bug
+L.CMD_BUG = "report a problem: shows a bug report to copy into the GitHub form"
+L.BUGREPORT_TITLE = "Report a problem"
+L.BUGREPORT_STEPS = "1. Copy the link below (click it, Ctrl+C) and open it in your browser.\n2. Describe what happened, then click the report below, press Ctrl+C and paste it into the form's \"Report\" field."
+L.BUGREPORT_FOOTER = "Addons can't go online - copy and paste is the way. Screenshots help too."
 L.CMD_WHY = "why the guide does or doesn't suggest a quest: /pw why <quest name or ID>"
 L.WHY_USAGE = "Usage: /pw why <quest name or ID> - why the guide does or doesn't suggest picking up a quest."
 L.WHY_NOT_READY = "QuestieDB's quest list isn't ready yet (or QuestieDB isn't installed)."

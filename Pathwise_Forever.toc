@@ -3,7 +3,7 @@
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
 ## X-Curse-Project-ID: 1767676
-## Version: 0.30.7
+## Version: 0.31.0
 ## OptionalDeps: QuestieDB
 ## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB
@@ -73,6 +73,7 @@ Core\Waypoints.lua
 Core\TargetMacro.lua
 Core\Professions.lua
 Core\Hearthstone.lua
+Core\BugReport.lua
 
 Classes\Hunter.lua
 Classes\PetGuide.lua
@@ -96,5 +97,6 @@ UI\TargetButton.lua
 UI\Settings.lua
 UI\FeaturesPanel.lua
 UI\MinimapButton.lua
+UI\BugReportFrame.lua
 UI\SlashCommands.lua
 UI\Bindings.lua

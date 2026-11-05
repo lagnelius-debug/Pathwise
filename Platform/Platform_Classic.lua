@@ -74,15 +74,37 @@ function Platform.After(seconds, fn)
   timerFrame:Show()
 end
 
+-- The last errors SafeCall caught (for /pw bug): list of { message, stack,
+-- time }, oldest first.
+local MAX_RECENT_ERRORS = 5
+local recentErrors = {}
+
+local function OnError(message)
+  recentErrors[#recentErrors + 1] = {
+    message = tostring(message),
+    stack = debugstack and debugstack(2, 8, 0) or nil,
+    time = GetTime(),
+  }
+  if #recentErrors > MAX_RECENT_ERRORS then
+    table.remove(recentErrors, 1)
+  end
+  return geterrorhandler()(message)
+end
+
 -- Calls fn(...) and returns true on success. On error, the error goes to
 -- WoW's error handler (the scriptErrors popup, or BugSack if installed) and
--- false is returned, so the caller can carry on. Lua 5.1's xpcall doesn't
--- forward arguments, hence the closure.
+-- false is returned, so the caller can carry on. The error is also kept
+-- for bug reports (GetRecentErrors). Lua 5.1's xpcall doesn't forward
+-- arguments, hence the closure.
 function Platform.SafeCall(fn, ...)
   local n, args = select("#", ...), { ... }
   return xpcall(function()
     return fn(unpack(args, 1, n))
-  end, geterrorhandler())
+  end, OnError)
+end
+
+function Platform.GetRecentErrors()
+  return recentErrors
 end
 
 -- Runs fn every `seconds` until the game ends. C_Timer.NewTicker exists in
@@ -138,12 +160,19 @@ function Platform.GetClientInfo()
 end
 
 -- Metadata moved to C_AddOns in newer clients; the global may or may not
--- still exist depending on the Classic Era build.
-function Platform.GetAddOnMetadata(field)
+-- still exist depending on the Classic Era build. other: another addon's
+-- (e.g. "QuestieDB"), nil for Pathwise's own.
+function Platform.GetAddOnMetadata(field, other)
   local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
   if getMetadata then
-    return getMetadata(addonName, field)
+    local ok, value = pcall(getMetadata, other or addonName, field)
+    return ok and value or nil
   end
+end
+
+-- The client's language, e.g. "enUS".
+function Platform.GetLocale()
+  return GetLocale and GetLocale() or nil
 end
 
 ---------------------------------------------------------------------------

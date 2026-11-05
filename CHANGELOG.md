@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.31.0
+
+- **/pw bug**: a bug report from the game. It opens a window with the
+  GitHub link and a report - Pathwise and game version, Classic Era or
+  Forever, your character, where you are, the mode, the arrow, your To-do
+  steps and the last errors Pathwise caught. Addons can't go online, so:
+  copy the link into your browser, describe what happened and paste the
+  report (click it, Ctrl+C) into the form's "Report" field. The error
+  message Pathwise prints in chat now points there too.
+- GitHub has a bug report form for it (Issues > New issue > Bug report).
+
 ## 0.30.7
 
 No changes in the game. On CurseForge, QuestieDB is now a required

@@ -330,6 +330,12 @@ rangedShown = true
 
 ---------------------------------------------------------------------------
 
+WoW.Slash("bug")
+local bugReport = Pathwise:GetModule("BugReportFrame"):GetReportText()
+check("/pw bug: the report says Forever", bugReport:find("on Forever\n", 1, true) ~= nil
+  and bugReport:find("interface 16001", 1, true) ~= nil)
+_G.PathwiseBugReport:Hide()
+
 check("no errors (" .. tostring(WoW.errors[1]) .. ")", #WoW.errors == 0)
 print(string.format("%d passed, %d failed", passed, failed))
 os.exit(failed == 0 and 0 or 1)

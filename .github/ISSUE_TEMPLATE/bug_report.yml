@@ -1,0 +1,26 @@
+name: Bug report
+description: Something in Pathwise doesn't work or looks wrong.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! In the game, type **/pw bug**, copy the report it shows and paste it below - it tells which version, game and place this is about.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Report
+      description: The text from /pw bug in the game (click it, Ctrl+C, then paste here).
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag images here if you have any (error popups, the To-do window, the arrow...).
