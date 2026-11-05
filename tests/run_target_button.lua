@@ -178,7 +178,7 @@ check("any boar the partial line found counts too", GoesFor(MacroBody()) == "Roc
 S.targetName = "Rockjaw Trogg"
 WoW.FireEvent("PLAYER_TARGET_CHANGED")
 WoW.RunTimers()
-check("a trogg: back to the boars, all of them", MacroBody():find("/target Crag Boar\n/run", 1, true) ~= nil)
+check("a trogg: back to the boars, all of them", MacroBody():find("/target Crag Boar\n/tm", 1, true) ~= nil)
 Waypoints:SetManual({ mapID = 1438, x = 0.6, y = 0.4, label = "Webwood Spider", spawn = true,
   names = { "Webwood Spider", "Githyiss the Vile" } })
 check("another step: its own order", GoesFor(MacroBody()) == "Webwood Spider")

@@ -18,9 +18,12 @@ local TargetMacro = Pathwise:NewModule("TargetMacro")
 TargetMacro.MACRO_NAME = "Pathwise"
 local ICON = "Ability_Hunter_SniperShot"
 local MAX_BODY = 255 -- the client's macro length limit
--- (Only on something to fight: not on a vendor or quest giver. Kept short:
--- the macro holds 255 characters.)
-local MARK_LINE = '/run local t="target"if UnitCanAttack("player",t)and not UnitIsDead(t)then SetRaidTarget(t,8)end'
+-- The skull, with the game's own /tm (target marker) command: only on
+-- something to fight (not a vendor or quest giver) that's alive; "!" keeps
+-- a skull that's already there instead of toggling it off. Not /run
+-- SetRaidTarget(...): WoW Forever only lets Blizzard's code set markers,
+-- and blocks the whole macro ("ForceTaint_Strong ... blocked").
+local MARK_LINE = "/tm [harm,nodead] !8"
 
 local lastBody
 local warnedFull = false

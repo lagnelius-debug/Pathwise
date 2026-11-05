@@ -16,7 +16,7 @@ section("Macro: body")
 local body = TargetMacro.BuildBody({ "Webwood Spider", "Githyiss the Vile" })
 check("body: clear, least important first, most important last, skull mark",
   body == "/cleartarget\n/targetexact Githyiss the Vile\n/targetexact Webwood Spider\n"
-    .. '/run local t="target"if UnitCanAttack("player",t)and not UnitIsDead(t)then SetRaidTarget(t,8)end')
+    .. "/tm [harm,nodead] !8")
 -- Your screenshot: a step with seven kinds of mobs. Names inside other
 -- names share one /target line (part of a name, the nearest of them).
 local seven = { "Large Crag Boar", "Crag Boar", "Rockjaw Trogg", "Burly Rockjaw Trogg", "Frostmane Troll Whelp",
@@ -27,7 +27,7 @@ check("grouped: any Crag Boar, any Rockjaw Trogg, the rest exact (" .. body:gsub
   and body:find("/targetexact Frostmane Troll Whelp", 1, true) ~= nil
   and body:find("/targetexact Rockjaw Skullthumper", 1, true) ~= nil
   and not body:find("Large Crag Boar", 1, true) and not body:find("Burly", 1, true))
-check("the most important group last", body:find("/target Crag Boar\n/run", 1, true) ~= nil)
+check("the most important group last", body:find("/target Crag Boar\n/tm", 1, true) ~= nil)
 check("and it fits the 255 character limit", #body <= 255)
 local groups = TargetMacro.Groups(seven)
 check("four groups, in order", #groups == 4 and groups[1].name == "Crag Boar" and groups[1].partial
@@ -40,13 +40,18 @@ groups = TargetMacro.Groups(crawlers)
 check("names ending alike: one group (" .. tostring(groups[1] and groups[1].name) .. ")", #groups == 1
   and groups[1].name == "Crawler" and groups[1].partial and #groups[1].members == 6)
 body = TargetMacro.BuildBody(crawlers)
-check("one /target Crawler line", body:find("/cleartarget\n/target Crawler\n/run", 1, true) ~= nil)
+check("one /target Crawler line", body:find("/cleartarget\n/target Crawler\n/tm", 1, true) ~= nil)
 check("different endings stay apart", #TargetMacro.Groups({ "Rockjaw Trogg", "Frostmane Troll Whelp" }) == 2)
 check("a short shared ending (under 4 letters) doesn't merge", #TargetMacro.Groups({ "Big Rat", "Old Rat" }) == 2)
 check("whole words only: Rat doesn't take in Pirate", not TargetMacro.Groups({ "Rat", "Pirate" })[1].partial
   and #TargetMacro.Groups({ "Rat", "Pirate" }) == 2)
 check("a name inside no other: exact as before", TargetMacro.BuildBody({ "Crag Boar", "Rockjaw Trogg" })
   :find("/targetexact Crag Boar", 1, true) ~= nil)
+-- The skull through the game's /tm command, never /run: WoW Forever blocks
+-- an addon's Lua from setting raid markers (the whole macro, in fact).
+local marked = TargetMacro.BuildBody({ "Webwood Spider" })
+check("skull with /tm, no /run line", not marked:find("/run", 1, true)
+  and marked:sub(-#"\n/tm [harm,nodead] !8") == "\n/tm [harm,nodead] !8")
 check("body without names: harmless message", TargetMacro.BuildBody({}):find("^/run print") ~= nil)
 local many = {}
 for i = 1, 20 do many[i] = "A very long mob name number " .. i end

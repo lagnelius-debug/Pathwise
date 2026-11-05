@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.3
+
+- WoW Forever: pressing the target macro (or the target button) no longer
+  ends in "ForceTaint_Strong has been blocked from an action only available
+  to the Blizzard UI". Forever only lets Blizzard's own code set raid
+  markers, and the macro's skull line was addon code (`/run
+  SetRaidTarget(...)`). It now uses the game's `/tm [harm,nodead] !8`
+  command instead - the same on Classic Era - which still only marks
+  something you can attack that's alive, and leaves an existing skull on.
+  The macro also has room for more mob names now.
+
 ## 0.30.2
 
 Fixes from a check of the WoW Forever support:

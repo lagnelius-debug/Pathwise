@@ -262,6 +262,12 @@ ok, err = pcall(tooltipPosts[Enum.TooltipDataType.Unit], GameTooltip)
 check("unit tooltip with a secret unit: no error, no line (" .. tostring(err) .. ")", ok and GameTooltip:NumLines() == 0)
 GameTooltip.GetUnit = nil
 
+-- The target macro: Forever blocks an addon's Lua (/run) from setting raid
+-- markers, and with it the whole macro; the skull goes through /tm.
+local macroBody = Pathwise:GetModule("TargetMacro").BuildBody({ "Webwood Spider" })
+check("target macro: skull with /tm, no /run", not macroBody:find("/run", 1, true)
+  and macroBody:find("/tm [harm,nodead] !8", 1, true) ~= nil)
+
 ---------------------------------------------------------------------------
 -- Ammo: Forever can do without
 
