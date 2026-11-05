@@ -269,6 +269,28 @@ check("target macro: skull with /tm, no /run", not macroBody:find("/run", 1, tru
   and macroBody:find("/tm [harm,nodead] !8", 1, true) ~= nil)
 
 ---------------------------------------------------------------------------
+-- The Training panel on Forever's spellbook (PlayerSpellsFrame, loaded the
+-- first time it's opened)
+
+check("no Training tab before the spellbook is loaded", _G.PathwiseSpellBookTab == nil)
+PlayerSpellsFrame = CreateFrame("Frame", "PlayerSpellsFrame", UIParent)
+PlayerSpellsFrame:Hide()
+WoW.FireEvent("ADDON_LOADED", "Blizzard_PlayerSpells")
+local trainingTab, trainingPanel = _G.PathwiseSpellBookTab, _G.PathwiseTrainingPanel
+check("loaded: the Training tab and panel are on PlayerSpellsFrame", trainingTab ~= nil and trainingPanel ~= nil
+  and trainingTab:GetParent() == PlayerSpellsFrame and trainingPanel:GetParent() == PlayerSpellsFrame)
+Pathwise.db.trainerPanel = true
+PlayerSpellsFrame:Show()
+WoW.RunTimers()
+check("opening the spellbook shows the panel, at its right edge", trainingPanel:IsShown()
+  and select(2, trainingPanel:GetPoint(1)) == PlayerSpellsFrame)
+trainingTab:Click()
+check("the tab closes it", not trainingPanel:IsShown() and Pathwise.db.trainerPanel == false)
+trainingTab:Click()
+check("and opens it again", trainingPanel:IsShown())
+PlayerSpellsFrame:Hide()
+
+---------------------------------------------------------------------------
 -- Ammo: Forever can do without
 
 local ammoNeeded = false

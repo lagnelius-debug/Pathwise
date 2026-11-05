@@ -4,9 +4,14 @@ local addonName, Pathwise = ...
 -- docked to the right of the spellbook, listing spells available at the
 -- trainer now and the ones coming in the next levels.
 --
+-- The spellbook is Classic Era's SpellBookFrame, or WoW Forever's modern
+-- PlayerSpellsFrame (spellbook and talents in one window; Blizzard loads it
+-- the first time it's opened, so the panel attaches then).
+--
 -- Pathwise doesn't take over one of Blizzard's skill line tabs (other addons
 -- such as WhatsTraining do); its tab is its own button placed below the last
--- visible skill line tab, so they can't conflict.
+-- visible skill line tab (Classic Era) or on the window's right edge
+-- (Forever), so they can't conflict.
 
 local L = Pathwise.L
 local Platform = Pathwise.Platform
@@ -21,6 +26,7 @@ local TAB_ICON = "Interface\\Icons\\INV_Misc_Book_11"
 
 local tab, panel, scrollFrame, scrollChild
 local rows = {}
+local host -- the spellbook window the tab and panel belong to
 
 local function MoneyText(copper)
   return Pathwise.Platform.CoinText(copper) or Pathwise.FormatMoney(copper)
@@ -155,8 +161,16 @@ end
 ---------------------------------------------------------------------------
 
 -- Places the tab under the last visible skill line tab (Blizzard's or
--- another addon's), and the panel to the right of the tab.
+-- another addon's), and the panel to the right of the tab. On Forever's
+-- window: the tab at its top right edge, the panel beside it.
 local function Position()
+  if host ~= SpellBookFrame then
+    tab:ClearAllPoints()
+    tab:SetPoint("TOPLEFT", host, "TOPRIGHT", 2, -60)
+    panel:ClearAllPoints()
+    panel:SetPoint("TOPLEFT", host, "TOPRIGHT", 38, 0)
+    return
+  end
   local last
   for i = 1, MAX_SKILL_LINE_TABS do
     local skillTab = _G["SpellBookSkillLineTab" .. i]
@@ -206,7 +220,7 @@ local function OnSpellBookShow()
 end
 
 local function CreateTab()
-  tab = CreateFrame("CheckButton", "PathwiseSpellBookTab", SpellBookFrame)
+  tab = CreateFrame("CheckButton", "PathwiseSpellBookTab", host)
   tab:SetSize(32, 32)
 
   local background = tab:CreateTexture(nil, "BACKGROUND")
@@ -238,7 +252,7 @@ end
 
 local function CreatePanel()
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
-  panel = CreateFrame("Frame", "PathwiseTrainingPanel", SpellBookFrame, template)
+  panel = CreateFrame("Frame", "PathwiseTrainingPanel", host, template)
   panel:SetSize(PANEL_WIDTH, PANEL_HEIGHT)
   if panel.SetBackdrop then
     panel:SetBackdrop({
@@ -286,14 +300,15 @@ function TrainerPanel:OnTrainingUpdated()
   end
 end
 
-function TrainerPanel:OnInitialize()
-  if not SpellBookFrame then
-    self:Debug("No SpellBookFrame; training panel disabled.")
-    return
-  end
+-- Builds the tab and panel on a spellbook window.
+local function Attach(frame)
+  host = frame
   CreateTab()
   CreatePanel()
-  SpellBookFrame:HookScript("OnShow", OnSpellBookShow)
+  host:HookScript("OnShow", OnSpellBookShow)
+  if host ~= SpellBookFrame then
+    return
+  end
   -- Re-place the tab when the spellbook rebuilds its skill line tabs (the
   -- function is a method in 1.15.x and a global in older clients).
   if SpellBookFrame.UpdateSkillLineTabs then
@@ -301,5 +316,23 @@ function TrainerPanel:OnInitialize()
   elseif SpellBookFrame_UpdateSkillLineTabs then
     hooksecurefunc("SpellBookFrame_UpdateSkillLineTabs", Position)
   end
+end
+
+-- Forever's spellbook arrives with Blizzard_PlayerSpells.
+function TrainerPanel:OnAddonLoaded(_, name)
+  if name == "Blizzard_PlayerSpells" and not host and PlayerSpellsFrame then
+    self:UnregisterEvent("ADDON_LOADED")
+    Attach(PlayerSpellsFrame)
+  end
+end
+
+function TrainerPanel:OnInitialize()
   self:RegisterCallback("TRAINING_UPDATED", "OnTrainingUpdated")
+  if SpellBookFrame then
+    Attach(SpellBookFrame)
+  elseif PlayerSpellsFrame then
+    Attach(PlayerSpellsFrame)
+  else
+    self:RegisterEvent("ADDON_LOADED", "OnAddonLoaded")
+  end
 end

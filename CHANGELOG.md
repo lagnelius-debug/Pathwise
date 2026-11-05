@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.4
+
+- WoW Forever: the Training panel (spells to learn at your trainer now,
+  with their cost, and the ones coming in the next levels) is back. It was
+  docked to Classic Era's spellbook, which Forever doesn't have; now it
+  docks to Forever's spellbook window too: the book tab on the window's
+  right edge opens it beside the window.
+
 ## 0.30.3
 
 - WoW Forever: pressing the target macro (or the target button) no longer
