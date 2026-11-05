@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.34.1
+
+- WoW Forever: the boat between Auberdine and Stormwind Harbor. From
+  Darkshore to Stormwind (or Elwynn and beyond), the arrow now says "Take
+  the boat to Stormwind (Auberdine docks)" instead of sending you through
+  Menethil Harbor, and the other way round. The dock spots are
+  approximate until measured in game.
+
 ## 0.34.0
 
 - WoW Forever: a Beast Mastery talent build made for Forever's trees

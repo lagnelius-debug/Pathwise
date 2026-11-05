@@ -93,3 +93,10 @@ snapshot.faction = savedFaction
 Pathwise.charDB.flightNodes = savedNodes
 Flights:ClearCache()
 At(1438, 0.5, 0.5)
+
+local foreverBoat = false
+for _, connector in ipairs(Pathwise.Data.Travel.CONNECTORS) do
+  if connector.label == "TRAVEL_BOAT_AUBERDINE_TO_STORMWIND" then foreverBoat = true end
+end
+check("Forever's Auberdine - Stormwind boat isn't on Classic Era", not foreverBoat)
+

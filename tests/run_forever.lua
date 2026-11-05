@@ -7,6 +7,7 @@
 package.path = "./tests/?.lua;" .. package.path
 local WoW = require("mock_wow")
 local S = WoW.state
+WoW.mapRects[1453] = { continent = 0, top = 1600, left = 1600, bottom = 1000, right = 1000 } -- Stormwind
 WoW.echo = os.getenv("PATHWISE_ECHO") == "1"
 
 local passed, failed = 0, 0
@@ -242,6 +243,29 @@ check("Stratholme's entrance on Forever's Eastern Plaguelands map", entrance and
   and (Near(entrance.x, 0.313 * 0.8997577709204458 - 0.016464926382438023)
     or Near(entrance.x, 0.479 * 0.8997577709204458 - 0.016464926382438023)))
 QuestieData.AreaToUiMap = areaToUiMap
+
+-- Forever's boat between Auberdine and Stormwind Harbor.
+do
+  local Travel = Pathwise:GetModule("Travel")
+  local savedNodes = Pathwise.charDB.flightNodes
+  Pathwise.charDB.flightNodes = {}
+  Pathwise:GetModule("Flights"):ClearCache()
+  if Travel.ClearCache then Travel.ClearCache() end
+  local function Labels(route)
+    local labels = {}
+    for _, leg in ipairs(route and route.legs or {}) do labels[#labels + 1] = leg.label or "flight" end
+    return table.concat(labels, ", ")
+  end
+  local route = Travel.Route(1439, 0.40, 0.40, 1453, 0.60, 0.60)
+  check("Darkshore to Stormwind: the boat straight to Stormwind (" .. Labels(route) .. ")",
+    Labels(route) == "TRAVEL_BOAT_AUBERDINE_TO_STORMWIND")
+  route = Travel.Route(1453, 0.60, 0.60, 1439, 0.40, 0.40)
+  check("and back (" .. Labels(route) .. ")", Labels(route) == "TRAVEL_BOAT_STORMWIND_TO_AUBERDINE")
+  route = Travel.Route(1439, 0.40, 0.40, 1437, 0.50, 0.50)
+  check("the Wetlands: still the Menethil boat (" .. Labels(route) .. ")", Labels(route) == "TRAVEL_BOAT_AUBERDINE_TO_MENETHIL")
+  Pathwise.charDB.flightNodes = savedNodes
+  Pathwise:GetModule("Flights"):ClearCache()
+end
 
 -- Forever's new dungeons: in the list, in level order, known inside.
 local DungeonGuide = Pathwise:GetModule("DungeonGuide")

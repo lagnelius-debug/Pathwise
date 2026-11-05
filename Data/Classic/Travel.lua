@@ -98,3 +98,16 @@ Pathwise.Data.Travel = {
       faction = "Horde", entry = { 1434, 0.314, 0.299 }, exit = { 1420, 0.618, 0.592 } },
   },
 }
+
+-- WoW Forever: a boat between Auberdine and Stormwind Harbor ("a boat on
+-- the southern-most dock in Stormwind Harbor", Forever's quest "Business in
+-- Auberdine"). Forever's Stormwind map includes the harbor, west of the
+-- old city; these Stormwind points are in Forever's map frame. Both docks
+-- are approximate until measured in game.
+if Pathwise.Platform.flavor == "Forever" then
+  local connectors = Pathwise.Data.Travel.CONNECTORS
+  table.insert(connectors, { from = "KALIMDOR", to = "EASTERN_KINGDOMS", label = "TRAVEL_BOAT_AUBERDINE_TO_STORMWIND",
+    cost = 500, sail = 1000, faction = "Alliance", entry = { 1439, 0.324, 0.438 }, exit = { 1453, 0.226, 0.56 } })
+  table.insert(connectors, { from = "EASTERN_KINGDOMS", to = "KALIMDOR", label = "TRAVEL_BOAT_STORMWIND_TO_AUBERDINE",
+    cost = 500, sail = 1000, faction = "Alliance", entry = { 1453, 0.226, 0.56 }, exit = { 1439, 0.324, 0.438 } })
+end
