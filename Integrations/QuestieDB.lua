@@ -237,9 +237,17 @@ end
 
 -- A creature objective that isn't a kill: what to do (the quest log's
 -- words without the count, else QuestieDB's, else "talk to <NPC>" or "go to
--- the marked spot") and whether it's done.
+-- the marked spot") and whether it's done. Talk to: a talk objective, or an
+-- event at a real NPC - one with a role (trainer, vendor, gossip: npcFlags),
+-- not an invisible credit marker.
 local ICON_TALK = 5
-local function EventObjective(quest, k, count, text, npcName, icon)
+local function EventObjective(quest, k, count, text, npcId, icon)
+  local npcName = lib.Npc.Get(npcId, "name")
+  local talk = icon == ICON_TALK
+  if not talk and npcName then
+    local flagsOk, flags = pcall(lib.Npc.Get, npcId, "npcFlags")
+    talk = flagsOk and type(flags) == "number" and flags > 0
+  end
   local logObjective = CreatureLogObjective(quest, k, count)
   local logText = logObjective and (logObjective.text or ""):gsub("%s*:?%s*%d+%s*/%s*%d+%s*$", "")
   if logText and (logText == "" or logText == npcName or logText:find(" slain$")) then
@@ -251,7 +259,7 @@ local function EventObjective(quest, k, count, text, npcName, icon)
   else
     finished = IsFinished(quest, text)
   end
-  local fallback = icon == ICON_TALK and npcName and string.format(L.TASK_TALK, npcName) or L.TASK_EVENT
+  local fallback = talk and npcName and string.format(L.TASK_TALK, npcName) or L.TASK_EVENT
   return logText or text or fallback, finished
 end
 
@@ -382,7 +390,8 @@ end
 -- What's left of a quest log entry, as tasks (the guide inside dungeons):
 -- list of { kind = "kill" | "loot" | "use" | "event", npcs = { names }, item,
 -- object, text } - "kill": one of npcs; "loot": item from npcs (can be
--- empty); "use": object; "event": text says what to do. nil without QuestieDB (or a quest it doesn't know).
+-- empty); "use": object; "event": text says what to do. nil without
+-- QuestieDB (or a quest it doesn't know).
 function QuestieData:QuestTasks(quest)
   if not Load() or not quest.questID then
     return nil
@@ -394,7 +403,7 @@ function QuestieData:QuestTasks(quest)
     for k, objective in ipairs(objectives[1] or {}) do
       local npcName = lib.Npc.Get(objective[1], "name")
       if NOT_A_KILL[objective[3]] then
-        local text, finished = EventObjective(quest, k, creatures, objective[2], npcName, objective[3])
+        local text, finished = EventObjective(quest, k, creatures, objective[2], objective[1], objective[3])
         if not finished then
           tasks[#tasks + 1] = { kind = "event", text = text }
         end
@@ -422,7 +431,7 @@ function QuestieData:QuestTasks(quest)
     for j, objective in ipairs(objectives[5] or {}) do
       local npcName = lib.Npc.Get(objective[2], "name")
       if NOT_A_KILL[objective[4]] then
-        local text, finished = EventObjective(quest, #(objectives[1] or {}) + j, creatures, objective[3], npcName,
+        local text, finished = EventObjective(quest, #(objectives[1] or {}) + j, creatures, objective[3], objective[2],
           objective[4])
         if not finished then
           tasks[#tasks + 1] = { kind = "event", text = text }
@@ -451,8 +460,8 @@ local function DoTarget(quest)
 
   -- A spot to go to: the credit marker's spawns, with no NPC name (nothing
   -- to target there).
-  local function EventSpots(k, npcIds, text, npcName, icon)
-    local task, finished = EventObjective(quest, k, creatures, text, npcName, icon)
+  local function EventSpots(k, npcIds, text, npcId, icon)
+    local task, finished = EventObjective(quest, k, creatures, text, npcId, icon)
     if not finished then
       for _, npcId in ipairs(npcIds) do
         local first = #points + 1
@@ -467,7 +476,7 @@ local function DoTarget(quest)
   for k, objective in ipairs(objectives[1] or {}) do
     local name = objective[2] or lib.Npc.Get(objective[1], "name")
     if NOT_A_KILL[objective[3]] then
-      EventSpots(k, { objective[1] }, objective[2], lib.Npc.Get(objective[1], "name"), objective[3])
+      EventSpots(k, { objective[1] }, objective[2], objective[1], objective[3])
     elseif not IsFinished(quest, name) then
       local first = #points + 1
       NpcPoints(points, { objective[1] })
@@ -533,8 +542,7 @@ local function DoTarget(quest)
   for j, objective in ipairs(objectives[5] or {}) do
     local name = objective[3] or lib.Npc.Get(objective[2], "name")
     if NOT_A_KILL[objective[4]] then
-      EventSpots(#(objectives[1] or {}) + j, objective[1] or {}, objective[3], lib.Npc.Get(objective[2], "name"),
-        objective[4])
+      EventSpots(#(objectives[1] or {}) + j, objective[1] or {}, objective[3], objective[2], objective[4])
     elseif not IsFinished(quest, name) then
       local first = #points + 1
       NpcPoints(points, objective[1])

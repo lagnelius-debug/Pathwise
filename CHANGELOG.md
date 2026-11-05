@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.32.2
+
+- "Speak with" quests that QuestieDB marks as an event at a real NPC (the
+  WoW Forever "Camping 101" profession quests: "Speak with Nadyia
+  Maneweaver...") now say "Talk to Nadyia Maneweaver" when the quest log
+  doesn't word it, instead of "Go to the marked spot" (0.32.1 already
+  stopped calling them "Kill ...").
+
 ## 0.32.1
 
 - Quests where you go somewhere or do something there (place an owl,

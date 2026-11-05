@@ -343,6 +343,22 @@ if questie:IsAvailable() then
   end
   step, lines = EventStep({ { text = "Sentinel Owl: 0/1", type = "item" } })
   check("a talk objective with no quest log line: talk to the NPC: " .. lines, lines == "Talk to Credit")
+  -- Reported on Forever: "Camping 101: Leatherworking" said "Kill Nadyia
+  -- Maneweaver" - an event objective at a real NPC (a trainer): talk to her.
+  LibQuestieDB.Quest.Get = function(id, key)
+    if id == 98067 and key == "objectives" then return { { { 3605, nil, 3 } } } end
+    return q3(id, key)
+  end
+  local n3 = LibQuestieDB.Npc.Get
+  LibQuestieDB.Npc.Get = function(id, key)
+    if id == 3605 then
+      return ({ name = "Nadyia Maneweaver", npcFlags = 1 + 2 + 16 + 128, spawns = { [141] = { { 45, 58 } } } })[key]
+    end
+    return n3(id, key)
+  end
+  step, lines = EventStep({ { text = "Nadyia Maneweaver: 0/1" } })
+  check("an event at a trainer: talk to her, no target macro: " .. lines, lines == "Talk to Nadyia Maneweaver"
+    and step.target and #(step.target.names or {}) == 0)
   LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get = q2, n2
   WoW.questLog = { { header = true, title = "Hunter" },
     { title = "Taming the Beast", level = 10, questID = 6063, objectives = { { text = "Tame a Webwood Lurker: 0/1" } } } }
