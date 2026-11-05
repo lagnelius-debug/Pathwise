@@ -3,17 +3,23 @@
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
 ## X-Curse-Project-ID: 1767676
-## Version: 0.30.1
+## Version: 0.30.2
 ## OptionalDeps: QuestieDB
 ## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB
 ## SavedVariablesPerCharacter: PathwiseCharDB
 
-# WoW Forever (1.60.1, interface 16001; the client's internal name is
-# Camelot). Pathwise_Camelot.toc is an identical copy, for clients that
-# look for that suffix. This file is Pathwise_Vanilla.toc with this
-# interface, these comments and Platform_Forever.lua after
-# Platform_Classic.lua (tests/run.lua checks this).
+# Interface numbers: 11509 = Classic Era 1.15.9 (verified in game
+# 2026-10-22 with /dump select(4, GetBuildInfo()) - re-check after each
+# patch); 16001 = WoW Forever 1.60.1 (the client's internal name is Camelot).
+#
+# Four TOCs, all loading the same files; only the interface line differs:
+#   Pathwise_Vanilla.toc  11509         Classic Era
+#   Pathwise_Forever.toc  16001         WoW Forever
+#   Pathwise_Camelot.toc  16001         WoW Forever, if it looks for that suffix
+#   Pathwise.toc          11509, 16001  fallback for clients that pick up neither
+# Platform_Forever.lua does nothing outside WoW Forever. tests/run.lua checks
+# that the four stay in step.
 
 # Load order matters:
 #  0. Libs        - LibStub, LibTameable-1.0 (Classic Era data only)

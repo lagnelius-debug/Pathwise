@@ -73,7 +73,8 @@ local function HasPathwiseLine(tooltip)
   for i = tooltip:NumLines(), 1, -1 do
     local fontString = _G[name .. "TextLeft" .. i]
     local text = fontString and fontString:GetText()
-    if text and text:find(PREFIX, 1, true) then
+    -- (Text the client keeps secret, in combat, can't be searched.)
+    if text and not Platform.IsSecret(text) and text:find(PREFIX, 1, true) then
       return true
     end
   end
@@ -91,7 +92,7 @@ local function AddPathwiseLine(tooltip)
     return false
   end
   local _, link = tooltip:GetItem()
-  if not link or HasPathwiseLine(tooltip) then
+  if not link or Platform.IsSecret(link) or HasPathwiseLine(tooltip) then
     return false
   end
 

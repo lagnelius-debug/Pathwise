@@ -3,6 +3,21 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.30.2
+
+Fixes from a check of the WoW Forever support:
+
+- The fallback `Pathwise.toc` lists both game versions (Classic Era and
+  Forever), and every TOC loads the Forever platform file, which stays out
+  of the way on Classic Era. So Pathwise also loads on Forever if the
+  client doesn't pick up `Pathwise_Forever.toc` or `Pathwise_Camelot.toc`
+  (not confirmed yet, for any addon).
+- Hunters: no "out of ammo" warning when Forever says ranged weapons don't
+  need ammo (its character sheet then hides the ammo slot).
+- Tooltips in combat: the gear verdict, sell price and skinning lines leave
+  tooltip text and units alone that Forever keeps secret during combat,
+  instead of erroring.
+
 ## 0.30.1
 
 No changes in the game. Fixes the CurseForge upload of release notes

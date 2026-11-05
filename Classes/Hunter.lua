@@ -55,7 +55,7 @@ local STATE_RANK = { ok = 0, low = 1, critical = 2, none = 3 }
 
 local function AmmoItems()
   local kind = AmmoKind()
-  if not kind then
+  if not kind or not Platform.AmmoNeeded() then
     lastAmmoState = "noweapon"
     return {}
   end

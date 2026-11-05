@@ -28,25 +28,23 @@ local Pathwise = WoW.LoadAddon("./Pathwise_Vanilla.toc", "Pathwise")
 local broken = Pathwise:NewModule("BrokenTestModule")
 function broken:OnEnable() error("boom") end
 local function ReadFile(path) local f = assert(io.open(path)); local s = f:read("*a"); f:close(); return s end
-check("Pathwise.toc matches Pathwise_Vanilla.toc", ReadFile("./Pathwise.toc") == ReadFile("./Pathwise_Vanilla.toc"))
--- WoW Forever: Pathwise_Camelot.toc is a copy of Pathwise_Forever.toc,
--- which is the Vanilla TOC with its interface, its own comments and
--- Platform_Forever.lua after Platform_Classic.lua.
-check("Pathwise_Camelot.toc matches Pathwise_Forever.toc", ReadFile("./Pathwise_Camelot.toc") == ReadFile("./Pathwise_Forever.toc"))
-local function TocLines(path)
-  local lines = {}
-  for line in io.lines(path) do
-    if line ~= "" and not line:match("^# ") and line ~= "#" and not line:match("^## Interface:")
-      and line ~= "Platform\\Platform_Forever.lua" then
-      lines[#lines + 1] = line
-    end
-  end
-  return table.concat(lines, "\n")
+-- Four TOCs (Vanilla, Forever, Camelot and the fallback Pathwise.toc)
+-- load the same files; only the interface line differs.
+local function WithoutInterface(path)
+  return (ReadFile(path):gsub("^## Interface: [^\n]*\n", ""))
 end
-check("Pathwise_Forever.toc lists what Pathwise_Vanilla.toc does", TocLines("./Pathwise_Forever.toc") == TocLines("./Pathwise_Vanilla.toc")
-  and ReadFile("./Pathwise_Forever.toc"):find("Platform\\Platform_Classic.lua\r?\nPlatform\\Platform_Forever.lua") ~= nil
-  and ReadFile("./Pathwise_Forever.toc"):find("## Interface: 16001", 1, true) == 1)
-check("Classic Era: the Classic platform", Pathwise.Platform.flavor == "Classic"
+local function Interface(path)
+  return ReadFile(path):match("^## Interface: ([^\r\n]*)")
+end
+check("the four TOCs are the same but for the interface", WithoutInterface("./Pathwise.toc") == WithoutInterface("./Pathwise_Vanilla.toc")
+  and WithoutInterface("./Pathwise_Forever.toc") == WithoutInterface("./Pathwise_Vanilla.toc")
+  and WithoutInterface("./Pathwise_Camelot.toc") == WithoutInterface("./Pathwise_Vanilla.toc"))
+check("interfaces: Classic Era, Forever, both in the fallback", Interface("./Pathwise_Vanilla.toc") == "11509"
+  and Interface("./Pathwise_Forever.toc") == "16001" and Interface("./Pathwise_Camelot.toc") == "16001"
+  and Interface("./Pathwise.toc") == "11509, 16001")
+check("the Forever platform right after the Classic one", ReadFile("./Pathwise_Vanilla.toc")
+  :find("Platform\\Platform_Classic.lua\r?\nPlatform\\Platform_Forever.lua") ~= nil)
+check("Classic Era: Platform_Forever.lua loaded but stays out", Pathwise.Platform.flavor == "Classic"
   and select(1, Pathwise.Platform.MapPoint(1453, 0.75, 0.28)) == 0.75)
 check("namespace has Platform", Pathwise.Platform ~= nil)
 check("slash command bound", SlashCmdList.PATHWISE ~= nil and SLASH_PATHWISE2 == "/pw")

@@ -121,6 +121,12 @@ local function Readable(value)
   return value
 end
 
+-- True for such a secret value (tooltip text in combat, ...): the UI
+-- leaves it alone.
+function Platform.IsSecret(value)
+  return issecretvalue ~= nil and issecretvalue(value) and true or false
+end
+
 ---------------------------------------------------------------------------
 -- Client / addon info
 ---------------------------------------------------------------------------
@@ -1032,6 +1038,12 @@ end
 ---------------------------------------------------------------------------
 -- Hunter: ammo and pet
 ---------------------------------------------------------------------------
+
+-- Whether ranged weapons use ammo (Classic Era: always; WoW Forever can do
+-- without).
+function Platform.AmmoNeeded()
+  return true
+end
 
 -- Returns count, itemID of the equipped ammo (0, nil if none). For the ammo
 -- slot, GetInventoryItemCount counts that ammo in all bags and quivers.

@@ -249,6 +249,41 @@ WoW.FireEvent("PLAYER_TARGET_CHANGED")
 WoW.RunTimers()
 UnitName, S.targetName = originalUnitName, nil
 
+-- Tooltips in combat: a secret line (text can't be searched) or unit.
+GameTooltip:ClearLines()
+GameTooltip._link = WoW.ItemLink(anyItem)
+GameTooltip:AddLine("Some Item")
+GameTooltip:AddLine(SECRET)
+local ok, err = pcall(tooltipPosts[Enum.TooltipDataType.Item], GameTooltip)
+check("item tooltip with a secret line: no error (" .. tostring(err) .. ")", ok)
+GameTooltip:ClearLines()
+GameTooltip.GetUnit = function() return SECRET, SECRET end
+ok, err = pcall(tooltipPosts[Enum.TooltipDataType.Unit], GameTooltip)
+check("unit tooltip with a secret unit: no error, no line (" .. tostring(err) .. ")", ok and GameTooltip:NumLines() == 0)
+GameTooltip.GetUnit = nil
+
+---------------------------------------------------------------------------
+-- Ammo: Forever can do without
+
+local ammoNeeded = false
+C_PaperDollInfo = { AmmoNeeded = function() return ammoNeeded end }
+S.inventory[18] = { id = 2504, name = "Worn Shortbow" }
+S.inventory[0] = nil
+WoW.FireEvent("PLAYER_EQUIPMENT_CHANGED", 18)
+WoW.RunTimers()
+local function HasAmmoStep()
+  WoW.FireEvent("BAG_UPDATE_DELAYED")
+  WoW.RunTimers()
+  for _, item in ipairs(Pathwise:GetModule("NextSteps"):GetItems()) do
+    if item.id == "ammo" then return true end
+  end
+  return false
+end
+check("no ammo needed: no ammo warning for a hunter with a bow", not Platform.AmmoNeeded() and not HasAmmoStep())
+ammoNeeded = true
+check("ammo needed: the warning as on Classic Era", Platform.AmmoNeeded() and HasAmmoStep())
+S.inventory[18] = nil
+
 ---------------------------------------------------------------------------
 
 check("no errors (" .. tostring(WoW.errors[1]) .. ")", #WoW.errors == 0)

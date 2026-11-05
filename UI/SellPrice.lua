@@ -19,7 +19,8 @@ local function HasSellLine(tooltip)
   for i = tooltip:NumLines(), 1, -1 do
     local fontString = _G[name .. "TextLeft" .. i]
     local text = fontString and fontString:GetText()
-    if text and text:find(L.SELL_PRICE_PREFIX, 1, true) then
+    -- (Text the client keeps secret, in combat, can't be searched.)
+    if text and not Platform.IsSecret(text) and text:find(L.SELL_PRICE_PREFIX, 1, true) then
       return true
     end
   end
@@ -50,7 +51,7 @@ function SellPrice.AddLine(tooltip)
     return false
   end
   local _, link = tooltip:GetItem()
-  if not link or HasSellLine(tooltip) then
+  if not link or Platform.IsSecret(link) or HasSellLine(tooltip) then
     return false
   end
   local info = Platform.GetItemInfo(link)

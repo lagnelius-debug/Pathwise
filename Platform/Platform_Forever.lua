@@ -3,12 +3,17 @@ local addonName, Pathwise = ...
 -- Platform layer for WoW Forever (1.60, interface 16xxx): Classic Era's
 -- world and quests on the modern (retail) client, so part of the game's API
 -- moved to C_ namespaces or works differently. Loaded right after
--- Platform_Classic.lua, and only by Pathwise_Forever.toc (and its
--- _Camelot copy): it replaces just the functions that differ; everything
--- else is Platform_Classic.lua's.
+-- Platform_Classic.lua by every TOC, it does nothing outside WoW Forever;
+-- there it replaces just the functions that differ, everything else is
+-- Platform_Classic.lua's.
 --
 -- Checked against Blizzard's Forever UI source and API documentation,
 -- 1.60.1 (70790). Where an API might be missing, check at runtime.
+
+local interface = select(4, GetBuildInfo())
+if not interface or interface < 16000 or interface >= 17000 then
+  return
+end
 
 local Platform = Pathwise.Platform
 
@@ -170,8 +175,17 @@ function Platform.GetQuestGreenRange(playerLevel)
 end
 
 ---------------------------------------------------------------------------
--- Hunter pet (C_PetInfo, the pet spellbook)
+-- Hunter: ammo and pet (C_PaperDollInfo, C_PetInfo, the pet spellbook)
 ---------------------------------------------------------------------------
+
+-- Forever's character sheet hides the ammo slot when the game says no ammo
+-- is needed; then there's nothing to warn about.
+function Platform.AmmoNeeded()
+  if C_PaperDollInfo and C_PaperDollInfo.AmmoNeeded then
+    return C_PaperDollInfo.AmmoNeeded() ~= false
+  end
+  return true
+end
 
 function Platform.GetHunterPet()
   if not UnitExists("pet") then
