@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.34.2
+
+- WoW Forever's Beast Mastery build: Improved Aspect of the Hawk 5/5
+  (levels 10-14), then Endurance Training 3/5 (15-17) - they were the
+  other way round.
+
 ## 0.34.1
 
 - WoW Forever: the boat between Auberdine and Stormwind Harbor. From

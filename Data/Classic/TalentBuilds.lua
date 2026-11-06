@@ -712,14 +712,15 @@ Pathwise.Data.TalentBuilds = {
 -- labels; "?" where a talent isn't known from Classic.
 if Pathwise.Platform.flavor == "Forever" then
   local hunter = Pathwise.Data.TalentBuilds.HUNTER
-  -- Beast Mastery, 31/16/4 (the player's chosen build). Pet and hawk
-  -- first, Bestial Wrath at 40, then Marksmanship and a little Survival.
+  -- Beast Mastery, 31/16/4 (the player's chosen build): Improved Aspect
+  -- of the Hawk 5/5 and Endurance Training 3/5 first, Bestial Wrath at 40,
+  -- then Marksmanship and a little Survival.
   hunter.builds.BM_FOREVER = {
     name = "Beast Mastery (31/16/4)",
     gamePositions = true,
     picks = {
-      { 1, 1, 3, 3, "Improved Aspect of the Hawk" }, -- 10-12
-      { 1, 1, 2, 5, "Endurance Training" },          -- 13-17
+      { 1, 1, 2, 5, "Improved Aspect of the Hawk" }, -- 10-14
+      { 1, 1, 3, 3, "Endurance Training" },          -- 15-17
       { 1, 2, 1, 2, "?" },                           -- 18-19
       { 1, 3, 3, 5, "Unleashed Fury" },              -- 20-24
       { 1, 3, 2, 1, "?" },                           -- 25 (leads to Intimidation)
