@@ -393,7 +393,13 @@ TraitTree({
   { 12, 600, 400, "Thick Hide", 0, 3, nil, false },
   { 13, 600, 100, "Monster Slaying" }, { 13, 900, 100, "Humanoid Slaying" },
 })
--- (The Leveling path: Classic's build, matched by name.)
+-- (Classic's build on Forever, matched by name - Leveling on Classic's
+-- Beast Mastery build for this test; on Forever it's Forever's own.)
+local hunterBuilds = Pathwise.Data.TalentBuilds.HUNTER
+local foreverLeveling = hunterBuilds.bySpec.LEVELING
+check("Forever: hunters level with Forever's Beast Mastery build", foreverLeveling == "BM_FOREVER"
+  and hunterBuilds.default == "BM_FOREVER")
+hunterBuilds.bySpec.LEVELING = "BM_LEVELING"
 Pathwise.charDB.goal = "LEVELING"
 WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
 WoW.RunTimers()
@@ -464,6 +470,7 @@ PlayerSpellsFrame:Hide()
 -- and columns as in the talent window (a node's posY/posX, a few units off
 -- in places); the names here aren't Classic's.
 Pathwise.charDB.goal = "BEAST_MASTERY"
+hunterBuilds.bySpec.LEVELING = foreverLeveling
 TraitTree({
   { 11, 1200, 100, "Wild Endurance", 5, 5 }, { 11, 1803, 100, "Hawk Mastery", 3, 5 },
   { 11, 600, 400, "Golden Bond", 0, 2 }, { 11, 1200, 397, "Grey One" }, { 11, 1800, 400, "Grey Two" },
@@ -493,6 +500,28 @@ check("then the build's order: " .. table.concat(order, ", "), order[3] == "Fury
 local total = 0
 for _, pick in ipairs(build.picks) do total = total + pick[4] end
 check("Forever's Beast Mastery build: 31/16/4, 51 points", total == 51)
+-- Reported: no path chosen, Hawk 5/5, Endurance Training 3/5 and the gold
+-- row-2 talent 2/2 - the glow was on Endurance Training (Classic's build,
+-- 5/5 there). Now the next point is row 3's Unleashed Fury.
+Pathwise.charDB.goal = nil
+TraitTree({
+  { 11, 1200, 100, "Improved Aspect of the Hawk", 5, 5 }, { 11, 1803, 100, "Endurance Training", 3, 5 },
+  { 11, 600, 400, "Golden Bond", 2, 2 }, { 11, 1200, 397, "Grey One" }, { 11, 1800, 400, "Grey Two" },
+  { 11, 600, 700, "Grey Three" }, { 11, 1200, 700, "Pack Leader", 0, 1 }, { 11, 1800, 700, "Unleashed Fury" },
+  { 11, 600, 1000, "Grey Four" }, { 11, 1800, 1000, "Ferocity" }, { 11, 2400, 1000, "Swiftness", 0, 1 },
+  { 11, 1200, 1300, "Intimidation", 0, 1 }, { 11, 2400, 1300, "Discipline", 0, 2 },
+  { 11, 1800, 1600, "Frenzy" }, { 11, 1200, 1900, "Bestial Wrath", 0, 1 },
+  { 12, 600, 100, "Mark One" }, { 12, 1800, 100, "Mark Three" }, { 12, 600, 400, "Mark Four", 0, 3 },
+  { 12, 1200, 400, "Mark Five" }, { 12, 1800, 400, "Mark Six" }, { 12, 1200, 1000, "Aimed Shot", 0, 1 },
+  { 12, 2400, 700, "Mark Seven" }, { 13, 1200, 100, "Wild One" }, { 13, 1800, 100, "Wild Two" },
+  { 13, 600, 400, "Wild Three" }, { 13, 2400, 400, "Wild Four" },
+})
+WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
+WoW.RunTimers()
+items = TalentItems()
+check("no path chosen, 10 points spent like the build: next Unleashed Fury (" .. tostring(items[1] and items[1].text) .. ")",
+  items[1] and items[1].text == "Spend 1 talent point: Unleashed Fury (1/5)")
+Pathwise.charDB.goal = "BEAST_MASTERY"
 -- A grid that doesn't fit the build (most of its spots empty): no "?"
 -- talents, just the reminder.
 TraitTree({ { 11, 1200, 100, "Lone Talent", 0, 5 }, { 12, 600, 100, "Other Talent", 0, 5 } })

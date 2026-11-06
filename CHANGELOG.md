@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.34.4
+
+- WoW Forever: hunters get Forever's Beast Mastery build (Improved Aspect
+  of the Hawk 5/5, Endurance Training 3/5, ...) by default - also on the
+  Leveling path and Survival, not only when Beast Mastery is chosen. On
+  the Leveling path the advisor still used Classic's build and asked for
+  a 4th point in Endurance Training. Marksmanship keeps its own build.
+
 ## 0.34.3
 
 - Fixed: a step you clicked in the To-do window kept the arrow on its old

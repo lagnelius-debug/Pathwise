@@ -738,5 +738,10 @@ if Pathwise.Platform.flavor == "Forever" then
       { 3, 1, 2, 4, "?" },                           -- 57-60
     },
   }
+  -- The hunter build on Forever: also for the Leveling path (the default)
+  -- and Survival (no build of its own); Marksmanship keeps Classic's.
   hunter.bySpec.BEAST_MASTERY = "BM_FOREVER"
+  hunter.bySpec.LEVELING = "BM_FOREVER"
+  hunter.bySpec.SURVIVAL = "BM_FOREVER"
+  hunter.default = "BM_FOREVER"
 end
