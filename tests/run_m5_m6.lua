@@ -376,6 +376,31 @@ if questie:IsAvailable() then
   check("an interact objective on a beast: the log's words, and the beast in the target macro: " .. lines,
     lines == "Rabid Thistle Bear captured" and step.target and step.target.names
     and step.target.names[1] == "Rabid Thistle Bear")
+
+  -- Seen in a replay of Redridge: an item many creatures drop (spider
+  -- meat) put spiders from all over the world in the target macro. Only
+  -- the arrow's zone counts.
+  LibQuestieDB.Quest.Get = function(id, key)
+    if id == 98067 and key == "objectives" then return { nil, nil, { { 9901 } } } end
+    return q3(id, key)
+  end
+  local i4 = LibQuestieDB.Item.Get
+  LibQuestieDB.Item.Get = function(id, key)
+    if id == 9901 then return ({ name = "Crisp Spider Meat", npcDrops = { 9911, 9912, 9913 } })[key] end
+    return i4(id, key)
+  end
+  local n5 = LibQuestieDB.Npc.Get
+  LibQuestieDB.Npc.Get = function(id, key)
+    if id == 9911 then return ({ name = "Near Spider", spawns = { [141] = { { 41, 61 } } } })[key] end
+    if id == 9912 then return ({ name = "Other Near Spider", spawns = { [141] = { { 45, 65 } } } })[key] end
+    if id == 9913 then return ({ name = "Far Away Spider", spawns = { [148] = { { 50, 50 } } } })[key] end
+    return n5(id, key)
+  end
+  step = EventStep({ { text = "Crisp Spider Meat: 0/5" } })
+  local names = step and step.target and table.concat(step.target.names or {}, ",") or ""
+  check("target macro: only the mobs of the arrow's zone (" .. names .. ")",
+    names:find("Near Spider", 1, true) ~= nil and names:find("Far Away Spider", 1, true) == nil)
+  LibQuestieDB.Item.Get = i4
   LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get = q2, n2
   WoW.questLog = { { header = true, title = "Hunter" },
     { title = "Taming the Beast", level = 10, questID = 6063, objectives = { { text = "Tame a Webwood Lurker: 0/1" } } } }

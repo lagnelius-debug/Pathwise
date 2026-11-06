@@ -274,7 +274,7 @@ Pathwise.Data.ClassSpells = {
   },
   PALADIN = {
     -- Talent ranks (base of the trainable ranks below)
-    { id = 20217, name = "Blessing of Kings", rank = None, talent = true },
+    { id = 20217, name = "Blessing of Kings", talent = true },
     { id = 20911, name = "Blessing of Sanctuary", rank = 1, talent = true },
     { id = 26573, name = "Consecration", rank = 1, talent = true },
     { id = 20925, name = "Holy Shield", rank = 1, talent = true },

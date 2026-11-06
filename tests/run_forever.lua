@@ -493,6 +493,14 @@ check("then the build's order: " .. table.concat(order, ", "), order[3] == "Fury
 local total = 0
 for _, pick in ipairs(build.picks) do total = total + pick[4] end
 check("Forever's Beast Mastery build: 31/16/4, 51 points", total == 51)
+-- A grid that doesn't fit the build (most of its spots empty): no "?"
+-- talents, just the reminder.
+TraitTree({ { 11, 1200, 100, "Lone Talent", 0, 5 }, { 12, 600, 100, "Other Talent", 0, 5 } })
+WoW.FireEvent("TRAIT_CONFIG_UPDATED", 77)
+WoW.RunTimers()
+items = TalentItems()
+check("a grid the build doesn't fit: \"Spend 1 talent point\" (" .. tostring(items[1] and items[1].text) .. ")",
+  #items == 1 and items[1].text == "Spend 1 talent point")
 Pathwise.charDB.goal = nil
 unspentTalents = 2
 

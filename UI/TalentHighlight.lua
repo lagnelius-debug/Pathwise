@@ -126,38 +126,41 @@ local function OnButtonEnter(button)
   end
 end
 
+-- Shows a glow on target (nil: hides it). Left alone when it's already
+-- there: this runs twice a second while the window is open, and placing it
+-- again would restart its pulse.
+local function ShowGlow(frame, target)
+  if not target then
+    frame:Hide()
+    frame.target = nil
+  elseif frame.target ~= target or not frame:IsShown() then
+    PlaceGlow(frame, target)
+    frame.target = target
+  end
+end
+
 function TalentHighlight:Update()
   if not talentFrame then
     return
   end
-  glow:Hide()
-  tabGlow:Hide()
-  glowButton = nil
-  local point = Pathwise:GetModule("Talents"):GetNextPoint()
-  if not point or not talentFrame:IsShown() then
-    return
+  local point = talentFrame:IsShown() and Pathwise:GetModule("Talents"):GetNextPoint()
+  local button, tab
+  if point and byNode then
+    button = point.nodeID and talentFrame:GetTalentButtonByNodeID(point.nodeID)
+  elseif point and SelectedTab() == point.tab then
+    button = _G[frameName .. "Talent" .. point.index]
+  elseif point then
+    tab = _G[frameName .. "Tab" .. point.tab]
   end
-  if byNode then
-    local button = point.nodeID and talentFrame:GetTalentButtonByNodeID(point.nodeID)
-    if button and button:IsShown() then
-      glowButton = button
-      PlaceGlow(glow, button)
-      if not hookedButtons[button] then
-        hookedButtons[button] = true
-        button:HookScript("OnEnter", OnButtonEnter)
-      end
-    end
-  elseif SelectedTab() == point.tab then
-    local button = _G[frameName .. "Talent" .. point.index]
-    if button and button:IsShown() then
-      glowButton = button
-      PlaceGlow(glow, button)
-    end
-  else
-    local tab = _G[frameName .. "Tab" .. point.tab]
-    if tab then
-      PlaceGlow(tabGlow, tab)
-    end
+  if button and not button:IsShown() then
+    button = nil
+  end
+  glowButton = button
+  ShowGlow(glow, button)
+  ShowGlow(tabGlow, tab)
+  if button and byNode and not hookedButtons[button] then
+    hookedButtons[button] = true
+    button:HookScript("OnEnter", OnButtonEnter)
   end
 end
 

@@ -181,6 +181,17 @@ check("next steps row has a location marker", row and row.text:GetText():find("*
 row._scripts.OnMouseUp(row, "LeftButton")
 local _, kind = Waypoints:GetTarget()
 check("clicking a step sets a manual waypoint", kind == "manual")
+-- Reported in game: a clicked "collect" step kept the arrow on its mobs
+-- after the quest was complete. The clicked step's arrow follows the step.
+local clicked = row.item
+local turnIn = { mapID = clicked.target.mapID, x = 0.9, y = 0.9, label = "Turn in: somewhere" }
+Waypoints:OnNextStepsUpdated(nil, { { id = clicked.id, priority = clicked.priority, text = "Turn in", target = turnIn } })
+local followed, followedKind = Waypoints:GetTarget()
+check("a clicked step's arrow follows the step (now its turn-in)", followedKind == "manual" and followed == turnIn)
+Waypoints:OnNextStepsUpdated(nil, {})
+check("and lets go when the step is gone", select(2, Waypoints:GetTarget()) ~= "manual")
+Waypoints:OnNextStepsUpdated(nil, Pathwise:GetModule("NextSteps"):GetItems())
+row._scripts.OnMouseUp(row, "LeftButton")
 arrow._scripts.OnMouseUp(arrow, "RightButton")
 check("right-click clears a manual waypoint", select(2, Waypoints:GetTarget()) == "auto")
 

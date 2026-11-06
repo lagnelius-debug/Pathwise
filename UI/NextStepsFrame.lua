@@ -58,7 +58,7 @@ end
 -- Clicking a step with a known location points the arrow there.
 local function OnRowClick(row, button)
   if button == "LeftButton" and row.item and row.item.target then
-    Pathwise:GetModule("Waypoints"):SetManual(row.item.target)
+    Pathwise:GetModule("Waypoints"):SetManual(row.item.target, row.item.id)
   end
 end
 

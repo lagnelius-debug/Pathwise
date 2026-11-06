@@ -27,6 +27,7 @@ Waypoints.VISIT_MEMORY_SECONDS = 300
 local visited = {} -- { { mapID, x, y, radius, time } }
 
 local manual -- manual target or nil
+local manualItemId -- the Next Steps item a clicked step's target follows
 local auto   -- target of the top Next Steps item, or nil
 local autoItemId     -- id of the Next Steps item auto points at
 local lastItems = {} -- latest Next Steps items
@@ -205,12 +206,15 @@ local function Changed()
   Pathwise:FireCallback("WAYPOINT_CHANGED", (Waypoints:GetTarget()))
 end
 
-function Waypoints:SetManual(target)
-  manual = target
+-- itemId: the target is a clicked Next Steps item's; it follows that item
+-- (a finished quest's turn-in instead of its mobs) and ends with it.
+function Waypoints:SetManual(target, itemId)
+  manual, manualItemId = target, itemId
   Changed()
 end
 
 function Waypoints:ClearManual()
+  manualItemId = nil
   if manual then
     manual = nil
     Changed()
@@ -345,6 +349,21 @@ end
 
 function Waypoints:OnNextStepsUpdated(_, items)
   lastItems = items
+  if manual and manualItemId then
+    local current
+    for _, item in ipairs(items) do
+      if item.id == manualItemId then
+        current = item
+        break
+      end
+    end
+    if not (current and current.target) then
+      self:ClearManual()
+    elseif not Same(manual, current.target) then
+      manual = current.target
+      Changed()
+    end
+  end
   self:RefreshAuto()
 end
 

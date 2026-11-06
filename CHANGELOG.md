@@ -3,6 +3,25 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.34.3
+
+- Fixed: a step you clicked in the To-do window kept the arrow on its old
+  spot. Clicking a step pins the arrow to it; the pin kept pointing at the
+  quest's mobs after the quest was complete (reported: "The Zoram Strand",
+  Wrathtail Heads). The clicked step's arrow now follows the step - to the
+  turn-in once it's complete - and lets go when the step is gone.
+- The target macro only lists the mobs of the zone the arrow is in. Items
+  many creatures drop (spider meat) put spiders from all over the world in
+  it, crowding out the ones nearby.
+- WoW Forever: quest progress also updates the guide on the modern
+  client's own quest log event, in case the usual one comes too early.
+- WoW Forever talents: the "Next talent point" chat reminder after a
+  level-up (the point arrives a moment later there); the talent window's
+  glow no longer restarts its pulse twice a second; a build whose talents
+  aren't in the game's grid falls back to "Spend N talent points" instead
+  of naming talents it can't find.
+- A paladin spell (Blessing of Kings) had a typo in its data.
+
 ## 0.34.2
 
 - WoW Forever's Beast Mastery build: Improved Aspect of the Hawk 5/5

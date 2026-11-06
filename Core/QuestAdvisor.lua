@@ -1052,6 +1052,13 @@ function QuestAdvisor:OnQuestEvent()
   self:ScheduleUpdate()
 end
 
+-- (Fires for party members too: only the player's own log matters.)
+function QuestAdvisor:OnUnitQuestLogChanged(_, unit)
+  if unit == "player" then
+    self:ScheduleUpdate()
+  end
+end
+
 function QuestAdvisor:OnInitialize()
   self:RegisterCallback("CHARACTER_UPDATED", "OnCharacterUpdated")
   -- Reached a spawn the arrow pointed at: pick the next one.
@@ -1079,6 +1086,9 @@ function QuestAdvisor:OnEnable()
     QuestAdvisor:CheckMovement()
   end)
   self:RegisterEvent("QUEST_LOG_UPDATE", "OnQuestEvent")
+  -- (Also on quest progress; on the modern client (Forever) as a second
+  -- signal, in case QUEST_LOG_UPDATE came before the objective changed.)
+  self:RegisterEvent("UNIT_QUEST_LOG_CHANGED", "OnUnitQuestLogChanged")
   self:RegisterEvent("QUEST_ACCEPTED", "OnQuestEvent")
   self:RegisterEvent("QUEST_REMOVED", "OnQuestEvent")
   self:RegisterEvent("QUEST_TURNED_IN", "OnQuestEvent")

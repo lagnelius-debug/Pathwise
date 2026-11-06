@@ -242,7 +242,9 @@ function Talents:OnCharacterUpdated(_, snapshot, section)
     return
   end
   self:UpdateSpec()
-  self:UpdateAdvice(section ~= "talents")
+  -- The chat reminder comes once per level (charDB.talentAnnouncedLevel),
+  -- also when the point arrives after the level-up (WoW Forever).
+  self:UpdateAdvice(true)
 
   if section == "all" and not promptChecked then
     promptChecked = true
@@ -325,7 +327,9 @@ end
 -- are left out, and a talent the game says can take a point (available)
 -- is open.
 function Talents.UpcomingPoints(trees, build, limit)
-  local byName = ByName(build)
+  -- (Where the game's trees aren't Classic's, a pick the game doesn't have
+  -- - by name, or at its spot - is left out.)
+  local skipMissing = Platform.TalentsMatchByName()
   local open, closed = {}, {}
   local spentInTree = {}
   for i, tree in ipairs(trees) do
@@ -345,7 +349,7 @@ function Talents.UpcomingPoints(trees, build, limit)
     local before = plannedBefore[key] or 0
     plannedBefore[key] = before + pick[4]
     local tab = talent and talent.tab or pick[1]
-    for rank = before + 1, (talent or not byName) and before + pick[4] or before do
+    for rank = before + 1, (talent or not skipMissing) and before + pick[4] or before do
       if rank > have then
         local tierOpen
         if talent and talent.available ~= nil then
@@ -410,8 +414,10 @@ end
 function Talents.BuildCoverage(trees, build)
   local found, total, seen = 0, 0, {}
   for _, pick in ipairs(build.picks) do
-    if not seen[pick[5]] then
-      seen[pick[5]] = true
+    -- (A talent is its name, or its spot in builds by the game's grid.)
+    local key = build.gamePositions and (pick[1] .. ":" .. pick[2] .. ":" .. pick[3]) or pick[5]
+    if not seen[key] then
+      seen[key] = true
       total = total + 1
       if FindTalent(trees, pick, build) then
         found = found + 1
@@ -434,7 +440,7 @@ function Talents:GetUpcoming(limit)
     return {}, nil
   end
   local trees = GetSnapshot().talents.trees
-  if ByName(build) then
+  if Platform.TalentsMatchByName() then
     local found, total = Talents.BuildCoverage(trees, build)
     if found == 0 or found < total * MIN_BUILD_COVERAGE then
       return {}, nil, build

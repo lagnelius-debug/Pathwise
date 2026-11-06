@@ -287,7 +287,7 @@ local function TargetName(npcId)
 end
 
 -- NPC names for the target macro: the chosen point's NPC first, then the
--- other NPCs of the step.
+-- other NPCs of the step in the same zone.
 local function WithNames(best, points)
   if not best then
     return nil
@@ -300,8 +300,13 @@ local function WithNames(best, points)
     end
   end
   Add(best.npcName)
+  -- Only the mobs of the zone the arrow is in: an item many creatures drop
+  -- (spider meat) lists them all over the world, and the macro has room
+  -- for ten.
   for _, point in ipairs(points) do
-    Add(point.npcName)
+    if point.mapID == best.mapID then
+      Add(point.npcName)
+    end
   end
   best.names = names
   return best
