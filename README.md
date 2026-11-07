@@ -17,6 +17,7 @@ A World of Warcraft addon that follows your character's progression and tells yo
 - Auto-accept and auto turn-in: talking to a quest giver, the quests the guide suggests are accepted and finished quests handed in (the reward taken only when there's nothing to choose) without clicking; hold Shift to skip. Built and passing the offline tests, not yet tested in game.
 - All classes: trainer spells, talent builds (three per class), stat weights, usable gear and the path choices for warriors, paladins, rogues, priests, shamans, mages, warlocks and druids too. Built and passing the offline tests, not yet tested in game.
 - Pet ability guide (hunter): which ranks your pet can learn at its level and which beast to tame for each, with the arrow on the nearest one. Built and passing the offline tests, not yet tested in game.
+- Languages: English, Deutsch, Español and Français (Locales/). Settings > Language or `/pw language en|de|es|fr|auto`; Auto follows the game's language (English for languages Pathwise doesn't have yet). Applies after /reload. Quest, NPC and item names come from the game or QuestieDB and aren't translated by Pathwise.
 - Window themes (docs/PATHWISE_THEMES.md): 14 themes on the To-do window (v2 painted corner art, v3 emblem themes and the v4 Azure theme included), an Appearance section in the settings and `/pw theme`. Built and passing the offline tests, not yet tested in game.
 
 ## Install
@@ -69,6 +70,7 @@ Without them the upload is skipped. To upload the current version (e.g. after ad
 | `/pw why here` | The quests nearby (givers within 300 yards) the guide doesn't suggest, and why |
 | `/pw bug` | Report a problem (also the bug icon in the To-do window's bottom-left corner, the "Report a problem..." button in the settings, or Shift-click on the minimap button): shows a report (versions, game, character, place, To-do steps, recent errors) to copy into the GitHub bug form, and the link to it |
 | `/pw why <quest name or ID>` | Why the guide does or doesn't suggest picking up a quest, now and at your next two levels (needs QuestieDB) |
+| `/pw language en\|de\|es\|fr\|auto` | Pathwise's language: English, Deutsch, Español, Français, or auto (the game's language). Applies after /reload; also in the settings |
 | `/pw units meters\|yards` | Show distances in meters (default) or yards |
 | `/pw targetbutton` | Turn the floating target button for quest mobs on or off |
 | `/pw macro` | Put the "Pathwise" target macro on your cursor to drop on an action bar. `/pw macro off` / `on` stops or resumes updating it |

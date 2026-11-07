@@ -31,6 +31,7 @@ local DB_DEFAULTS = {
   arrowAuto = true,             -- arrow follows the top Next Steps item
   questLocations = {},          -- learned quest locations (Core/QuestLocations.lua)
   distanceUnit = "meters",      -- "meters" or "yards" (/pw units)
+  language = "auto",            -- "auto" (the game's), "enUS", "deDE", "esES" or "frFR" (/pw language)
   questPickups = true,          -- suggest quests to pick up (QuestieDB)
   autoAccept = true,            -- accept the suggested quests when talking to the giver
   autoAcceptHinted = false,     -- the auto-accept hint was said in chat
@@ -392,6 +393,65 @@ function Pathwise:RegisterCommand(name, handler, help)
   commands[name] = { handler = handler, help = help }
 end
 
+---------------------------------------------------------------------------
+-- Language
+---------------------------------------------------------------------------
+
+-- Pathwise's languages: Locales/enUS.lua is the base, the others
+-- (Pathwise.Locales[code]) replace its strings. "auto" follows the game.
+Pathwise.LANGUAGES = { "enUS", "deDE", "esES", "frFR" }
+Pathwise.LANGUAGE_NAMES = { enUS = "English", deDE = "Deutsch", esES = "Español", frFR = "Français" }
+local GAME_LANGUAGES = { deDE = "deDE", esES = "esES", esMX = "esES", frFR = "frFR" }
+
+function Pathwise:LanguageCode()
+  local choice = self.db and self.db.language or "auto"
+  if choice == "auto" then
+    return GAME_LANGUAGES[Platform.GetLocale() or ""] or "enUS"
+  end
+  return self.LANGUAGE_NAMES[choice] and choice or "enUS"
+end
+
+-- Puts the chosen language's strings into L (once, at login: the windows
+-- are built after it). Strings taken from L before - the slash commands'
+-- help, the key binding names - are swapped too.
+function Pathwise:ApplyLanguage()
+  local strings = self.Locales and self.Locales[self:LanguageCode()]
+  if not strings or self.appliedLanguage then
+    return
+  end
+  self.appliedLanguage = self:LanguageCode()
+  local keyOf = {}
+  for key, text in pairs(L) do
+    if type(text) == "string" then
+      keyOf[text] = key
+    end
+  end
+  for key, text in pairs(strings) do
+    if key:find("^BINDING_") then
+      _G[key] = text
+    else
+      rawset(L, key, text)
+    end
+  end
+  for _, command in pairs(commands) do
+    local key = command.help and keyOf[command.help]
+    if key then
+      command.help = L[key]
+    end
+  end
+end
+
+-- Saves a language choice ("auto" or a code); it applies after a reload.
+function Pathwise:SetLanguage(choice)
+  if choice ~= "auto" and not self.LANGUAGE_NAMES[choice] then
+    return false
+  end
+  self.db.language = choice
+  local name = choice == "auto" and L.SETTINGS_LANGUAGE_AUTO or self.LANGUAGE_NAMES[choice]
+  self:Printf(L.LANGUAGE_SET, name)
+  return true
+end
+
 function Pathwise:PrintHelp()
   self:Print(L.HELP_HEADER)
   for _, name in ipairs(commandOrder) do
@@ -437,6 +497,23 @@ Pathwise:RegisterCommand("debug", function(args)
   Pathwise:Print(Pathwise.db.debug and L.DEBUG_ON or L.DEBUG_OFF)
 end, L.CMD_DEBUG)
 
+-- /pw language [auto|en|de|es|fr]
+local LANGUAGE_ARGS = { auto = "auto", en = "enUS", english = "enUS", de = "deDE", deutsch = "deDE", german = "deDE",
+  es = "esES", ["español"] = "esES", espanol = "esES", spanish = "esES", fr = "frFR", ["français"] = "frFR",
+  francais = "frFR", french = "frFR", enus = "enUS", dede = "deDE", eses = "esES", frfr = "frFR" }
+Pathwise:RegisterCommand("language", function(args)
+  local choice = LANGUAGE_ARGS[args:lower()]
+  if not choice then
+    local names = {}
+    for _, code in ipairs(Pathwise.LANGUAGES) do
+      names[#names + 1] = Pathwise.LANGUAGE_NAMES[code]
+    end
+    Pathwise:Printf(L.LANGUAGE_USAGE, table.concat(names, ", "))
+    return
+  end
+  Pathwise:SetLanguage(choice)
+end, L.CMD_LANGUAGE)
+
 Pathwise:RegisterCommand("reset", function(args)
   if args:lower() == "char" then
     Pathwise:ResetCharacter()
@@ -471,6 +548,7 @@ function lifecycle:ADDON_LOADED(_, loadedName)
   Pathwise:UnregisterEvent("ADDON_LOADED", lifecycle)
 
   InitSavedVariables()
+  Pathwise:ApplyLanguage()
   Pathwise.version = Platform.GetAddOnMetadata("Version") or Pathwise.version
 
   for _, module in ipairs(moduleOrder) do

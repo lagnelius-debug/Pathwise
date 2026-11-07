@@ -32,6 +32,7 @@ local panel
 local themeButtons = {}
 local seasonButtons = {}
 local unitButtons = {}
+local languageButtons = {}
 
 local function RGB(hex, alpha)
   return Pathwise.HexToRGB(hex, alpha)
@@ -60,6 +61,14 @@ local function UpdateOutlines()
   local unit = Pathwise.db.distanceUnit == "yards" and "yards" or "meters"
   for _, button in ipairs(unitButtons) do
     Outline(button, button.unit == unit)
+  end
+  local language = Pathwise.db.language or "auto"
+  for _, button in ipairs(languageButtons) do
+    Outline(button, button.language == language)
+  end
+  if panel.reload then
+    panel.reload:SetShown(Pathwise.appliedLanguage ~= nil and Pathwise:LanguageCode() ~= Pathwise.appliedLanguage
+      or Pathwise.appliedLanguage == nil and Pathwise:LanguageCode() ~= "enUS")
   end
 end
 
@@ -174,8 +183,42 @@ local function CreatePanel()
     unitButtons[index] = button
   end
 
+  -- Language: Auto (the game's) / English / Deutsch / Español / Français.
+  local language = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  language:SetPoint("TOPLEFT", units, "BOTTOMLEFT", 0, -16)
+  language:SetText(L.SETTINGS_LANGUAGE)
+  local choices = { "auto" }
+  for _, code in ipairs(Pathwise.LANGUAGES) do
+    choices[#choices + 1] = code
+  end
+  for index, code in ipairs(choices) do
+    local button = CreateChoiceButton(SEASON_BUTTON_WIDTH, SEASON_BUTTON_HEIGHT)
+    button:SetPoint("LEFT", language, "RIGHT", 10 + (index - 1) * (SEASON_BUTTON_WIDTH + ROW_GAP), 0)
+    button.language = code
+    button.name = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    button.name:SetPoint("CENTER", button, "CENTER", 0, 0)
+    button.name:SetText(code == "auto" and L.SETTINGS_LANGUAGE_AUTO or Pathwise.LANGUAGE_NAMES[code])
+    button:SetScript("OnClick", function(self)
+      Pathwise:SetLanguage(self.language)
+      UpdateOutlines()
+    end)
+    languageButtons[index] = button
+  end
+  -- The new language takes effect after a reload.
+  local reload = CreateFrame("Button", "PathwiseSettingsReload", panel, "UIPanelButtonTemplate")
+  reload:SetSize(140, 22)
+  reload:SetPoint("TOPLEFT", language, "BOTTOMLEFT", 0, -8)
+  reload:SetText(L.SETTINGS_RELOAD)
+  reload:SetScript("OnClick", function()
+    if ReloadUI then
+      ReloadUI()
+    end
+  end)
+  reload:Hide()
+  panel.reload = reload
+
   local featuresHint = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-  featuresHint:SetPoint("TOPLEFT", units, "BOTTOMLEFT", 0, -16)
+  featuresHint:SetPoint("TOPLEFT", language, "BOTTOMLEFT", 0, -38)
   featuresHint:SetText(L.SETTINGS_FEATURES_HINT)
 
   -- Appearance

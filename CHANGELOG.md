@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.41.0
+
+- Languages: Pathwise now speaks English, Deutsch, Español and Français.
+  Pick one in the settings (Settings > Language, then "Reload to apply")
+  or with `/pw language en`, `de`, `es`, `fr` or `auto`. Auto, the
+  default, follows the game's language (English if Pathwise doesn't have
+  it). Quest, NPC and item names come from the game or QuestieDB as
+  before.
+
 ## 0.40.0
 
 - Dungeons: hover a dungeon in the dungeon list to see its open quests,
