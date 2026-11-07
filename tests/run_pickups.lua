@@ -53,12 +53,17 @@ local quests = {
   [7016] = { name = "A Donation of Wool", requiredLevel = 1, questLevel = 60, startedBy = { { 9101 } } },
   [7015] = { name = "Earlier In Chain", requiredLevel = 1, questLevel = L, nextQuestInChain = 7011,
     startedBy = { { 9101 } } },
+  -- WoW Forever's library (Garion Wendell): only with a book in the bags.
+  [7020] = { name = "Friend of the Library", requiredLevel = 1, questLevel = L, startedBy = { { 211033 } } },
+  [7021] = { name = "A Book For The Library", requiredLevel = 1, questLevel = L, startedBy = { { 211033 } },
+    objectives = { nil, nil, { { 9950 } } } },
 }
 local npcs = {
   [9101] = { name = "Giver Near", spawns = { [141] = { { 58, 41 } } } },   -- 30 yd
   [9102] = { name = "Giver Mid", spawns = { [141] = { { 58, 45 } } } },    -- 150 yd
   [9103] = { name = "Giver Far", spawns = { [141] = { { 58, 70 } } } },    -- 900 yd
   [9104] = { name = "Giver In Darkshore", spawns = { [148] = { { 50, 10 } } } },
+  [211033] = { name = "Garion Wendell", spawns = { [148] = { { 52, 12 } } } },
 }
 local objects = { [9201] = { name = "Wanted Poster", spawns = { [141] = { { 60, 40 } } } } } -- 60 yd
 
@@ -241,6 +246,21 @@ Pathwise.charDB.notOffered[7001] = S.level - 1 -- as if seen a level ago
 UpdateLog(WoW.questLog)
 check("after a level up it's tried again", Has(7001))
 Pathwise.charDB.notOffered = {}
+
+-- Reported: "Friend of the Library" suggested all the time - it's only
+-- handed in with a book. The library's quests need their item in the bags;
+-- the donation without one is never suggested.
+WoW.ClearChat()
+WoW.Slash("why 7020")
+check("library donation without an item: never suggested", WoW.ChatContains("No quest to pick up matches"))
+WoW.ClearChat()
+WoW.Slash("why 7021")
+check("library quest without its book: not now", WoW.ChatContains("handed in with an item you don't carry"))
+WoW.bagCounts[9950] = 1
+WoW.ClearChat()
+WoW.Slash("why 7021")
+check("with the book: suggested", WoW.ChatContains("Level " .. S.level .. ": suggested"))
+WoW.bagCounts[9950] = nil
 
 -- Without a scannable QuestieDB: no pickups and no zone guesses
 LibQuestieDB.Quest.GetAllIds = nil

@@ -337,6 +337,9 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
 
     if quest.failed then
       priority, text = P.QUEST_FAILED, string.format(L.QA_FAILED, name)
+    elseif QuestAdvisor.IsReady(quest) and difficulty == "GREY" and not near and quest.leadsOn == false then
+      -- A grey quest that leads nowhere worth going: not worth a trip.
+      priority, text = P.QUEST_GREY, string.format(L.QA_GREY_TURN_IN, name)
     elseif QuestAdvisor.IsReady(quest) then
       priority = far and P.QUEST_FAR or P.QUEST_TURN_IN
       text = string.format(L.QA_TURN_IN, name)
@@ -835,6 +838,20 @@ function QuestAdvisor:Update()
     return QuestieData:GetTarget(quest, kind) or QuestLocations:GetTarget(quest, kind)
   end
   local greenRange = Platform.GetQuestGreenRange(level)
+  -- Whether a quest leads on to one still worth doing (its next quest in
+  -- the chain isn't grey); false only when QuestieDB says it doesn't.
+  if QuestieData:IsAvailable() then
+    for _, quest in ipairs(quests) do
+      local nextID = quest.questID and QuestieData:QuestInfo(quest.questID, "nextQuestInChain")
+      if type(nextID) == "number" and nextID > 0 then
+        local nextLevel = QuestieData:QuestInfo(nextID, "questLevel")
+        quest.leadsOn = type(nextLevel) ~= "number" or nextLevel <= 0
+          or QuestAdvisor.Difficulty(nextLevel, level, greenRange) ~= "GREY"
+      elseif quest.questID then
+        quest.leadsOn = false
+      end
+    end
+  end
   local items
   if inside then
     lastPickups = {}

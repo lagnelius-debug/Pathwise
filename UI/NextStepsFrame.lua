@@ -351,16 +351,20 @@ local function CreateWindow()
     GameTooltip:Hide()
   end)
   frame.dungeons = dungeons
-  -- Report a problem: a small bug in the bottom-left corner (the Insect
-  -- Swarm icon, in every client).
+  -- Report a problem: a red warning triangle in the bottom-left corner
+  -- (Pathwise's own texture, the same in every client).
   local bug = CreateFrame("Button", "PathwiseNextStepsBugReport", frame.footer)
-  bug:SetSize(14, 14)
+  bug:SetSize(16, 16)
   bug:SetPoint("LEFT", frame.footer, "LEFT", 0, 0)
   local bugIcon = bug:CreateTexture(nil, "ARTWORK")
   bugIcon:SetAllPoints(bug)
-  bugIcon:SetTexture("Interface\\Icons\\Spell_Nature_InsectSwarm")
-  bugIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-  bug:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+  bugIcon:SetTexture("Interface\\AddOns\\" .. addonName .. "\\Media\\alert")
+  bug.icon = bugIcon
+  local bugHighlight = bug:CreateTexture(nil, "HIGHLIGHT")
+  bugHighlight:SetAllPoints(bug)
+  bugHighlight:SetTexture("Interface\\AddOns\\" .. addonName .. "\\Media\\alert")
+  bugHighlight:SetBlendMode("ADD")
+  bugHighlight:SetAlpha(0.5)
   bug:SetScript("OnClick", function()
     Pathwise:GetModule("BugReportFrame"):Open()
   end)

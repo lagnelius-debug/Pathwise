@@ -802,6 +802,13 @@ local CLASS_SORTS = {
   [-82] = true, [-161] = true, [-61] = true, [-263] = true,
 }
 
+-- Givers whose quests are only handed in with an item the player finds
+-- (WoW Forever's libraries: Garion Wendell in Stormwind, Owen Thadd in
+-- the Undercity take the books). QuestieDB doesn't say which item, so
+-- their quests are suggested only while the player carries the quest's
+-- item - never the donation quests without one ("Friend of the Library").
+local HAND_IN_GIVERS = { [211022] = true, [211033] = true }
+
 local pickupCandidates -- list once scanned; false: can't scan (old QuestieDB)
 local pickupScan       -- in progress: { ids, next, list, raceBit, classBit }
 local candidateIndex   -- the candidates by ID and by title (WouldSuggest)
@@ -850,9 +857,26 @@ local function ScanQuest(id, scan)
   if not NonEmpty(startedBy[1]) and not NonEmpty(startedBy[2]) then
     return nil -- started by an item (or nothing): not a place to go
   end
+  local needsItem
+  if NonEmpty(startedBy[1]) and not NonEmpty(startedBy[2]) then
+    local handIn = true
+    for _, npcId in ipairs(startedBy[1]) do
+      handIn = handIn and HAND_IN_GIVERS[npcId] == true
+    end
+    if handIn then
+      needsItem = {}
+      for _, objective in ipairs((Get(id, "objectives") or {})[3] or {}) do
+        needsItem[#needsItem + 1] = objective[1]
+      end
+      if #needsItem == 0 then
+        return nil -- a donation: nothing says what to bring
+      end
+    end
+  end
   local requiredLevel = Get(id, "requiredLevel") or 1
   return {
     id = id,
+    needsItem = needsItem,
     name = Get(id, "name"),
     requiredLevel = requiredLevel,
     level = Get(id, "questLevel") or requiredLevel,
@@ -1107,6 +1131,10 @@ local function NotEligibleReason(candidate, ctx)
     return "range"
   elseif isCompleted(candidate.id) then
     return "done"
+  elseif candidate.needsItem and not AnyCompleted(candidate.needsItem, function(item)
+    return (Platform.GetItemCount(item) or 0) > 0
+  end) then
+    return "item"
   elseif (NonEmpty(candidate.preGroup) and not AllCompleted(candidate.preGroup, isCompleted))
     or (NonEmpty(candidate.preSingle) and not AnyCompleted(candidate.preSingle, isCompleted)) then
     return "pre"

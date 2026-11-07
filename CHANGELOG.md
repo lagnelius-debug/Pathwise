@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.35.0
+
+- The report button in the To-do window's corner is a red warning
+  triangle with an exclamation mark.
+- Grey quests that lead nowhere aren't worth a trip: a finished grey quest
+  whose chain doesn't go on to a quest still worth doing shows as "Low XP:
+  ... - turn it in when you pass by, or abandon it" at the bottom, without
+  the arrow (reported: Elmore's Task). Close by, or when it leads on, it's
+  still a normal turn-in.
+- WoW Forever: the library's quests (Garion Wendell in Stormwind, Owen
+  Thadd in the Undercity) are only suggested while you carry the book they
+  take; "Friend of the Library" isn't suggested at all.
+
 ## 0.34.4
 
 - WoW Forever: hunters get Forever's Beast Mastery build (Improved Aspect

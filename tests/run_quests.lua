@@ -34,6 +34,30 @@ check("progress from counts", QuestAdvisor.Progress({ objectives = {
   { have = 6, need = 10 }, { finished = true } } }) == 7 / 11)
 check("progress without objectives", QuestAdvisor.Progress({ objectives = {} }) == nil)
 
+-- Reported: "Turn in: [15] Elmore's Task - 1583 m" for a level 20 - a grey
+-- quest that leads nowhere isn't worth a trip; one that leads on, or one
+-- right here, still is.
+do
+  local P = NextSteps.PRIORITY
+  local function Done(id, title, leadsOn)
+    return { questID = id, title = title, level = 10, zone = "Teldrassil", suggestedGroup = 0, complete = true,
+      failed = false, objectives = {}, leadsOn = leadsOn }
+  end
+  local far = { mapID = 1438, x = 0.9, y = 0.9, label = "far giver" }
+  local here = { zone = "Teldrassil", mapID = 1438, x = 0.1, y = 0.1 }
+  local items = QuestAdvisor.Plan({ Done(1, "Dead End", false), Done(2, "Leads On", true) }, 25, 5, here,
+    function() return far end)
+  local byId = {}
+  for _, item in ipairs(items) do byId[item.id] = item end
+  check("grey turn-in that leads nowhere, far away: low, no trip (" .. Strip(byId["quest:1"].text) .. ")",
+    byId["quest:1"].priority == P.QUEST_GREY and Strip(byId["quest:1"].text):find("^Low XP: ") ~= nil)
+  check("grey turn-in that leads on to a quest worth doing: still a turn-in",
+    Strip(byId["quest:2"].text):find("^Turn in: ") ~= nil and byId["quest:2"].priority > P.QUEST_GREY)
+  items = QuestAdvisor.Plan({ Done(1, "Dead End", false) }, 25, 5, { zone = "Teldrassil", mapID = 1438, x = 0.9, y = 0.9 },
+    function() return far end)
+  check("grey turn-in right here: turn it in", Strip(items[1].text):find("^Turn in: ") ~= nil)
+end
+
 ---------------------------------------------------------------------------
 section("Quests: plan")
 
