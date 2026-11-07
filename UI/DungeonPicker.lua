@@ -30,6 +30,9 @@ local function RangeColor(dungeon, level)
   return "|cff40c040"
 end
 
+-- Quests listed in a dungeon's tooltip.
+local MAX_TOOLTIP_QUESTS = 12
+
 local function Row(index)
   local row = rows[index]
   if not row then
@@ -45,6 +48,32 @@ local function Row(index)
     row:SetScript("OnClick", function(self)
       DungeonGuide():SetDungeon(self.dungeonID)
       DungeonPicker:Refresh()
+    end)
+    -- Hovering a dungeon: its open quests and where they're picked up.
+    row:SetScript("OnEnter", function(self)
+      local dungeon = self.dungeonID and DungeonGuide().Get(self.dungeonID)
+      local quests = dungeon and DungeonGuide():OpenQuests(dungeon)
+      if not quests or #quests == 0 then
+        return
+      end
+      GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+      GameTooltip:SetText(dungeon.name)
+      for i, quest in ipairs(quests) do
+        if i > MAX_TOOLTIP_QUESTS then
+          GameTooltip:AddLine(string.format(L.DUNGEON_TIP_MORE, #quests - MAX_TOOLTIP_QUESTS), 0.6, 0.6, 0.6)
+          break
+        end
+        local where = quest.inLog and L.DUNGEON_TIP_IN_LOG
+          or string.format(L.DUNGEON_TIP_FROM, quest.giver or "?",
+            quest.mapID and Pathwise.Platform.GetMapName(quest.mapID) or "?")
+        GameTooltip:AddDoubleLine(string.format("[%s] %s", quest.level or "?", quest.title), where, 1, 0.82, 0,
+          0.85, 0.85, 0.85)
+      end
+      GameTooltip:AddLine(L.DUNGEON_TIP_CLICK, 0.4, 0.8, 1, true)
+      GameTooltip:Show()
+    end)
+    row:SetScript("OnLeave", function()
+      GameTooltip:Hide()
     end)
     rows[index] = row
   end

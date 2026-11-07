@@ -217,6 +217,39 @@ end
 
 -- How many of a dungeon's quests the player hasn't done yet, or nil while
 -- the quest list isn't scanned.
+-- A dungeon's open quests (not done yet) and where each is picked up:
+-- list of { id, title, level, giver, mapID, inLog }, in the log first, then
+-- by level. nil without QuestieDB.
+function DungeonGuide:OpenQuests(dungeon)
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local list = QuestieData:GetDungeonQuests(dungeon.id)
+  if not list then
+    return nil
+  end
+  local inLog = {}
+  for _, quest in ipairs(Platform.GetQuestLog()) do
+    if quest.questID then
+      inLog[quest.questID] = true
+    end
+  end
+  local open = {}
+  for _, questID in ipairs(list) do
+    if not Platform.IsQuestCompleted(questID) then
+      local giver, mapID = QuestieData:GiverInfo(questID)
+      open[#open + 1] = { id = questID, title = QuestieData:QuestInfo(questID, "name") or ("#" .. questID),
+        level = QuestieData:QuestInfo(questID, "questLevel"), giver = giver, mapID = mapID,
+        inLog = inLog[questID] == true }
+    end
+  end
+  table.sort(open, function(a, b)
+    if a.inLog ~= b.inLog then
+      return a.inLog
+    end
+    return (a.level or 0) < (b.level or 0)
+  end)
+  return open
+end
+
 function DungeonGuide:CountOpen(dungeon)
   local list = Pathwise:GetModule("QuestieData"):GetDungeonQuests(dungeon.id)
   if not list then

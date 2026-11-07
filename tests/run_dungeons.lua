@@ -50,6 +50,11 @@ local quests = {
   [9609] = { name = "After The Errand", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, preQuestSingle = { 9608 },
     startedBy = { { 9702 } } },
   [9610] = { name = "Unrelated Grey", requiredLevel = 1, questLevel = 1, zoneOrSort = 141, startedBy = { { 9701 } } },
+  -- Reported: a grey pre-quest whose chain ends in grey quests too ("The
+  -- Coast Isn't Clear" at level 25) - useless, not suggested.
+  [9611] = { name = "Grey Errand", requiredLevel = 1, questLevel = 1, zoneOrSort = 141, startedBy = { { 9701 } } },
+  [9612] = { name = "Grey Dungeon Quest", requiredLevel = 1, questLevel = 2, zoneOrSort = 9500, preQuestSingle = { 9611 },
+    startedBy = { { 9702 } } },
   [9606] = { name = "Chain End", requiredLevel = L + 3, questLevel = L + 4, zoneOrSort = 9500, preQuestSingle = { 9605 },
     startedBy = { { 9702 } } },
 }
@@ -75,7 +80,7 @@ LibQuestieDB.Npc.Get = function(id, key)
   if npcs[id] then return npcs[id][key] end
   return npcGet(id, key)
 end
-LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610 } end
+LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610, 9611, 9612 } end
 QuestieData:ResetPickups()
 QuestieData:PickupsReady()
 WoW.RunTimers()
@@ -89,7 +94,7 @@ local names = {}
 for _, d in ipairs(DungeonGuide.List()) do names[d.name] = true end
 check("Alliance: no Ragefire Chasm, but The Stockade and The Deadmines", not names["Ragefire Chasm"]
   and names["The Stockade"] and names["The Deadmines"] and names["The Test Mines"])
-check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 5)
+check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 6)
 check("normal mode: the normal quest is suggested", Item("pickup:9604") ~= nil)
 
 ---------------------------------------------------------------------------
@@ -174,6 +179,17 @@ end
 check("the active dungeon is marked, with its level range and quest count", activeRow
   and activeRow.text:GetText():find("(active)", 1, true) and activeRow.text:GetText():find("The Test Mines", 1, true)
   and activeRow.text:GetText():find(string.format("%d%%-%d", L - 2, L + 5)))
+-- Reported: the picker counted a dungeon's quests but didn't say where to
+-- get them. Hovering a dungeon lists them with their givers.
+GameTooltip:ClearLines()
+activeRow._scripts.OnEnter(activeRow)
+local tip = {}
+for i = 1, GameTooltip:NumLines() do tip[#tip + 1] = _G["GameTooltipTextLeft" .. i]:GetText() or "" end
+tip = table.concat(tip, " / ")
+check("hovering a dungeon: its quests and where to pick them up (" .. tip .. ")",
+  tip:find("Mine Quest", 1, true) ~= nil and tip:find("Mine Foreman", 1, true) ~= nil
+  and tip:find("dungeon mode", 1, true) ~= nil)
+activeRow._scripts.OnLeave(activeRow)
 WoW.ClearChat()
 rows[1]:Click()
 check("leaving: back to the usual guide", DungeonGuide:GetActive() == nil and window.title:GetText() == "To-do"
@@ -264,6 +280,8 @@ local QuestAdvisor = Pathwise:GetModule("QuestAdvisor")
 check("normal mode: a grey quest isn't suggested", not QuestAdvisor:IsSuggested(9608))
 DungeonGuide:SetDungeon(9500)
 check("dungeon mode: its grey pre-quest is (auto-accepted)", QuestAdvisor:IsSuggested(9608))
+check("nor a grey pre-quest whose dungeon quest is grey too", not QuestAdvisor:IsSuggested(9611)
+  and not QuestAdvisor:IsSuggested(9612))
 check("but not a grey quest that doesn't belong to it", not QuestAdvisor:IsSuggested(9610)
   and not QuestAdvisor:IsSuggested(nil, "Unrelated Grey"))
 local empty = { id = 9501, name = "The Empty Halls", min = 1, max = 60, instance = 9551, entrances = { { 141, 10, 10 } },

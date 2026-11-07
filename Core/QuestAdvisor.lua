@@ -118,6 +118,88 @@ end
 -- Ready to hand in: the client marks it complete, or it has no objectives
 -- at all ("talk to X", "deliver this letter"), which the client never
 -- reports as complete even though only the turn-in is left.
+-- Quest categories the guide leaves out: WoW Forever's Camping 101
+-- profession quests (QuestieDB's sort "Camping"; done whenever the player
+-- has the skill, not worth a trip).
+local LEFT_OUT_SORTS = { [-666] = true }
+local LEFT_OUT_TITLES = { "^Camping 101:" }
+
+function QuestAdvisor.LeftOut(quest)
+  for _, pattern in ipairs(LEFT_OUT_TITLES) do
+    if quest.title and quest.title:find(pattern) then
+      return true
+    end
+  end
+  local sort = quest.questID and Pathwise:GetModule("QuestieData"):QuestInfo(quest.questID, "zoneOrSort")
+  return LEFT_OUT_SORTS[sort] == true
+end
+
+-- The quest log without the quests the guide leaves out; collapsed headers
+-- pass through.
+function QuestAdvisor.Guided(quests, collapsed)
+  local list = {}
+  for _, quest in ipairs(quests or {}) do
+    if not QuestAdvisor.LeftOut(quest) then
+      list[#list + 1] = quest
+    end
+  end
+  return list, collapsed
+end
+
+-- Whether a quest's chain (QuestieDB's next quests) reaches a quest that
+-- isn't grey for the player.
+local MAX_CHAIN = 10
+function QuestAdvisor.LeadsOnToWorthwhile(questID, level, greenRange)
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local id, seen = questID, {}
+  for _ = 1, MAX_CHAIN do
+    id = id and QuestieData:QuestInfo(id, "nextQuestInChain")
+    if type(id) ~= "number" or id <= 0 or seen[id] then
+      return false
+    end
+    seen[id] = true
+    local nextLevel = QuestieData:QuestInfo(id, "questLevel")
+    if type(nextLevel) ~= "number" or nextLevel <= 0
+      or QuestAdvisor.Difficulty(nextLevel, level, greenRange) ~= "GREY" then
+      return true
+    end
+  end
+  return false
+end
+
+-- Dungeon mode's level rule: a dungeon's quests count above the player's
+-- level too (it's done in a group); a grey one only while it leads on to
+-- one still worth doing - through its chain, or as the pre-quest of one of
+-- the dungeon's quests (`dungeonQuests`: [questID] = true).
+function QuestAdvisor.DungeonOutOfRange(level, greenRange, dungeonQuests)
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local function Grey(questID)
+    local questLevel = QuestieData:QuestInfo(questID, "questLevel")
+    return type(questLevel) == "number" and questLevel > 0
+      and QuestAdvisor.Difficulty(questLevel, level, greenRange) == "GREY"
+  end
+  local function Unlocks(questID, depth)
+    for otherID in pairs(dungeonQuests or {}) do
+      local single = QuestieData:QuestInfo(otherID, "preQuestSingle") or {}
+      local group = QuestieData:QuestInfo(otherID, "preQuestGroup") or {}
+      local needs = false
+      for _, list in ipairs({ single, group }) do
+        for _, id in ipairs(list) do
+          needs = needs or id == questID
+        end
+      end
+      if needs and (not Grey(otherID) or (depth < 5 and Unlocks(otherID, depth + 1))) then
+        return true
+      end
+    end
+    return false
+  end
+  return function(questLevel, questID)
+    return QuestAdvisor.Difficulty(questLevel, level, greenRange) == "GREY"
+      and not (questID and (QuestAdvisor.LeadsOnToWorthwhile(questID, level, greenRange) or Unlocks(questID, 1)))
+  end
+end
+
 function QuestAdvisor.IsReady(quest)
   return quest.complete or (#quest.objectives == 0 and not quest.failed)
 end
@@ -722,14 +804,15 @@ function QuestAdvisor:IsSuggested(questID, title)
   local level = Pathwise:GetModule("Character"):GetSnapshot().level or 1
   local ctx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
   local QuestieData = Pathwise:GetModule("QuestieData")
-  -- Dungeon mode: the dungeon's quests and pre-quests, whatever their
-  -- level (as the dungeon plan suggests them).
+  -- Dungeon mode: the dungeon's quests and pre-quests, above the player's
+  -- level too, grey ones while they lead on (as the dungeon plan suggests
+  -- them).
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
   local dungeon = DungeonGuide:GetActive()
   local belongs = dungeon and DungeonGuide:GetQuests(dungeon)
   if belongs and (not questID or belongs.quests[questID]) then
     local dungeonCtx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
-    dungeonCtx.outOfRange = function() return false end
+    dungeonCtx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, Platform.GetQuestGreenRange(level), belongs.quests)
     dungeonCtx.only = belongs.quests
     if QuestieData:WouldSuggest(questID, title, dungeonCtx) then
       return true
@@ -853,9 +936,10 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
     end
     local ctx = PickupContext(quests, level, greenRange)
     ctx.only = belongs.quests
-    -- Pre-quests count whatever their level (a grey one can still unlock
-    -- the chain).
-    ctx.outOfRange = function() return false end
+    -- A dungeon's quests count above the player's level too (it's done in a
+    -- group). A grey one only while its chain leads on to a quest still
+    -- worth doing (a grey pre-quest can unlock one).
+    ctx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, greenRange, belongs.quests)
     local pickups = Pathwise:GetModule("QuestieData"):GetPickups(ctx, DUNGEON_MAX_PICKUPS) or {}
     for _, pickup in ipairs(pickups) do
       pickup.finishMapID = nil
@@ -896,7 +980,7 @@ function QuestAdvisor:Update()
   end
   local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
   local level = snapshot.level or 1
-  local quests, collapsed = Platform.GetQuestLog()
+  local quests, collapsed = QuestAdvisor.Guided(Platform.GetQuestLog())
   local zone = snapshot.zone or {}
   local mapID, x, y = Platform.GetPlayerMapPosition()
   local location = { zone = zone.zone, subZone = zone.subZone, mapID = mapID, x = x, y = y }
@@ -909,17 +993,12 @@ function QuestAdvisor:Update()
     return QuestieData:GetTarget(quest, kind) or QuestLocations:GetTarget(quest, kind)
   end
   local greenRange = Platform.GetQuestGreenRange(level)
-  -- Whether a quest leads on to one still worth doing (its next quest in
-  -- the chain isn't grey); false only when QuestieDB says it doesn't.
+  -- Whether a quest leads on to one still worth doing (a quest further in
+  -- its chain isn't grey); false only when QuestieDB says it doesn't.
   if QuestieData:IsAvailable() then
     for _, quest in ipairs(quests) do
-      local nextID = quest.questID and QuestieData:QuestInfo(quest.questID, "nextQuestInChain")
-      if type(nextID) == "number" and nextID > 0 then
-        local nextLevel = QuestieData:QuestInfo(nextID, "questLevel")
-        quest.leadsOn = type(nextLevel) ~= "number" or nextLevel <= 0
-          or QuestAdvisor.Difficulty(nextLevel, level, greenRange) ~= "GREY"
-      elseif quest.questID then
-        quest.leadsOn = false
+      if quest.questID then
+        quest.leadsOn = QuestAdvisor.LeadsOnToWorthwhile(quest.questID, level, greenRange)
       end
     end
   end

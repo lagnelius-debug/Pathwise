@@ -1127,7 +1127,7 @@ local function NotEligibleReason(candidate, ctx)
     return "level"
   elseif ctx.inLog[candidate.id] then
     return "inLog"
-  elseif ctx.outOfRange(level) then
+  elseif ctx.outOfRange(level, candidate.id) then
     return "range"
   elseif isCompleted(candidate.id) then
     return "done"

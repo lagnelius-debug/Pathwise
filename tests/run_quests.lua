@@ -34,6 +34,17 @@ check("progress from counts", QuestAdvisor.Progress({ objectives = {
   { have = 6, need = 10 }, { finished = true } } }) == 7 / 11)
 check("progress without objectives", QuestAdvisor.Progress({ objectives = {} }) == nil)
 
+-- Reported: Camping 101 quests (WoW Forever's profession quests) - the guide
+-- leaves them out.
+UpdateLog({ { header = true, title = "Camping" },
+  { title = "Camping 101: Leatherworking", level = 6, questID = 97946, objectives = { { text = "Nadyia Maneweaver: 0/1" } } },
+  { header = true, title = "Teldrassil" },
+  { title = "Webwood Venom", level = 4, questID = 916, objectives = { { text = "Webwood Venom Sac: 6/10" } } } })
+local campingTexts = table.concat(QuestTexts(), "|")
+check("Camping 101 quests aren't in the guide (" .. campingTexts .. ")", not campingTexts:find("Camping", 1, true)
+  and campingTexts:find("Webwood Venom", 1, true) ~= nil)
+UpdateLog({})
+
 -- The route through the zone: a nearest-next order that crosses back over
 -- itself is smoothed (2-opt). From the west end, nearest-next goes 0.3,
 -- then 0.1 (back west), then 0.6, 0.9; smoothed it's 0.1, 0.3, 0.6, 0.9.

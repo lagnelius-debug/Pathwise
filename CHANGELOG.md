@@ -3,6 +3,21 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.40.0
+
+- Dungeons: hover a dungeon in the dungeon list to see its open quests,
+  their level and where each is picked up (giver and zone), or that it's
+  already in your quest log. Click it for dungeon mode, where the To-do
+  list and the arrow lead to the givers.
+- Dungeon mode no longer suggests grey quests that lead nowhere worth
+  going (reported: "The Coast Isn't Clear" at level 25). A grey pre-quest
+  is still suggested while its chain leads to a dungeon quest that's
+  worth doing; quests above your level still count (dungeons are done in
+  a group).
+- The Camping 101 quests (WoW Forever) are left out of the guide.
+- Grey turn-ins: whether a quest leads on to one still worth doing now
+  looks further down its chain.
+
 ## 0.39.1
 
 - `/pw why here`: lists the quests whose givers are near you (300 yards)

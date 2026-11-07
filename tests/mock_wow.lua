@@ -232,6 +232,9 @@ local function NewTooltip(name)
     fontString._text = text
     _G[name .. "TextLeft" .. self._lines] = fontString
   end
+  function tooltip:AddDoubleLine(left, right)
+    self:AddLine(tostring(left) .. " | " .. tostring(right))
+  end
   function tooltip:ClearLines()
     for i = 1, self._lines do _G[name .. "TextLeft" .. i]._text = nil end
     self._lines = 0
