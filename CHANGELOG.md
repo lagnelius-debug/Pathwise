@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.38.0
+
+- WoW Forever: the pet ability guide is back. Forever's Beast Training is
+  the trainer window in pet mode (training points instead of gold), not
+  Classic's craft window; Pathwise now reads that one when you open it, so
+  the guide knows which abilities your hunter has learned and says either
+  "Teach Bite (Rank 3) to <pet> in Beast Training" or which beast to tame
+  to learn a rank, with the arrow and the target button on it.
+
 ## 0.37.0
 
 - WoW Forever: talent builds for every class, made for Forever's own

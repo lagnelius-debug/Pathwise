@@ -1162,6 +1162,9 @@ end
 -- The abilities in the open Beast Training window (the hunter's learned pet
 -- abilities): list of { name, rank, level, cost }, or nil when no Beast
 -- Training window is open.
+-- The events when the Beast Training window shows or changes.
+Platform.BEAST_TRAINING_EVENTS = { "CRAFT_SHOW", "CRAFT_UPDATE" }
+
 function Platform.GetBeastTraining()
   if not (GetNumCrafts and GetCraftInfo) then
     return nil

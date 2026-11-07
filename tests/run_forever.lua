@@ -212,6 +212,29 @@ check("no trait talent API: no talent trees and no unspent points, no talent ste
   and Platform.GetUnspentTalentPoints() == 0 and talentSteps == 0)
 check("no Beast Training window", Platform.GetBeastTraining() == nil)
 
+-- Beast Training on Forever: the trainer window in pet mode.
+local trainerType = 0
+Enum.TrainerType = { General = 0, Tradeskills = 2, Pet = 3 }
+C_Trainer = { GetTrainerType = function() return trainerType end }
+local services = {
+  { "Bite", "used", nil, 1, "Rank 1" }, { "Bite", "available", nil, 8, "Rank 2" },
+  { "Claw", "unavailable", nil, 30, "Rank 5" },
+}
+function GetNumTrainerServices() return #services end
+function GetTrainerServiceInfo(i) return unpack(services[i]) end
+function GetTrainerServiceCost(i) return i * 5 end
+check("a class trainer isn't Beast Training", Platform.GetBeastTraining() == nil)
+trainerType = 3
+local training = Platform.GetBeastTraining()
+check("Beast Training from the pet trainer: every ability the hunter knows, with its rank",
+  training and #training == 3 and training[2].name == "Bite" and training[2].rank == 2 and training[3].rank == 5
+  and training[3].level == 30)
+Pathwise.charDB.beastTrainingSeen = nil
+WoW.FireEvent("TRAINER_SHOW")
+WoW.RunTimers()
+check("opening it lets the pet guide know what's learned", Pathwise.charDB.beastTrainingSeen == true)
+C_Trainer, GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceCost = nil, nil, nil, nil
+
 ---------------------------------------------------------------------------
 -- Hunter pet (C_PetInfo, the pet spellbook)
 

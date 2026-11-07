@@ -168,9 +168,30 @@ function Platform.TalentsMatchByName()
   return true
 end
 
--- There's no Beast Training craft window (the pet ability guide reads it).
+-- Beast Training is the trainer window in pet mode (C_Trainer's trainer
+-- type Pet, training points instead of money), not Classic's craft window:
+-- the abilities the hunter has learned - ones the pet can learn now, can't
+-- yet (its level) or already has.
+Platform.BEAST_TRAINING_EVENTS = { "TRAINER_SHOW", "TRAINER_UPDATE" }
+
 function Platform.GetBeastTraining()
-  return nil
+  if not (C_Trainer and C_Trainer.GetTrainerType and Enum and Enum.TrainerType and GetNumTrainerServices
+    and GetTrainerServiceInfo) or C_Trainer.GetTrainerType() ~= Enum.TrainerType.Pet then
+    return nil
+  end
+  local list = {}
+  for i = 1, GetNumTrainerServices() or 0 do
+    local name, serviceType, _, level, subText = GetTrainerServiceInfo(i)
+    if name and serviceType ~= "header" then
+      list[#list + 1] = {
+        name = name,
+        rank = tonumber((subText or ""):match("(%d+)")),
+        level = level,
+        cost = GetTrainerServiceCost and GetTrainerServiceCost(i),
+      }
+    end
+  end
+  return list
 end
 
 ---------------------------------------------------------------------------

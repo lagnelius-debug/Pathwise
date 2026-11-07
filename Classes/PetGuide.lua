@@ -9,7 +9,8 @@ local addonName, Pathwise = ...
 -- The data (ranks, pet levels, families, teaching beasts and where they
 -- are) comes from LibTameable-1.0 (Libs/). What the hunter has learned is
 -- read from the Beast Training window when it's opened
--- (PathwiseCharDB.beastTraining).
+-- (PathwiseCharDB.beastTraining) - Classic's craft window, or on WoW
+-- Forever the trainer window in pet mode (Platform.GetBeastTraining).
 
 local L = Pathwise.L
 local Platform = Pathwise.Platform
@@ -277,8 +278,9 @@ function PetGuide:OnEnable()
   self:RegisterEvent("UNIT_LEVEL", "OnUnitEvent")
   self:RegisterEvent("PET_UI_UPDATE", "OnUnitEvent")
   self:RegisterEvent("PET_BAR_UPDATE", "OnUnitEvent")
-  self:RegisterEvent("CRAFT_SHOW", "OnCraftShow")
-  self:RegisterEvent("CRAFT_UPDATE", "OnCraftShow")
+  for _, event in ipairs(Platform.BEAST_TRAINING_EVENTS) do
+    self:RegisterEvent(event, "OnCraftShow")
+  end
   -- The nearest teaching beast changes as the player moves.
   Platform.Every(DISTANCE_CHECK_SECONDS, function()
     if PetGuide.hasTargets then
