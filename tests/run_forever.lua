@@ -8,6 +8,9 @@ package.path = "./tests/?.lua;" .. package.path
 local WoW = require("mock_wow")
 local S = WoW.state
 WoW.mapRects[1453] = { continent = 0, top = 1600, left = 1600, bottom = 1000, right = 1000 } -- Stormwind
+WoW.mapRects[2521] = { continent = 2900, top = 3000, left = 3000, bottom = 0, right = 0 } -- Zephras Isle
+WoW.mapRects[1412] = { continent = 1, top = -1000, left = 3000, bottom = -3000, right = 1000 } -- Mulgore
+WoW.mapRects[1416] = { continent = 0, top = 7000, left = 3000, bottom = 5000, right = 1000 } -- Alterac Mountains
 WoW.echo = os.getenv("PATHWISE_ECHO") == "1"
 
 local passed, failed = 0, 0
@@ -263,6 +266,26 @@ do
   check("and back (" .. Labels(route) .. ")", Labels(route) == "TRAVEL_BOAT_STORMWIND_TO_AUBERDINE")
   route = Travel.Route(1439, 0.40, 0.40, 1437, 0.50, 0.50)
   check("the Wetlands: still the Menethil boat (" .. Labels(route) .. ")", Labels(route) == "TRAVEL_BOAT_AUBERDINE_TO_MENETHIL")
+  -- Zephras Isle: the skycutters. Alliance to Dalaran, Horde to Mulgore -
+  -- and on from there (a second crossing).
+  route = Travel.Route(2521, 0.5, 0.5, 1416, 0.3, 0.3)
+  check("Alliance, Zephras Isle to Alterac: the skycutter to Dalaran (" .. Labels(route) .. ")",
+    Labels(route) == "TRAVEL_SKYCUTTER_TO_DALARAN")
+  route = Travel.Route(1453, 0.6, 0.6, 2521, 0.5, 0.5)
+  check("Alliance, Stormwind to Zephras Isle: the skycutter from Dalaran (" .. Labels(route) .. ")",
+    Labels(route) == "TRAVEL_SKYCUTTER_DALARAN_TO_ZEPHRAS")
+  local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
+  local faction = snapshot.faction
+  snapshot.faction = "Horde"
+  Travel.ClearCache()
+  route = Travel.Route(2521, 0.5, 0.5, 1412, 0.5, 0.5)
+  check("Horde, Zephras Isle to Mulgore: the skycutter to Mulgore (" .. Labels(route) .. ")",
+    Labels(route) == "TRAVEL_SKYCUTTER_TO_MULGORE")
+  route = Travel.Route(2521, 0.5, 0.5, 1420, 0.5, 0.5)
+  check("Horde, Zephras Isle to Tirisfal: skycutter, then the zeppelin (" .. Labels(route) .. ")",
+    Labels(route):find("^TRAVEL_SKYCUTTER_TO_MULGORE, .*TRAVEL_ZEPPELIN_ORGRIMMAR_TO_UNDERCITY$") ~= nil)
+  snapshot.faction = faction
+  Travel.ClearCache()
   Pathwise.charDB.flightNodes = savedNodes
   Pathwise:GetModule("Flights"):ClearCache()
 end

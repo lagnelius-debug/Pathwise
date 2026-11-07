@@ -268,9 +268,15 @@ local function Continent(mapID)
   return rect and rect.continent
 end
 
+-- Crossings in a row at most (Zephras Isle to the Eastern Kingdoms for the
+-- Horde: the skycutter to Mulgore, then a zeppelin).
+local MAX_CROSSINGS = 2
+
 -- To another continent: the best boat or zeppelin across, with the best
--- way (flights too) to it on this side and from it on the other side.
-local function CrossRoute(fromMap, fromX, fromY, toMap, toX, toY)
+-- way (flights too) to it on this side and from it on the other side - or,
+-- without a direct one, across another continent first.
+local function CrossRoute(fromMap, fromX, fromY, toMap, toX, toY, crossings)
+  crossings = crossings or 1
   local fromContinent, toContinent = Continent(fromMap), Continent(toMap)
   local best
   for _, connector in ipairs(Data.Travel.CONNECTORS) do
@@ -290,6 +296,31 @@ local function CrossRoute(fromMap, fromX, fromY, toMap, toX, toY)
             legs[#legs + 1] = leg
           end
           best = { legs = legs, distance = distance }
+        end
+      end
+    end
+  end
+  if not best and crossings < MAX_CROSSINGS then
+    for _, connector in ipairs(Data.Travel.CONNECTORS) do
+      local entry, exit = connector.entry, connector.exit
+      local via = Continent(exit[1])
+      if Usable(connector) and Continent(entry[1]) == fromContinent and via and via ~= fromContinent
+        and via ~= toContinent then
+        local before = SameContinentRoute(fromMap, fromX, fromY, entry[1], entry[2], entry[3])
+        local after = before and CrossRoute(exit[1], exit[2], exit[3], toMap, toX, toY, crossings + 1)
+        if after then
+          local distance = before.distance + (connector.cost or 0) + Crossing(connector) + after.distance
+          if not best or distance < best.distance then
+            local legs = {}
+            for _, leg in ipairs(before.legs) do
+              legs[#legs + 1] = leg
+            end
+            legs[#legs + 1] = connector
+            for _, leg in ipairs(after.legs) do
+              legs[#legs + 1] = leg
+            end
+            best = { legs = legs, distance = distance }
+          end
         end
       end
     end

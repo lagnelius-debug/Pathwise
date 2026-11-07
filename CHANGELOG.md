@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.36.0
+
+- WoW Forever: Zephras Isle (the Skyborne's island) and its skycutter
+  ships. The arrow now finds its way off the island and back: Alliance
+  through the High Order's skycutter to Dalaran (Alterac Mountains), Horde
+  through the Windshapers' skycutter to Skywatcher Plateau in Mulgore.
+  Docks from where QuestieDB has the dockmasters and the NPCs meeting the
+  ships.
+- Travel across two seas: when there's no ship straight there, the arrow
+  plans two crossings (e.g. Horde from Zephras Isle to the Undercity: the
+  skycutter to Mulgore, then the zeppelin from Orgrimmar).
+
 ## 0.35.0
 
 - The report button in the To-do window's corner is a red warning

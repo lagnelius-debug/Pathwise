@@ -110,4 +110,20 @@ if Pathwise.Platform.flavor == "Forever" then
     cost = 500, sail = 1000, faction = "Alliance", entry = { 1439, 0.324, 0.438 }, exit = { 1453, 0.226, 0.56 } })
   table.insert(connectors, { from = "EASTERN_KINGDOMS", to = "KALIMDOR", label = "TRAVEL_BOAT_STORMWIND_TO_AUBERDINE",
     cost = 500, sail = 1000, faction = "Alliance", entry = { 1453, 0.226, 0.56 }, exit = { 1439, 0.324, 0.438 } })
+
+  -- Zephras Isle (the Skyborne's island, its own continent) and the
+  -- skycutter ships off it: the High Order's (Alliance) to Dalaran in the
+  -- Alterac Mountains, the Windshapers' (Horde) to Skywatcher Plateau in
+  -- Mulgore. Docks: where QuestieDB has the dockmasters on Zephras (High
+  -- Order Dockmaster 65.6, 83.2; Windshapers Dockmaster 58.2, 80.4) and the
+  -- NPCs who meet the ships (Denaaris Stargale 12.4, 56.3 in Alterac;
+  -- Alaana Stormwalker 33.4, 22.6 in Mulgore) - Forever's map frames.
+  table.insert(connectors, { from = "ZEPHRAS", to = "EASTERN_KINGDOMS", label = "TRAVEL_SKYCUTTER_TO_DALARAN",
+    cost = 500, sail = 1000, faction = "Alliance", entry = { 2521, 0.656, 0.832 }, exit = { 1416, 0.124, 0.563 } })
+  table.insert(connectors, { from = "EASTERN_KINGDOMS", to = "ZEPHRAS", label = "TRAVEL_SKYCUTTER_DALARAN_TO_ZEPHRAS",
+    cost = 500, sail = 1000, faction = "Alliance", entry = { 1416, 0.124, 0.563 }, exit = { 2521, 0.656, 0.832 } })
+  table.insert(connectors, { from = "ZEPHRAS", to = "KALIMDOR", label = "TRAVEL_SKYCUTTER_TO_MULGORE",
+    cost = 500, sail = 1000, faction = "Horde", entry = { 2521, 0.582, 0.804 }, exit = { 1412, 0.334, 0.226 } })
+  table.insert(connectors, { from = "KALIMDOR", to = "ZEPHRAS", label = "TRAVEL_SKYCUTTER_MULGORE_TO_ZEPHRAS",
+    cost = 500, sail = 1000, faction = "Horde", entry = { 1412, 0.334, 0.226 }, exit = { 2521, 0.582, 0.804 } })
 end
