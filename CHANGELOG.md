@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.39.0
+
+- Smoother routes through a zone: the farther quest steps were taken
+  nearest-first, which often crossed back over the same ground. The order
+  is now smoothed (any stretch that's shorter done the other way round is
+  turned around), still finishing the zone before leaving it. Measured on
+  the starting zones' real quests: up to 7% less walking (Elwynn Forest),
+  most often the same when nearest-first was already right.
+
 ## 0.38.0
 
 - WoW Forever: the pet ability guide is back. Forever's Beast Training is

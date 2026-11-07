@@ -34,6 +34,23 @@ check("progress from counts", QuestAdvisor.Progress({ objectives = {
   { have = 6, need = 10 }, { finished = true } } }) == 7 / 11)
 check("progress without objectives", QuestAdvisor.Progress({ objectives = {} }) == nil)
 
+-- The route through the zone: a nearest-next order that crosses back over
+-- itself is smoothed (2-opt). From the west end, nearest-next goes 0.3,
+-- then 0.1 (back west), then 0.6, 0.9; smoothed it's 0.1, 0.3, 0.6, 0.9.
+do
+  local P = NextSteps.PRIORITY
+  local function Step(id, x)
+    return { id = "quest:" .. id, priority = P.QUEST_FAR, kind = "do",
+      target = { mapID = 1438, x = x, y = 0.5, label = "spot " .. id } }
+  end
+  local items = { Step(1, 0.3), Step(2, 0.1), Step(3, 0.6), Step(4, 0.9) }
+  QuestAdvisor.ImproveRoute(items, 1, { mapID = 1438, x = 0.2, y = 0.5 }, function() return true end)
+  local order = {}
+  for i, item in ipairs(items) do order[i] = item.target.x end
+  check("zone route smoothed: no walking back over it (" .. table.concat(order, ", ") .. ")",
+    table.concat(order, ",") == "0.1,0.3,0.6,0.9")
+end
+
 -- Reported: "Turn in: [15] Elmore's Task - 1583 m" for a level 20 - a grey
 -- quest that leads nowhere isn't worth a trip; one that leads on, or one
 -- right here, still is.

@@ -606,6 +606,77 @@ function QuestAdvisor.RouteFar(items, location, anyZone)
     items[index] = table.remove(pending, bestIndex)
     at = items[index].target
   end
+  QuestAdvisor.ImproveRoute(items, first, location, InZone)
+end
+
+-- The cost of walking from a to a step (turn-ins and pickups pulled closer:
+-- they're quick).
+local function LegCost(a, item)
+  local target = item.target
+  local distance = Pathwise:GetModule("Waypoints").TravelDistance(a.mapID, a.x, a.y, target.mapID, target.x, target.y)
+    or math.huge
+  return distance * ((item.kind == "turnIn" or item.kind == "pickup") and QuestAdvisor.TURN_IN_PULL or 1)
+end
+
+-- Smooths the route through the zone (the steps from `first` on while
+-- they're in it): the nearest-next order often crosses back over itself,
+-- so any stretch that makes the whole walk shorter when done the other way
+-- round is turned around (2-opt), until none does.
+QuestAdvisor.ROUTE_IMPROVE_MAX = 16 -- steps at most (the work grows fast)
+function QuestAdvisor.ImproveRoute(items, first, location, InZone)
+  local last = first - 1
+  while items[last + 1] and items[last + 1].priority == items[first].priority and InZone(items[last + 1])
+    and last - first + 1 < QuestAdvisor.ROUTE_IMPROVE_MAX do
+    last = last + 1
+  end
+  if last - first < 2 then
+    return
+  end
+  local cache = {}
+  local function Cost(fromIndex, toItem)
+    local from = fromIndex and items[fromIndex].target or location
+    local key = tostring(from) .. ">" .. tostring(toItem)
+    if not cache[key] then
+      cache[key] = LegCost(from, toItem)
+    end
+    return cache[key]
+  end
+  -- (Costs are one-way - pickups and turn-ins are pulled closer - so a
+  -- reversal is measured over the whole stretch.)
+  local function StretchCost(i, j)
+    local total = Cost(i > first and i - 1 or nil, items[i])
+    for k = i + 1, j do
+      total = total + Cost(k - 1, items[k])
+    end
+    if j < last then
+      total = total + Cost(j, items[j + 1])
+    end
+    return total
+  end
+  local improved, rounds = true, 0
+  while improved and rounds < 50 do
+    improved, rounds = false, rounds + 1
+    for i = first, last - 1 do
+      for j = i + 1, last do
+        local before = StretchCost(i, j)
+        -- Reverse i..j in place, measure, keep or undo.
+        local a, b = i, j
+        while a < b do
+          items[a], items[b] = items[b], items[a]
+          a, b = a + 1, b - 1
+        end
+        if StretchCost(i, j) < before - 1 then
+          improved = true
+        else
+          a, b = i, j
+          while a < b do
+            items[a], items[b] = items[b], items[a]
+            a, b = a + 1, b - 1
+          end
+        end
+      end
+    end
+  end
 end
 
 ---------------------------------------------------------------------------
