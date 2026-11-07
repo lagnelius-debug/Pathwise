@@ -279,8 +279,9 @@ function Talents:GetBuild()
   return builds.builds[key], key
 end
 
--- The client's talent at a pick's position (tab, tier, column), or by its
--- English name as a fallback. Where the game's trees aren't laid out like
+-- The client's talent for a pick: by its trait node (Forever's builds), at
+-- its position (tab, tier, column), or by its English name as a fallback.
+-- Where the game's trees aren't laid out like
 -- Classic's (Forever), by name only: the pick's tree first, then the others -
 -- unless the build gives the game's own positions (gamePositions).
 local function ByName(build)
@@ -288,6 +289,16 @@ local function ByName(build)
 end
 
 local function FindTalent(trees, pick, build)
+  -- Forever's builds name the talent's trait node: exact.
+  if pick[6] then
+    for _, tree in ipairs(trees) do
+      for _, talent in ipairs(tree.talents) do
+        if talent.nodeID == pick[6] then
+          return talent
+        end
+      end
+    end
+  end
   if ByName(build) then
     local first = trees[pick[1]]
     for pass = 1, 2 do

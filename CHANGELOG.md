@@ -3,6 +3,24 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.37.0
+
+- WoW Forever: talent builds for every class, made for Forever's own
+  talent trees. Forever reworked the trees (new talents, others moved or
+  with fewer ranks), so Classic's builds only half fit. Each path now has a
+  Forever build: Arms, Fury and Protection warriors; Holy, Protection and
+  Retribution paladins; Fire, Frost and Arcane mages; Shadow and healing
+  priests; Affliction, Demonology and Destruction warlocks; Balance, Feral
+  and Restoration druids; Elemental, Enhancement and Restoration shamans;
+  Assassination, Combat and Subtlety rogues; Marksmanship hunters (Beast
+  Mastery: the build you picked). Each follows Pathwise's Classic build for
+  that path, with Forever's talents where Classic's are gone, and was
+  checked against Forever's talent data: rows open in time (5 points per
+  row), prerequisites first, 51 points.
+- The advisor recognizes each talent by its node in Forever's talent tree,
+  so the right talent is highlighted even if a tree's grid reads
+  differently.
+
 ## 0.36.0
 
 - WoW Forever: Zephras Isle (the Skyborne's island) and its skycutter

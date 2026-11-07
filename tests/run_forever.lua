@@ -545,6 +545,36 @@ items = TalentItems()
 check("no path chosen, 10 points spent like the build: next Unleashed Fury (" .. tostring(items[1] and items[1].text) .. ")",
   items[1] and items[1].text == "Spend 1 talent point: Unleashed Fury (1/5)")
 Pathwise.charDB.goal = "BEAST_MASTERY"
+-- Forever's builds for every class: one for each path, 51 points, each
+-- talent with its trait node.
+do
+  local bad = {}
+  for class, data in pairs(Pathwise.Data.TalentBuilds) do
+    for spec, key in pairs(data.bySpec) do
+      local b = data.builds[key]
+      local total, nodes = 0, true
+      for _, pick in ipairs(b and b.picks or {}) do
+        total = total + pick[4]
+        nodes = nodes and type(pick[6]) == "number"
+      end
+      if not b or not b.gamePositions or total ~= 51 or not nodes then
+        bad[#bad + 1] = class .. "/" .. spec
+      end
+    end
+  end
+  check("Forever builds for every class and path: 51 points, by trait node (" .. table.concat(bad, ", ") .. ")",
+    #bad == 0)
+  -- Matched by node even where the grid reads differently.
+  local build = Pathwise.Data.TalentBuilds.HUNTER.builds.BM_FOREVER
+  local trees = { { index = 1, points = 5, talents = {
+    { index = 1, name = "Deadly Aspects", tier = 9, column = 9, rank = 5, maxRank = 5, nodeID = 104960, tab = 1 },
+    { index = 2, name = "Endurance Training", tier = 8, column = 1, rank = 0, maxRank = 5, nodeID = 104976, tab = 1,
+      available = true },
+  } } }
+  local points = Talents.UpcomingPoints(trees, build, 1)
+  check("Forever builds find talents by trait node", points[1] and points[1].name == "Endurance Training")
+end
+
 -- A grid that doesn't fit the build (most of its spots empty): no "?"
 -- talents, just the reminder.
 TraitTree({ { 11, 1200, 100, "Lone Talent", 0, 5 }, { 12, 600, 100, "Other Talent", 0, 5 } })
