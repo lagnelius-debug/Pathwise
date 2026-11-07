@@ -176,6 +176,19 @@ check("/pw why by ID: red now", WoW.ChatContains("Level " .. L .. ": too hard (r
 WoW.ClearChat()
 WoW.Slash("why no such quest")
 check("/pw why: nothing found", WoW.ChatContains("No quest to pick up matches"))
+-- Reported: in Thelsamar the guide sent the player 6.5 km away though quest
+-- givers stood right there. /pw why here lists the quests nearby it doesn't
+-- suggest, and why (the bug report too).
+WoW.ClearChat()
+WoW.Slash("why here")
+check("/pw why here: nearby quests not suggested, with the reason",
+  WoW.ChatContains("Quests nearby the guide doesn't suggest")
+  and WoW.ChatContains("Too High (ID 7008) from Giver Near") and WoW.ChatContains("needs a higher level")
+  and WoW.ChatContains("Grey (ID 7009)") and WoW.ChatContains("too hard (red) or too easy (grey)"))
+check("/pw why here: only givers within 300 yards (not the one 900 yards off)", not WoW.ChatContains("Far Quest"))
+local report = Pathwise:GetModule("BugReport"):Build()
+check("the bug report lists them too", report:find("Quests nearby not suggested", 1, true) ~= nil
+  and report:find("Too High (ID 7008)", 1, true) ~= nil)
 WoW.ClearChat()
 WoW.Slash("why")
 check("/pw why: usage", WoW.ChatContains("Usage: /pw why"))

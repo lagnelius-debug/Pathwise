@@ -62,6 +62,18 @@ function BugReport:Build()
     Add("- [%s] %s", tostring(items[i].id), Plain(items[i].text))
   end
 
+  -- Quests nearby the guide doesn't suggest, and why.
+  local okNearby, nearby = pcall(Pathwise:GetModule("QuestAdvisor").NearbyNotSuggested,
+    Pathwise:GetModule("QuestAdvisor"), MAX_STEPS)
+  if okNearby and nearby and #nearby > 0 then
+    Add("")
+    Add("Quests nearby not suggested (%d):", #nearby)
+    for _, entry in ipairs(nearby) do
+      Add("- [%d] %s (ID %d) from %s, %d yd: %s", entry.level or 0, Plain(entry.title), entry.id,
+        Plain(entry.giver or "?"), math.floor(entry.distance + 0.5), entry.reason)
+    end
+  end
+
   local errors = Platform.GetRecentErrors()
   Add("")
   Add("Recent errors (%d):", #errors)

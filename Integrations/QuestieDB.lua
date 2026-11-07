@@ -1296,6 +1296,45 @@ function QuestieData:Explain(query, fromLevel, toLevel, ctxFor)
   return results
 end
 
+-- Quests whose giver is within maxYards (straight line) that the guide
+-- doesn't suggest now, and why: list of { id, title, level, giver,
+-- distance, reason }, nearest first. (/pw why here, the bug report.)
+function QuestieData:NearbyNotSuggested(ctx, maxYards, limit)
+  if not self:PickupsReady() then
+    return nil
+  end
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  if not mapID then
+    return {}
+  end
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local list = {}
+  for _, candidate in ipairs(pickupCandidates) do
+    local ok, points = pcall(GiverPoints, candidate)
+    local best, bestDistance
+    for _, point in ipairs(ok and points or {}) do
+      local distance = point.mapID == mapID and Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+      if distance and distance <= maxYards and (not bestDistance or distance < bestDistance) then
+        best, bestDistance = point, distance
+      end
+    end
+    if best then
+      local okReason, reason = pcall(NotEligibleReason, candidate, ctx)
+      reason = okReason and reason or (not okReason and "error") or nil
+      if reason then
+        local level = candidate.level == -1 and ctx.level or candidate.level
+        list[#list + 1] = { id = candidate.id, title = candidate.name, level = level, giver = best.giver,
+          distance = bestDistance, reason = reason }
+      end
+    end
+  end
+  table.sort(list, function(a, b) return a.distance < b.distance end)
+  for i = #list, (limit or #list) + 1, -1 do
+    list[i] = nil
+  end
+  return list
+end
+
 function QuestieData:GetPickups(ctx, limit)
   if not self:PickupsReady() then
     return nil

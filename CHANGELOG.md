@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.39.1
+
+- `/pw why here`: lists the quests whose givers are near you (300 yards)
+  that the guide doesn't suggest, with the reason for each (already done,
+  a quest before it isn't done, the giver didn't offer it, Questie says
+  it isn't available, ...). The bug report (/pw bug) includes the same
+  list. For cases like Thelsamar, where the guide pointed 6.5 km away
+  while quest givers stood nearby.
+
 ## 0.39.0
 
 - Smoother routes through a zone: the farther quest steps were taken

@@ -1228,9 +1228,33 @@ end, L.CMD_UNITS)
 
 -- /pw why <quest name or ID>: why the guide does or doesn't suggest
 -- picking up a quest, now and at the next levels.
+-- Quests nearby the guide doesn't suggest, and why (/pw why here, the bug
+-- report): QuestieData:NearbyNotSuggested with the current context.
+QuestAdvisor.NEARBY_EXPLAIN_YARDS = 300
+function QuestAdvisor:NearbyNotSuggested(limit)
+  local level = Pathwise:GetModule("Character"):GetSnapshot().level or 1
+  local ctx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
+  return Pathwise:GetModule("QuestieData"):NearbyNotSuggested(ctx, QuestAdvisor.NEARBY_EXPLAIN_YARDS, limit)
+end
+
 Pathwise:RegisterCommand("why", function(args)
   if args == "" then
     Pathwise:Print(L.WHY_USAGE)
+    return
+  end
+  if args:lower() == "here" then
+    local list = QuestAdvisor:NearbyNotSuggested(15)
+    if not list then
+      Pathwise:Print(L.WHY_NOT_READY)
+    elseif #list == 0 then
+      Pathwise:Print(L.WHY_HERE_NONE)
+    else
+      Pathwise:Print(L.WHY_HERE_HEADER)
+      for _, entry in ipairs(list) do
+        Pathwise:PrintLine(string.format(L.WHY_HERE_LINE, entry.level or 0, entry.title or "?", entry.id,
+          entry.giver or "?", Pathwise.FormatDistance(entry.distance), L["WHY_" .. entry.reason] or entry.reason))
+      end
+    end
     return
   end
   local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
