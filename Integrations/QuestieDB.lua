@@ -828,6 +828,10 @@ local function NonEmpty(value)
   return type(value) == "table" and next(value) ~= nil
 end
 
+-- Battleground areas (Warsong Gulch, Arathi Basin, Alterac Valley): their
+-- quests are done in the battleground, not where the guide could lead.
+local BATTLEGROUND_SORTS = { [3277] = true, [3358] = true, [2597] = true }
+
 local function ScanQuest(id, scan)
   local Get = lib.Quest.Get
   if not MaskAllows(Get(id, "requiredRaces"), scan.raceBit)
@@ -842,7 +846,7 @@ local function ScanQuest(id, scan)
   local sort = Get(id, "zoneOrSort")
   if (type(parent) == "number" and parent ~= 0)
     or (type(special) == "number" and HasBit(special, REPEATABLE_FLAG))
-    or (type(sort) == "number" and sort < 0 and not CLASS_SORTS[sort]) then
+    or (type(sort) == "number" and sort < 0 and not CLASS_SORTS[sort]) or BATTLEGROUND_SORTS[sort or 0] then
     return nil
   end
   -- Dungeon quests (tagged with the dungeon's area) for the dungeon guide -
@@ -1166,10 +1170,7 @@ end
 -- Whether the guide would suggest picking up a quest now (by its ID, or by
 -- its title when the client gives no ID): the same rules as GetPickups,
 -- wherever the giver is. nil while the quest list isn't scanned.
-function QuestieData:WouldSuggest(questID, title, ctx)
-  if not self:PickupsReady() then
-    return nil
-  end
+local function CandidateIndex()
   if not candidateIndex then
     candidateIndex = { byId = {}, byTitle = {} }
     for _, candidate in ipairs(pickupCandidates) do
@@ -1179,6 +1180,14 @@ function QuestieData:WouldSuggest(questID, title, ctx)
       candidateIndex.byTitle[candidate.name] = list
     end
   end
+  return candidateIndex
+end
+
+function QuestieData:WouldSuggest(questID, title, ctx)
+  if not self:PickupsReady() then
+    return nil
+  end
+  CandidateIndex()
   local list = questID and { candidateIndex.byId[questID] } or candidateIndex.byTitle[title or ""] or {}
   for _, candidate in ipairs(list) do
     -- (ctx.only: just these quests, as in GetPickups.)
@@ -1188,6 +1197,25 @@ function QuestieData:WouldSuggest(questID, title, ctx)
     end
   end
   return false
+end
+
+-- Why the guide doesn't suggest picking up a quest now (ctx as for
+-- GetPickups): a reason as NotEligibleReason gives, "unknown" for a quest
+-- it never suggests (started by an item, repeatable, ...), or nil when it
+-- does. nil too while the quest list isn't scanned.
+function QuestieData:WhyNotSuggested(questID, ctx)
+  if not self:PickupsReady() then
+    return nil
+  end
+  local candidate = CandidateIndex().byId[questID]
+  if not candidate then
+    return "unknown"
+  end
+  local ok, reason = pcall(NotEligibleReason, candidate, ctx)
+  if not ok then
+    return "error"
+  end
+  return reason
 end
 
 -- The nearest giver spot of a quest from the player (of the spots keep

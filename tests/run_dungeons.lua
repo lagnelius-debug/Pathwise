@@ -157,6 +157,28 @@ UpdateLog({ { title = "Mine Quest", level = L, questID = 9602, zone = "The Test 
 local inside = Item("quest:9602")
 check("a dungeon quest in the log: the arrow on the entrance", inside and inside.target
   and inside.target.label == "The Test Mines entrance")
+-- Reported: the guide didn't say quests were missing; the player should
+-- have them all before going in.
+local missing = Item("dungeon:missing")
+check("missing: the dungeon's quests not done or in the log, named (" .. tostring(missing and missing.text) .. ")",
+  missing and missing.text:find("^Missing 5 of 6 quests: Into the Mines, Deep Mine Quest %+3 %- get them") ~= nil
+  and missing.priority == P.QUEST_ELSEWHERE)
+local function DetailHas(item, text)
+  for _, line in ipairs(item and item.detail or {}) do
+    if line == text then return true end
+  end
+end
+check("missing: where one is picked up", DetailHas(missing, "Into the Mines: pick it up from Mine Foreman, Map 1438"))
+check("missing: what comes first", DetailHas(missing, "After The Errand: first do Old Errand (Village Elder, Map 1438)"))
+check("missing: the level it needs", DetailHas(missing,
+  string.format("Deep Mine Quest: from level %d (Mine Foreman, Map 1438)", L + 5)))
+check("missing: a chain that starts at a higher level", DetailHas(missing,
+  string.format("Chain End: first Chain Start, from level %d (Village Elder, Map 1438)", L + 3)))
+local position = {}
+for index, item in ipairs(NextSteps:GetItems()) do position[item.id] = index end
+check("the dungeon's own quest waits: pickups, then the missing line, then the dungeon",
+  inside.priority == P.QUEST_ELSEWHERE and position["pickup:9601"] < position["dungeon:missing"]
+  and position["dungeon:missing"] < position["quest:9602"] and position["quest:9602"] < position["dungeon:entrance"])
 UpdateLog({ { title = "Elsewhere Quest", level = L, questID = 9999, zone = "Teldrassil", objectives = {} } })
 check("quests that don't belong to the dungeon are left out", Item("quest:9999") == nil)
 

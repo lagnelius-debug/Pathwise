@@ -3,6 +3,24 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.42.0
+
+- Dungeon mode: a "Missing 2 of 6 quests: ..." step names the dungeon's
+  quests you don't have yet; hover it for where each is picked up, what
+  has to come first (e.g. The Fury Runs Deep: first do The Dark Iron War,
+  Motley Garmason, Wetlands), the level it needs, or why the guide can't
+  suggest it. The dungeon itself (its quests and the entrance) now comes
+  after every pickup and pre-quest step: get all the quests, then go in.
+- Quest guide: when nothing worth doing is left in your zone, it picks one
+  area and leads you there - the one with the most to do for your level
+  for the way there, where the quests you already have count most - instead
+  of single quests and turn-ins scattered over the map. A line says where
+  ("Quest in Redridge Mountains next: 9 quests for your level there"), and
+  the pickups come from that area. Errands that are turned in elsewhere and
+  dungeon quests count for little when choosing.
+- Battleground quests (Warsong Gulch, Arathi Basin, Alterac Valley) are no
+  longer suggested as pickups.
+
 ## 0.41.0
 
 - Languages: Pathwise now speaks English, Deutsch, Español and Français.

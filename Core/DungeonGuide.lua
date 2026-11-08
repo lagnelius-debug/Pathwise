@@ -215,8 +215,92 @@ local function ChainNext(questID, nextSet, seen, depth)
   end
 end
 
--- How many of a dungeon's quests the player hasn't done yet, or nil while
--- the quest list isn't scanned.
+-- At most this many quest names in the "missing" step's line.
+local MISSING_NAMES = 2
+
+-- Dungeon mode: the dungeon's quests that aren't done or in the quest log
+-- yet - the player should have all of them before going in. One step that
+-- names them; its details (hover) say where each is picked up, or what has
+-- to come first. nil when none is missing (or without the quest list).
+-- log: the quest log; ctx: the pickup context; pickups: the pickups the
+-- plan suggests.
+function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local quests = self:GetQuests(dungeon)
+  if not quests then
+    return nil
+  end
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
+  local inLog, suggested = {}, {}
+  for _, quest in ipairs(log) do
+    if quest.questID then
+      inLog[quest.questID] = true
+    end
+  end
+  for _, pickup in ipairs(pickups or {}) do
+    suggested[pickup.questID] = true
+  end
+  local level = GetSnapshot().level or 1
+  local function Name(questID)
+    return QuestieData:QuestInfo(questID, "name") or ("#" .. questID)
+  end
+  local function Where(questID)
+    local giver, mapID = QuestieData:GiverInfo(questID)
+    return giver or "?", mapID and Platform.GetMapName(mapID) or "?"
+  end
+  local names, lines = {}, {}
+  for _, questID in ipairs(quests.list) do
+    if not inLog[questID] and not Platform.IsQuestCompleted(questID) then
+      local name = Name(questID)
+      names[#names + 1] = name
+      -- What comes first in its chain (not this quest itself).
+      local nextSet, first = {}, nil
+      ChainNext(questID, nextSet, {}, 0)
+      nextSet[questID] = nil
+      for id in pairs(nextSet) do
+        first = (not first or id < first) and id or first
+      end
+      local line
+      if suggested[questID] then
+        line = string.format(L.DUNGEON_MISSING_PICKUP, name, Where(questID))
+      elseif first and inLog[first] then
+        line = string.format(L.DUNGEON_MISSING_FINISH, name, Name(first))
+      elseif first then
+        local required = QuestieData:QuestInfo(first, "requiredLevel") or 1
+        local giver, zone = Where(first)
+        line = required > level and string.format(L.DUNGEON_MISSING_FIRST_LEVEL, name, Name(first), required, giver, zone)
+          or string.format(L.DUNGEON_MISSING_FIRST, name, Name(first), giver, zone)
+      else
+        local required = QuestieData:QuestInfo(questID, "requiredLevel") or 1
+        local giver, zone = Where(questID)
+        local reason = QuestieData:WhyNotSuggested(questID, ctx)
+        if required > level then
+          line = string.format(L.DUNGEON_MISSING_LEVEL, name, required, giver, zone)
+        elseif reason and reason ~= "range" then
+          line = string.format(L.DUNGEON_MISSING_WHY, name, giver, zone, L["WHY_" .. reason] or reason)
+        else
+          line = string.format(L.DUNGEON_MISSING_PICKUP, name, giver, zone)
+        end
+      end
+      lines[#lines + 1] = line
+    end
+  end
+  if #names == 0 then
+    return nil
+  end
+  local shown = {}
+  for i = 1, math.min(#names, MISSING_NAMES) do
+    shown[i] = names[i]
+  end
+  local list = table.concat(shown, ", ")
+  if #names > MISSING_NAMES then
+    list = list .. string.format(L.UPCOMING_MORE, #names - MISSING_NAMES)
+  end
+  lines[#lines + 1] = L.DUNGEON_MISSING_HINT
+  return { id = "dungeon:missing", priority = P.QUEST_ELSEWHERE, detail = lines,
+    text = string.format(L.DUNGEON_MISSING, #names, #quests.list, list) }
+end
+
 -- A dungeon's open quests (not done yet) and where each is picked up:
 -- list of { id, title, level, giver, mapID, inLog }, in the log first, then
 -- by level. nil without QuestieDB.

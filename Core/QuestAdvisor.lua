@@ -45,6 +45,11 @@ QuestAdvisor.TURN_IN_PULL = 0.75
 
 -- Quests to pick up (from QuestieDB): at most this many, nearest first.
 QuestAdvisor.MAX_PICKUPS = 4
+-- How many of the nearest pickups the focus area is chosen from.
+QuestAdvisor.PICKUP_POOL = 60
+-- Choosing the area to quest in when there's nothing to do in this one:
+-- this many yards of travel halve an area's worth.
+QuestAdvisor.FOCUS_DISTANCE = 2000
 
 -- "Next zone" suggestion: at most this many zones listed.
 local MAX_ZONES = 3
@@ -396,7 +401,7 @@ local function ClassQuestItem(step)
   }
 end
 
-function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pickups, anyZone)
+function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pickups, anyZone, focus)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local items = {}
 
@@ -534,8 +539,105 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
     end
     return a.text < b.text
   end)
-  QuestAdvisor.RouteFar(items, location, anyZone)
+  QuestAdvisor.RouteFar(items, location, anyZone, focus)
   return items
+end
+
+---------------------------------------------------------------------------
+-- The area to quest in
+---------------------------------------------------------------------------
+
+-- What there is to do, area by area (zone groups: a zone with its
+-- capital): { zone, value, distance } for each quest step with a known
+-- place (to do: 1.5, turn in: 1, a grey dead end: 0.3) and each pickup
+-- (green: 0.6, else 1; one that's turned in in another area, like an
+-- errand to another city: 0.2 - it doesn't keep the player there; a
+-- dungeon's: 0.3 - it's done in the dungeon, with a group).
+function QuestAdvisor.ZoneWork(quests, pickups, level, greenRange, location, locate)
+  local Travel = Pathwise:GetModule("Travel")
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local work = {}
+  local function Distance(target)
+    return location and location.mapID and location.x
+      and Waypoints.TravelDistance(location.mapID, location.x, location.y, target.mapID, target.x, target.y) or nil
+  end
+  for _, quest in ipairs(quests) do
+    local difficulty = QuestAdvisor.Difficulty(quest.level, level, greenRange)
+    local kind = TargetKind(quest, difficulty)
+    local target = kind and locate and locate(quest, kind)
+    if target then
+      local value = kind == "do" and 1.5 or (difficulty == "GREY" and quest.leadsOn == false) and 0.3 or 1
+      work[#work + 1] = { zone = Travel.ZoneGroup(target.mapID), value = value, distance = Distance(target) }
+    end
+  end
+  for _, pickup in ipairs(pickups or {}) do
+    local difficulty = QuestAdvisor.Difficulty(pickup.level, level, greenRange)
+    local zone = Travel.ZoneGroup(pickup.target.mapID)
+    local away = pickup.finishMapID ~= nil and Travel.ZoneGroup(pickup.finishMapID) ~= zone
+    local inDungeon = DungeonGuide.Get(QuestieData:QuestInfo(pickup.questID, "zoneOrSort") or 0) ~= nil
+    work[#work + 1] = { zone = zone, value = away and 0.2 or inDungeon and 0.3 or difficulty == "GREEN" and 0.6 or 1,
+      distance = pickup.distance }
+  end
+  return work
+end
+
+-- The area to quest in: the player's own while there's anything worth
+-- doing there (finish the zone first), else the one with the most to do
+-- for the way there - the quests already taken count most, so the guide
+-- goes on where the player was questing. Also the next best area after
+-- it. work: QuestAdvisor.ZoneWork; currentZone: the player's zone group.
+function QuestAdvisor.FocusZone(work, currentZone)
+  local value, nearest = {}, {}
+  for _, entry in ipairs(work) do
+    value[entry.zone] = (value[entry.zone] or 0) + entry.value
+    if entry.distance and (not nearest[entry.zone] or entry.distance < nearest[entry.zone]) then
+      nearest[entry.zone] = entry.distance
+    end
+  end
+  local scores = {}
+  for zone, total in pairs(value) do
+    local score = nearest[zone] and total / (1 + nearest[zone] / QuestAdvisor.FOCUS_DISTANCE) or 0
+    if zone == currentZone and total >= 1 then
+      score = math.huge
+    end
+    scores[#scores + 1] = { zone = zone, score = score }
+  end
+  table.sort(scores, function(a, b)
+    if a.score ~= b.score then
+      return a.score > b.score
+    end
+    return a.zone < b.zone
+  end)
+  return scores[1] and scores[1].score > 0 and scores[1].zone or nil,
+    scores[2] and scores[2].score > 0 and scores[2].zone or nil
+end
+
+-- The pickups to suggest (pool: nearest first): the close ones and the
+-- focus area's, then - if there's room - the next area's. Not single
+-- quests scattered over the map.
+function QuestAdvisor.FocusPickups(pool, focus, nextZone, limit)
+  local Travel = Pathwise:GetModule("Travel")
+  local chosen, taken = {}, {}
+  local function Take(keep)
+    for _, pickup in ipairs(pool) do
+      if #chosen < limit and not taken[pickup] and keep(pickup) then
+        taken[pickup] = true
+        chosen[#chosen + 1] = pickup
+      end
+    end
+  end
+  Take(function(pickup)
+    return pickup.distance <= QuestAdvisor.NEAR_YARDS or Travel.ZoneGroup(pickup.target.mapID) == focus
+  end)
+  if nextZone then
+    Take(function(pickup)
+      return Travel.ZoneGroup(pickup.target.mapID) == nextZone
+    end)
+  end
+  table.sort(chosen, function(a, b) return a.distance < b.distance end)
+  return chosen
 end
 
 -- "On the way" hints: spawns of another quest's mobs or objects within this
@@ -644,8 +746,10 @@ end
 -- capital included) come first, then steps elsewhere and pickups that lead
 -- away - otherwise e.g. the boat from Rut'theran to Darkshore "won" over
 -- the turn-ins still waiting up on Teldrassil.
--- anyZone: no "finish the zone first" (dungeon mode).
-function QuestAdvisor.RouteFar(items, location, anyZone)
+-- anyZone: no "finish the zone first" (dungeon mode). focus: the area to
+-- quest in (QuestAdvisor.FocusZone) - its steps come next, before the
+-- rest.
+function QuestAdvisor.RouteFar(items, location, anyZone, focus)
   local P = Pathwise:GetModule("NextSteps").PRIORITY
   local first, last
   for index, item in ipairs(items) do
@@ -659,8 +763,15 @@ function QuestAdvisor.RouteFar(items, location, anyZone)
   local Waypoints = Pathwise:GetModule("Waypoints")
   local Travel = Pathwise:GetModule("Travel")
   local zone = Travel.ZoneGroup(location.mapID)
-  local function InZone(item)
-    return anyZone or item.urgent or (not item.leadsAway and Travel.ZoneGroup(item.target.mapID) == zone)
+  -- 1: this zone, 2: the focus area, 3: elsewhere.
+  local function Tier(item)
+    if anyZone or item.urgent then
+      return 1
+    elseif item.leadsAway then
+      return 3
+    end
+    local group = Travel.ZoneGroup(item.target.mapID)
+    return group == zone and 1 or group == focus and 2 or 3
   end
   local pending = {}
   for index = first, last do
@@ -668,14 +779,15 @@ function QuestAdvisor.RouteFar(items, location, anyZone)
   end
   local at = location
   for index = first, last do
-    local zoneLeft = false
+    local tier = 3
     for _, item in ipairs(pending) do
-      zoneLeft = zoneLeft or InZone(item)
+      tier = math.min(tier, Tier(item))
     end
     local bestIndex, bestCost
     for candidate, item in ipairs(pending) do
-      -- While steps in this zone are left, only they count.
-      if not zoneLeft or InZone(item) then
+      -- While steps in this zone (then the focus area) are left, only
+      -- they count.
+      if Tier(item) == tier then
         local target = item.target
         local distance = Waypoints.TravelDistance(at.mapID, at.x, at.y, target.mapID, target.x, target.y) or math.huge
         local quick = item.kind == "turnIn" or item.kind == "pickup"
@@ -688,7 +800,12 @@ function QuestAdvisor.RouteFar(items, location, anyZone)
     items[index] = table.remove(pending, bestIndex)
     at = items[index].target
   end
-  QuestAdvisor.ImproveRoute(items, first, location, InZone)
+  local firstTier = Tier(items[first])
+  if firstTier <= 2 then
+    QuestAdvisor.ImproveRoute(items, first, location, function(item)
+      return Tier(item) == firstTier
+    end)
+  end
 end
 
 -- The cost of walking from a to a step (turn-ins and pickups pulled closer:
@@ -917,6 +1034,7 @@ local function InsidePlan(dungeon, quests, level, greenRange)
 end
 
 local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
+  local P = Pathwise:GetModule("NextSteps").PRIORITY
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
   local belongs = DungeonGuide:GetQuests(dungeon)
   local items = {}
@@ -947,8 +1065,28 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
         pickup.note = string.format(L.DUNGEON_PREQUEST, dungeon.name)
       end
     end
-    items = QuestAdvisor.Plan(mine, level, greenRange, location, DungeonLocate, pickups, true)
+    local planned = QuestAdvisor.Plan(mine, level, greenRange, location, DungeonLocate, pickups, true)
     lastPickups = pickups -- (so "not offered" is learned here too)
+    -- Every quest first, then the dungeon: its own quests' steps (they
+    -- point at the entrance) wait below the pickups and pre-quest steps,
+    -- after the line that names the quests still missing.
+    local inside = {}
+    for _, item in ipairs(planned) do
+      local atEntrance = item.kind == "do" and entrance ~= nil and item.priority >= P.QUEST_ELSEWHERE
+      for _, member in ipairs(item.members or { item }) do
+        atEntrance = atEntrance and member.target == entrance
+      end
+      if atEntrance then
+        item.priority = P.QUEST_ELSEWHERE
+        inside[#inside + 1] = item
+      else
+        items[#items + 1] = item
+      end
+    end
+    items[#items + 1] = DungeonGuide:MissingItem(dungeon, quests, ctx, pickups)
+    for _, item in ipairs(inside) do
+      items[#items + 1] = item
+    end
   end
   for _, item in ipairs(DungeonGuide:ExtraItems(dungeon, quests)) do
     items[#items + 1] = item
@@ -1015,9 +1153,40 @@ function QuestAdvisor:Update()
     local classSteps = ClassQuests:GetSteps()
     -- Quests to pick up (nil while QuestieDB's quest list is being scanned,
     -- or without QuestieDB).
-    local pickups
+    -- (Each quest's place is looked up once: the focus and the plan both
+    -- need it.)
+    local located = {}
+    local function LocateOnce(quest, kind)
+      local key = tostring(quest.questID or quest.title) .. ":" .. kind
+      if located[key] == nil then
+        located[key] = Locate(quest, kind) or false
+      end
+      return located[key] or nil
+    end
+    local pickups, focus, areaItem
     if Pathwise.db.questPickups then
-      pickups = QuestieData:GetPickups(PickupContext(quests, level, greenRange), QuestAdvisor.MAX_PICKUPS)
+      local pool = QuestieData:GetPickups(PickupContext(quests, level, greenRange), QuestAdvisor.PICKUP_POOL)
+      if pool then
+        local Travel = Pathwise:GetModule("Travel")
+        local work = QuestAdvisor.ZoneWork(quests, pool, level, greenRange, location, LocateOnce)
+        local nextZone
+        focus, nextZone = QuestAdvisor.FocusZone(work, mapID and Travel.ZoneGroup(mapID))
+        pickups = QuestAdvisor.FocusPickups(pool, focus, nextZone, QuestAdvisor.MAX_PICKUPS)
+        -- Questing moves on to another area: say where, and why there.
+        if focus and mapID and focus ~= Travel.ZoneGroup(mapID) then
+          local count = 0
+          for _, entry in ipairs(work) do
+            if entry.zone == focus and entry.value >= 0.6 then
+              count = count + 1
+            end
+          end
+          if count >= 2 then
+            areaItem = { id = "quest:area", priority = Pathwise:GetModule("NextSteps").PRIORITY.QUEST_FAR + 1,
+              text = string.format(L.QA_AREA, Platform.GetMapName(focus) or "?", count),
+              detail = { L.QA_AREA_DETAIL } }
+          end
+        end
+      end
     end
     lastPickups = pickups or {}
     -- Class quest steps with a known giver join the plan like pickups.
@@ -1033,7 +1202,10 @@ function QuestAdvisor:Update()
         planned[#planned + 1] = step
       end
     end
-    items = QuestAdvisor.Plan(quests, level, greenRange, location, Locate, planned)
+    items = QuestAdvisor.Plan(quests, level, greenRange, location, LocateOnce, planned, nil, focus)
+    if areaItem then
+      table.insert(items, 1, areaItem)
+    end
     -- Nothing to do: quests here a level or two from now, else other zones.
     local zoneItem
     if pickups and NothingToDo(items) then
