@@ -63,7 +63,7 @@ local function Row(index)
           GameTooltip:AddLine(string.format(L.DUNGEON_TIP_MORE, #quests - MAX_TOOLTIP_QUESTS), 0.6, 0.6, 0.6)
           break
         end
-        local where = quest.inLog and L.DUNGEON_TIP_IN_LOG
+        local where = quest.inLog and L.DUNGEON_TIP_IN_LOG or quest.inside and L.DUNGEON_TIP_INSIDE
           or string.format(L.DUNGEON_TIP_FROM, quest.giver or "?",
             quest.mapID and Pathwise.Platform.GetMapName(quest.mapID) or "?")
         GameTooltip:AddDoubleLine(string.format("[%s] %s", quest.level or "?", quest.title), where, 1, 0.82, 0,

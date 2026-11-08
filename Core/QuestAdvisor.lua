@@ -903,6 +903,34 @@ end
 -- Live updates
 ---------------------------------------------------------------------------
 
+-- A dungeon's quest QuestieDB knows no turn-in NPC for (WoW Forever's new
+-- dungeons): it's turned in at the dungeon, so the arrow goes to its
+-- entrance - not back to where it was picked up (reported: Songblade
+-- Search, picked up in Lakeshire, turned in at the Wetlands excavation
+-- site). nil for other quests and steps.
+function QuestAdvisor.DungeonTurnIn(quest, kind)
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  if kind ~= "turnIn" or not quest.questID then
+    return nil
+  end
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  local dungeon = DungeonGuide.Get(QuestieData:QuestInfo(quest.questID, "zoneOrSort") or 0)
+  local finishedBy = QuestieData:QuestInfo(quest.questID, "finishedBy")
+  if not dungeon or (type(finishedBy) == "table" and next(finishedBy) ~= nil) then
+    return nil
+  end
+  local entrance = DungeonGuide:EntranceTarget(dungeon)
+  if not entrance then
+    return nil
+  end
+  local target = {}
+  for key, value in pairs(entrance) do
+    target[key] = value
+  end
+  target.label = string.format(L.ARROW_TURN_IN_DUNGEON, quest.title or "?", dungeon.name)
+  return target
+end
+
 -- What the quest pickups are chosen with (QuestieData:GetPickups).
 local function PickupContext(quests, level, greenRange)
   local inLog = {}
@@ -1154,7 +1182,8 @@ function QuestAdvisor:Update()
   QuestLocations:OnQuestsScanned(quests)
   -- QuestieDB knows exact locations; learned spots are the fallback.
   local function Locate(quest, kind)
-    return QuestieData:GetTarget(quest, kind) or QuestLocations:GetTarget(quest, kind)
+    return QuestieData:GetTarget(quest, kind) or QuestAdvisor.DungeonTurnIn(quest, kind)
+      or QuestLocations:GetTarget(quest, kind)
   end
   local greenRange = Platform.GetQuestGreenRange(level)
   -- Whether a quest leads on to one still worth doing (a quest further in

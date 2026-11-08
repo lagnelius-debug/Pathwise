@@ -55,6 +55,12 @@ local quests = {
   [9611] = { name = "Grey Errand", requiredLevel = 1, questLevel = 1, zoneOrSort = 141, startedBy = { { 9701 } } },
   [9612] = { name = "Grey Dungeon Quest", requiredLevel = 1, questLevel = 2, zoneOrSort = 9500, preQuestSingle = { 9611 },
     startedBy = { { 9702 } } },
+  -- Forever's new dungeons: a quest an item inside starts, and one whose
+  -- turn-in NPC QuestieDB doesn't know (reported: Lost Relic Carry,
+  -- Songblade Search at the Excavation Site).
+  [9613] = { name = "Relic Found Inside", requiredLevel = 1, questLevel = L, zoneOrSort = 9500,
+    startedBy = { nil, nil, { 9903 } } },
+  [9614] = { name = "Find The Brother", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, startedBy = { { 9701 } } },
   [9606] = { name = "Chain End", requiredLevel = L + 3, questLevel = L + 4, zoneOrSort = 9500, preQuestSingle = { 9605 },
     startedBy = { { 9702 } } },
 }
@@ -80,7 +86,7 @@ LibQuestieDB.Npc.Get = function(id, key)
   if npcs[id] then return npcs[id][key] end
   return npcGet(id, key)
 end
-LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610, 9611, 9612 } end
+LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610, 9611, 9612, 9613, 9614 } end
 QuestieData:ResetPickups()
 QuestieData:PickupsReady()
 WoW.RunTimers()
@@ -94,7 +100,7 @@ local names = {}
 for _, d in ipairs(DungeonGuide.List()) do names[d.name] = true end
 check("Alliance: no Ragefire Chasm, but The Stockade and The Deadmines", not names["Ragefire Chasm"]
   and names["The Stockade"] and names["The Deadmines"] and names["The Test Mines"])
-check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 6)
+check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 8)
 check("normal mode: the normal quest is suggested", Item("pickup:9604") ~= nil)
 -- Reported: Gyrodrillmatic Excavationators (Gnomeregan) suggested in
 -- normal mode. A dungeon's quests wait for dungeon mode.
@@ -167,11 +173,11 @@ check("a dungeon quest in the log: the arrow on the entrance", inside and inside
 -- have them all before going in.
 local missing = Item("dungeon:missing")
 check("missing: the dungeon's quests not done or in the log, named (" .. tostring(missing and missing.text) .. ")",
-  missing and missing.text:find("^|cffff8040Missing 5 of 6 quests:|r Into the Mines, Deep Mine Quest %+3 %- %d+ m$") ~= nil
+  missing and missing.text:find("^|cffff8040Missing 6 of 8 quests:|r Into the Mines, Deep Mine Quest %+4 %- %d+ m$") ~= nil
   and missing.priority == P.QUEST_ELSEWHERE)
 check("missing: highlighted, the arrow on the first one to get now, how to get each one underneath",
   missing.target and missing.target.giver == "Mine Foreman" and missing.kind == "pickup"
-  and #missing.subLines == 5 and missing.subLines[1].text == "Into the Mines: pick it up from Mine Foreman, Map 1438")
+  and #missing.subLines == 6 and missing.subLines[1].text == "Into the Mines: pick it up from Mine Foreman, Map 1438")
 local function DetailHas(item, text)
   for _, line in ipairs(item and item.detail or {}) do
     if line == text then return true end
@@ -183,6 +189,8 @@ check("missing: the level it needs", DetailHas(missing,
   string.format("Deep Mine Quest: from level %d (Mine Foreman, Map 1438)", L + 5)))
 check("missing: a chain that starts at a higher level", DetailHas(missing,
   string.format("Chain End: first Chain Start, from level %d (Village Elder, Map 1438)", L + 3)))
+check("an item inside starts one: not missing, said where it's picked up",
+  DetailHas(missing, "Picked up inside the dungeon: Relic Found Inside"))
 local position = {}
 for index, item in ipairs(NextSteps:GetItems()) do position[item.id] = index end
 check("the dungeon's own quest waits: pickups, then the missing line, then the dungeon",
@@ -327,6 +335,15 @@ DungeonGuide:SetDungeon(9501)
 check("an older QuestieDB (no quest list): says so instead of loading forever", Item("dungeon:loading")
   and Item("dungeon:loading").text:find("newer QuestieDB", 1, true))
 DungeonGuide:SetDungeon(nil)
+-- A dungeon quest without a known turn-in NPC: to the dungeon, not back to
+-- where it was picked up.
+Pathwise.db.questLocations[9614] = { pickup = { mapID = 1438, x = 0.58, y = 0.41, npcName = "Village Elder" } }
+UpdateLog({ { title = "Find The Brother", level = L, questID = 9614, complete = 1, objectives = {} } })
+local brother = Item("quest:9614")
+check("a dungeon quest with no turn-in NPC known: turned in at the dungeon (" .. tostring(brother and brother.target
+  and brother.target.label) .. ")", brother and brother.target and brother.target.label == "Turn in: Find The Brother (at The Test Mines)")
+Pathwise.db.questLocations[9614] = nil
+UpdateLog({})
 table.remove(Pathwise.Data.Dungeons)
 check("normal mode: To-do under PATHWISE, the title not a button", window.title:GetText() == "To-do"
   and window.label:GetText() == "PATHWISE" and not window.titleButton:IsShown())

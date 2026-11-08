@@ -1107,6 +1107,30 @@ function QuestieData:GiverInfo(questID)
   return name, mapID
 end
 
+-- Whether a quest is picked up inside a dungeon (areaId: the dungeon's
+-- area): no NPC or object starts it (an item does, or nobody knows yet -
+-- Forever's new dungeons), or each one that does stands in the dungeon.
+-- nil without QuestieDB.
+function QuestieData:StartsInside(questID, areaId)
+  if not Load() then
+    return nil
+  end
+  local ok, inside = pcall(function()
+    local startedBy = lib.Quest.Get(questID, "startedBy") or {}
+    for index, entity in ipairs({ lib.Npc, lib.Object }) do
+      for _, id in ipairs(startedBy[index] or {}) do
+        for area in pairs(entity.Get(id, "spawns") or {}) do
+          if area ~= areaId then
+            return false
+          end
+        end
+      end
+    end
+    return true
+  end)
+  return ok and inside or nil
+end
+
 -- True when QuestieDB can't list its quests (an older version): no
 -- pickups, no dungeon guide.
 function QuestieData:PickupsUnavailable()

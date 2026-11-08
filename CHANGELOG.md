@@ -3,6 +3,21 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.44.1
+
+- A dungeon quest QuestieDB knows no turn-in NPC for (WoW Forever's new
+  dungeons) is turned in at the dungeon: the arrow goes to its entrance,
+  not back to where you picked it up (reported: Songblade Search, picked
+  up in Lakeshire, sent back there instead of to the Wetlands excavation
+  site).
+- Dungeon mode's "Missing" step only counts quests you can get before
+  going in. Quests an item or someone inside the dungeon starts are listed
+  as "Picked up inside the dungeon" (hover), and the dungeon list's tooltip
+  says "picked up inside" for them instead of "?, ?". Quests you can't get
+  now (Questie says so, another quest rules it out, ...) are mentioned in
+  the hover text but no longer counted as missing (reported: The
+  Excavation Site, where Forever's quest data is still incomplete).
+
 ## 0.44.0
 
 - Normal mode no longer suggests dungeon quests to pick up (reported:

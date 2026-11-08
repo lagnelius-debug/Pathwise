@@ -248,7 +248,7 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
     local giver, mapID = QuestieData:GiverInfo(questID)
     return giver or "?", mapID and Platform.GetMapName(mapID) or "?"
   end
-  local names, lines, subLines = {}, {}, {}
+  local names, lines, subLines, inside, unavailable = {}, {}, {}, {}, {}
   -- The arrow goes to the first missing quest that can be had now (its
   -- giver, or the giver of the quest that comes first in its chain).
   local target, distance
@@ -260,7 +260,6 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
   for _, questID in ipairs(quests.list) do
     if not inLog[questID] and not Platform.IsQuestCompleted(questID) then
       local name = Name(questID)
-      names[#names + 1] = name
       -- What comes first in its chain (not this quest itself).
       local nextSet, first = {}, nil
       ChainNext(questID, nextSet, {}, 0)
@@ -283,6 +282,10 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
           line = string.format(L.DUNGEON_MISSING_FIRST, name, Name(first), giver, zone)
           Aim(first)
         end
+      elseif QuestieData:StartsInside(questID, dungeon.id) then
+        -- Picked up in the dungeon (an item, or a giver inside): nothing
+        -- to get before going in.
+        inside[#inside + 1] = name
       else
         local required = QuestieData:QuestInfo(questID, "requiredLevel") or 1
         local giver, zone = Where(questID)
@@ -290,14 +293,20 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
         if required > level then
           line = string.format(L.DUNGEON_MISSING_LEVEL, name, required, giver, zone)
         elseif reason and reason ~= "range" then
-          line = string.format(L.DUNGEON_MISSING_WHY, name, giver, zone, L["WHY_" .. reason] or reason)
+          -- Not to be had now (Questie says so, another quest rules it
+          -- out, ...): mentioned, but not missing.
+          unavailable[#unavailable + 1] = string.format(L.DUNGEON_MISSING_WHY, name, giver, zone,
+            L["WHY_" .. reason] or reason)
         else
           line = string.format(L.DUNGEON_MISSING_PICKUP, name, giver, zone)
           Aim(questID)
         end
       end
-      lines[#lines + 1] = line
-      subLines[#subLines + 1] = { text = line, level = 1, task = true }
+      if line then
+        names[#names + 1] = name
+        lines[#lines + 1] = line
+        subLines[#subLines + 1] = { text = line, level = 1, task = true }
+      end
     end
   end
   if #names == 0 then
@@ -310,6 +319,12 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
   local list = table.concat(shown, ", ")
   if #names > MISSING_NAMES then
     list = list .. string.format(L.UPCOMING_MORE, #names - MISSING_NAMES)
+  end
+  if #inside > 0 then
+    lines[#lines + 1] = string.format(L.DUNGEON_MISSING_INSIDE, table.concat(inside, ", "))
+  end
+  for _, line in ipairs(unavailable) do
+    lines[#lines + 1] = line
   end
   lines[#lines + 1] = L.DUNGEON_MISSING_HINT
   local text = string.format(L.DUNGEON_MISSING, #names, #quests.list, list)
@@ -341,7 +356,7 @@ function DungeonGuide:OpenQuests(dungeon)
       local giver, mapID = QuestieData:GiverInfo(questID)
       open[#open + 1] = { id = questID, title = QuestieData:QuestInfo(questID, "name") or ("#" .. questID),
         level = QuestieData:QuestInfo(questID, "questLevel"), giver = giver, mapID = mapID,
-        inLog = inLog[questID] == true }
+        inLog = inLog[questID] == true, inside = QuestieData:StartsInside(questID, dungeon.id) == true }
     end
   end
   table.sort(open, function(a, b)
