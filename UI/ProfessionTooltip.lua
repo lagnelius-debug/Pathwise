@@ -64,7 +64,7 @@ end
 
 function ProfessionTooltip:OnInitialize()
   -- (Guarded: errors don't repeat on every refresh of an open tooltip.)
-  local AddLine = Pathwise.Guard(L.GUARD_UNIT_TOOLTIP, AddLine)
+  local AddLine = Pathwise.Guard("GUARD_UNIT_TOOLTIP", AddLine)
   if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and Enum.TooltipDataType
     and Enum.TooltipDataType.Unit then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, AddLine)

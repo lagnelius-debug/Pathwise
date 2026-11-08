@@ -1107,10 +1107,28 @@ function QuestieData:GiverInfo(questID)
   return name, mapID
 end
 
+-- The item that starts a quest, if an item does and no NPC or object
+-- does: its name ("?" when QuestieDB doesn't know it), else nil.
+function QuestieData:StarterItem(questID)
+  if not Load() then
+    return nil
+  end
+  local ok, name = pcall(function()
+    local startedBy = lib.Quest.Get(questID, "startedBy") or {}
+    if NonEmpty(startedBy[1]) or NonEmpty(startedBy[2]) or not NonEmpty(startedBy[3]) then
+      return nil
+    end
+    return lib.Item.Get(startedBy[3][1], "name") or "?"
+  end)
+  return ok and name or nil
+end
+
 -- Whether a quest is picked up inside a dungeon (areaId: the dungeon's
 -- area): no NPC or object starts it (an item does, or nobody knows yet -
--- Forever's new dungeons), or each one that does stands in the dungeon.
--- nil without QuestieDB.
+-- Forever's new dungeons), or each one that does stands in the dungeon -
+-- in its area, or in an instance (QuestieDB's -1, -1 spot: e.g. Kharan
+-- Mighthammer, in another of Blackrock Depths' areas). nil without
+-- QuestieDB.
 function QuestieData:StartsInside(questID, areaId)
   if not Load() then
     return nil
@@ -1119,9 +1137,13 @@ function QuestieData:StartsInside(questID, areaId)
     local startedBy = lib.Quest.Get(questID, "startedBy") or {}
     for index, entity in ipairs({ lib.Npc, lib.Object }) do
       for _, id in ipairs(startedBy[index] or {}) do
-        for area in pairs(entity.Get(id, "spawns") or {}) do
+        for area, spots in pairs(entity.Get(id, "spawns") or {}) do
           if area ~= areaId then
-            return false
+            for _, spot in ipairs(spots) do
+              if type(spot[1]) == "number" and spot[1] >= 0 then
+                return false
+              end
+            end
           end
         end
       end

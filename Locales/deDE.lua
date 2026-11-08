@@ -39,6 +39,9 @@ Pathwise.Locales.deDE = {
   STATUS_EMPTY_SLOTS = "Leer: %s",
   STATUS_SKILLS_COLLAPSED = "Im Fertigkeitenfenster eingeklappt (nicht aufgeführt): %s",
   STATUS_CLIENT = "Spiel %s (Interface %s), Pathwise %s",
+  MONEY_GOLD = "%dG",
+  MONEY_SILVER = "%dS",
+  MONEY_COPPER = "%dK",
 
   -- Ausrüstungsplätze
   SLOT_HEAD = "Kopf",
@@ -604,6 +607,7 @@ Pathwise.Locales.deDE = {
   DUNGEON_MISSING_FIRST = "%s: zuerst %s (%s, %s)",
   DUNGEON_MISSING_FIRST_LEVEL = "%s: zuerst %s, ab Stufe %d (%s, %s)",
   DUNGEON_MISSING_LEVEL = "%s: ab Stufe %d (%s, %s)",
+  DUNGEON_MISSING_FIRST_ITEM = "%s: zuerst %s (ein Gegenstand startet sie: %s)",
   DUNGEON_MISSING_WHY = "%s: %s, %s - %s",
   DUNGEON_MISSING_HINT = "Hol dir alle Quests, bevor du reingehst: Ein Durchlauf erledigt sie alle. Der Pfeil führt zur ersten, die du jetzt bekommen kannst.",
   DUNGEON_ACTIVE = "|cffffd100(aktiv)|r",

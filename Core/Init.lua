@@ -178,6 +178,8 @@ end
 -- /pw bug), and after `maxFailures` of them the hook stops for the session
 -- with one chat line, instead of an endless error flood. Returns the
 -- wrapped function, which returns fn's first result (nil once stopped).
+-- name: a string key of L (looked up when it's said: the language is set
+-- after the files load), or plain text.
 function Pathwise.Guard(name, fn, maxFailures)
   local failures = 0
   maxFailures = maxFailures or 3
@@ -191,7 +193,7 @@ function Pathwise.Guard(name, fn, maxFailures)
     end
     failures = failures + 1
     if failures == maxFailures then
-      Pathwise:Printf(L.GUARD_STOPPED, name)
+      Pathwise:Printf(L.GUARD_STOPPED, L[name])
     end
     return nil
   end
@@ -203,13 +205,13 @@ function Pathwise.FormatMoney(copper)
   local silver = math.floor(copper / 100) % 100
   local parts = {}
   if gold > 0 then
-    parts[#parts + 1] = gold .. "g"
+    parts[#parts + 1] = string.format(L.MONEY_GOLD, gold)
   end
   if silver > 0 then
-    parts[#parts + 1] = silver .. "s"
+    parts[#parts + 1] = string.format(L.MONEY_SILVER, silver)
   end
   if copper % 100 > 0 or #parts == 0 then
-    parts[#parts + 1] = (copper % 100) .. "c"
+    parts[#parts + 1] = string.format(L.MONEY_COPPER, copper % 100)
   end
   return table.concat(parts, " ")
 end

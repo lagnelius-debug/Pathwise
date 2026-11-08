@@ -61,6 +61,13 @@ local quests = {
   [9613] = { name = "Relic Found Inside", requiredLevel = 1, questLevel = L, zoneOrSort = 9500,
     startedBy = { nil, nil, { 9903 } } },
   [9614] = { name = "Find The Brother", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, startedBy = { { 9701 } } },
+  -- A later quest of one of the dungeon's own chains: comes with it, not
+  -- one more to get beforehand (reported in a bug check: Necklace
+  -- Recovery, Take 2 in Uldaman counted as missing).
+  [9615] = { name = "Mine Quest Part Two", requiredLevel = 1, questLevel = L, zoneOrSort = 9500,
+    preQuestSingle = { 9602 }, startedBy = { { 9702 } } },
+  [9616] = { name = "Mine Quest Part Three", requiredLevel = 1, questLevel = L, zoneOrSort = 9500,
+    preQuestSingle = { 9615 }, startedBy = { { 9702 } } },
   [9606] = { name = "Chain End", requiredLevel = L + 3, questLevel = L + 4, zoneOrSort = 9500, preQuestSingle = { 9605 },
     startedBy = { { 9702 } } },
 }
@@ -86,7 +93,7 @@ LibQuestieDB.Npc.Get = function(id, key)
   if npcs[id] then return npcs[id][key] end
   return npcGet(id, key)
 end
-LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610, 9611, 9612, 9613, 9614 } end
+LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610, 9611, 9612, 9613, 9614, 9615, 9616 } end
 QuestieData:ResetPickups()
 QuestieData:PickupsReady()
 WoW.RunTimers()
@@ -100,7 +107,7 @@ local names = {}
 for _, d in ipairs(DungeonGuide.List()) do names[d.name] = true end
 check("Alliance: no Ragefire Chasm, but The Stockade and The Deadmines", not names["Ragefire Chasm"]
   and names["The Stockade"] and names["The Deadmines"] and names["The Test Mines"])
-check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 8)
+check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 10)
 check("normal mode: the normal quest is suggested", Item("pickup:9604") ~= nil)
 -- Reported: Gyrodrillmatic Excavationators (Gnomeregan) suggested in
 -- normal mode. A dungeon's quests wait for dungeon mode.
@@ -173,7 +180,7 @@ check("a dungeon quest in the log: the arrow on the entrance", inside and inside
 -- have them all before going in.
 local missing = Item("dungeon:missing")
 check("missing: the dungeon's quests not done or in the log, named (" .. tostring(missing and missing.text) .. ")",
-  missing and missing.text:find("^|cffff8040Missing 6 of 8 quests:|r Into the Mines, Deep Mine Quest %+4 %- %d+ m$") ~= nil
+  missing and missing.text:find("^|cffff8040Missing 6 of 10 quests:|r Into the Mines, Deep Mine Quest %+4 %- %d+ m$") ~= nil
   and missing.priority == P.QUEST_ELSEWHERE)
 check("missing: highlighted, the arrow on the first one to get now, how to get each one underneath",
   missing.target and missing.target.giver == "Mine Foreman" and missing.kind == "pickup"
@@ -189,6 +196,13 @@ check("missing: the level it needs", DetailHas(missing,
   string.format("Deep Mine Quest: from level %d (Mine Foreman, Map 1438)", L + 5)))
 check("missing: a chain that starts at a higher level", DetailHas(missing,
   string.format("Chain End: first Chain Start, from level %d (Village Elder, Map 1438)", L + 3)))
+local function DetailMentions(item, text)
+  for _, line in ipairs(item and item.detail or {}) do
+    if line:find(text, 1, true) then return true end
+  end
+end
+check("a later quest of the dungeon's own chain isn't missing, however far along",
+  not DetailMentions(missing, "Mine Quest Part Two") and not DetailMentions(missing, "Mine Quest Part Three"))
 check("an item inside starts one: not missing, said where it's picked up",
   DetailHas(missing, "Picked up inside the dungeon: Relic Found Inside"))
 local position = {}

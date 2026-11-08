@@ -944,6 +944,13 @@ function Platform.GetTaxiNodes()
   return nodes
 end
 
+-- Reloads the interface (a new language takes effect).
+function Platform.ReloadUI()
+  if ReloadUI then
+    ReloadUI()
+  end
+end
+
 -- The flight points the character has discovered on a continent map
 -- (uiMapID), readable at any time: list of { name, x, y } (0..1 on that
 -- map), or nil where the game only tells while a flight map is open

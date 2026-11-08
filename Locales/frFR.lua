@@ -39,6 +39,9 @@ Pathwise.Locales.frFR = {
   STATUS_EMPTY_SLOTS = "Vides : %s",
   STATUS_SKILLS_COLLAPSED = "Repliées dans la fenêtre des compétences (non listées) : %s",
   STATUS_CLIENT = "Client %s (interface %s), Pathwise %s",
+  MONEY_GOLD = "%dpo",
+  MONEY_SILVER = "%dpa",
+  MONEY_COPPER = "%dpc",
 
   -- Equipment slots
   SLOT_HEAD = "Tête",
@@ -611,6 +614,7 @@ Pathwise.Locales.frFR = {
   DUNGEON_MISSING_FIRST = "%s : faites d'abord %s (%s, %s)",
   DUNGEON_MISSING_FIRST_LEVEL = "%s : d'abord %s, dès le niveau %d (%s, %s)",
   DUNGEON_MISSING_LEVEL = "%s : dès le niveau %d (%s, %s)",
+  DUNGEON_MISSING_FIRST_ITEM = "%s : d'abord %s (lancée par un objet : %s)",
   DUNGEON_MISSING_WHY = "%s : %s, %s - %s",
   DUNGEON_MISSING_HINT = "Prenez toutes les quêtes avant d'entrer : une seule visite les accomplit toutes. La flèche mène à la première que vous pouvez obtenir maintenant.",
   DUNGEON_ACTIVE = "|cffffd100(actif)|r",

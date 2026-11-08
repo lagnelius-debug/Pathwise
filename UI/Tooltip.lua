@@ -122,7 +122,7 @@ local function AddLines(tooltip)
 end
 
 -- (Guarded: errors don't repeat on every refresh of an open tooltip.)
-local GuardedAddLines = Pathwise.Guard(L.GUARD_ITEM_TOOLTIP, AddLines)
+local GuardedAddLines = Pathwise.Guard("GUARD_ITEM_TOOLTIP", AddLines)
 
 local function OnTooltipSetItem(tooltip)
   if GuardedAddLines(tooltip) then

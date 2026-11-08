@@ -3,6 +3,29 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.44.2
+
+Bug check of the features since 0.41.0 (124 simulated scenarios on the real
+quest data: both factions, 27 zones at levels 5-56, every dungeon in dungeon
+mode, German, Spanish and French).
+
+- Dungeon mode's "Missing" step:
+  - later quests of the dungeon's own chains (e.g. Necklace Recovery, Take
+    2 in Uldaman; Abandoned Hope in Blackrock Depths) no longer count as
+    missing - they come with the chain, often during the run;
+  - quests whose giver stands inside the dungeon (e.g. Kharan Mighthammer)
+    or whose chain starts inside it are listed as "Picked up inside the
+    dungeon", each name once;
+  - a pre-quest an item starts says so (e.g. The Stockade Riots: first The
+    Unsent Letter, an item starts it).
+- A dungeon quest whose turn-in NPC stands only inside the dungeon is
+  turned in at the entrance too, not back where it was picked up.
+- `/pw why` in dungeon mode no longer calls the dungeon's quests "a
+  dungeon quest".
+- Languages: money amounts are written the language's way (e.g. 3G 36S
+  10K, 3po 36pa 10pc), and the "tooltip line hit an error" message is
+  translated.
+
 ## 0.44.1
 
 - A dungeon quest QuestieDB knows no turn-in NPC for (WoW Forever's new

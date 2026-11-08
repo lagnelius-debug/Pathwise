@@ -39,6 +39,9 @@ Pathwise.Locales.esES = {
   STATUS_EMPTY_SLOTS = "Vacío: %s",
   STATUS_SKILLS_COLLAPSED = "Plegado en la ventana de habilidades (no listado): %s",
   STATUS_CLIENT = "Juego %s (interfaz %s), Pathwise %s",
+  MONEY_GOLD = "%do",
+  MONEY_SILVER = "%dp",
+  MONEY_COPPER = "%dc",
 
   -- Huecos de equipo
   SLOT_HEAD = "Cabeza",
@@ -604,6 +607,7 @@ Pathwise.Locales.esES = {
   DUNGEON_MISSING_FIRST = "%s: primero haz %s (%s, %s)",
   DUNGEON_MISSING_FIRST_LEVEL = "%s: primero %s, desde el nivel %d (%s, %s)",
   DUNGEON_MISSING_LEVEL = "%s: desde el nivel %d (%s, %s)",
+  DUNGEON_MISSING_FIRST_ITEM = "%s: primero %s (la inicia un objeto: %s)",
   DUNGEON_MISSING_WHY = "%s: %s, %s - %s",
   DUNGEON_MISSING_HINT = "Consigue todas las misiones antes de entrar: una sola visita las completa todas. La flecha lleva a la primera que puedes conseguir ahora.",
   DUNGEON_ACTIVE = "|cffffd100(activa)|r",

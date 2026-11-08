@@ -903,11 +903,12 @@ end
 -- Live updates
 ---------------------------------------------------------------------------
 
--- A dungeon's quest QuestieDB knows no turn-in NPC for (WoW Forever's new
--- dungeons): it's turned in at the dungeon, so the arrow goes to its
--- entrance - not back to where it was picked up (reported: Songblade
--- Search, picked up in Lakeshire, turned in at the Wetlands excavation
--- site). nil for other quests and steps.
+-- A dungeon's quest QuestieDB knows no turn-in place for (no turn-in NPC -
+-- WoW Forever's new dungeons - or one only inside): it's turned in at the
+-- dungeon, so the arrow goes to its entrance - not back to where it was
+-- picked up (reported: Songblade Search, picked up in Lakeshire, turned in
+-- at the Wetlands excavation site). nil for other quests and steps.
+-- (Asked only when QuestieData:GetTarget found no turn-in.)
 function QuestAdvisor.DungeonTurnIn(quest, kind)
   local QuestieData = Pathwise:GetModule("QuestieData")
   if kind ~= "turnIn" or not quest.questID then
@@ -915,8 +916,7 @@ function QuestAdvisor.DungeonTurnIn(quest, kind)
   end
   local DungeonGuide = Pathwise:GetModule("DungeonGuide")
   local dungeon = DungeonGuide.Get(QuestieData:QuestInfo(quest.questID, "zoneOrSort") or 0)
-  local finishedBy = QuestieData:QuestInfo(quest.questID, "finishedBy")
-  if not dungeon or (type(finishedBy) == "table" and next(finishedBy) ~= nil) then
+  if not dungeon then
     return nil
   end
   local entrance = DungeonGuide:EntranceTarget(dungeon)
@@ -1580,6 +1580,8 @@ Pathwise:RegisterCommand("why", function(args)
     function(atLevel)
       local ctx = PickupContext(quests, atLevel, Platform.GetQuestGreenRange(atLevel))
       ctx.future = atLevel > level
+      -- (Dungeon mode suggests dungeon quests.)
+      ctx.noDungeon = not Pathwise:GetModule("DungeonGuide"):GetActive() or nil
       return ctx
     end)
   if not results then

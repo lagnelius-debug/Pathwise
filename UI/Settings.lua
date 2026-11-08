@@ -210,9 +210,7 @@ local function CreatePanel()
   reload:SetPoint("TOPLEFT", language, "BOTTOMLEFT", 0, -8)
   reload:SetText(L.SETTINGS_RELOAD)
   reload:SetScript("OnClick", function()
-    if ReloadUI then
-      ReloadUI()
-    end
+    Pathwise.Platform.ReloadUI()
   end)
   reload:Hide()
   panel.reload = reload

@@ -215,6 +215,26 @@ local function ChainNext(questID, nextSet, seen, depth)
   end
 end
 
+-- Whether a quest comes after one of the dungeon's own quests in its chain
+-- (any not done quest before it, however far back, is one of them).
+local function BehindDungeonQuest(questID, inDungeon, depth, seen)
+  if depth > MAX_CHAIN_DEPTH or seen[questID] then
+    return false
+  end
+  seen[questID] = true
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  for _, key in ipairs({ "preQuestSingle", "preQuestGroup" }) do
+    local before = QuestieData:QuestInfo(questID, key)
+    for _, id in ipairs(type(before) == "table" and before or {}) do
+      if not Platform.IsQuestCompleted(id)
+        and (inDungeon[id] or BehindDungeonQuest(id, inDungeon, depth + 1, seen)) then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 -- At most this many quest names in the "missing" step's line.
 local MISSING_NAMES = 2
 
@@ -271,6 +291,17 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
       if suggested[questID] then
         line = string.format(L.DUNGEON_MISSING_PICKUP, name, Where(questID))
         Aim(questID)
+      elseif first and (quests.inDungeon[first] or BehindDungeonQuest(questID, quests.inDungeon, 0, {})) then
+        -- A later quest of one of the dungeon's own chains (e.g. Necklace
+        -- Recovery, Take 2): it comes with that chain, often during the
+        -- run - not one more quest to get beforehand.
+        line = nil
+      elseif first and QuestieData:StarterItem(first) then
+        -- (An item starts the quest before it, e.g. The Unsent Letter from
+        -- Edwin VanCleef for The Stockade Riots.)
+        line = string.format(L.DUNGEON_MISSING_FIRST_ITEM, name, Name(first), QuestieData:StarterItem(first))
+      elseif first and QuestieData:StartsInside(first, dungeon.id) then
+        inside[#inside + 1] = name
       elseif first and inLog[first] then
         line = string.format(L.DUNGEON_MISSING_FINISH, name, Name(first))
       elseif first then
@@ -321,7 +352,15 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
     list = list .. string.format(L.UPCOMING_MORE, #names - MISSING_NAMES)
   end
   if #inside > 0 then
-    lines[#lines + 1] = string.format(L.DUNGEON_MISSING_INSIDE, table.concat(inside, ", "))
+    -- (Race or class variants share a name: once each.)
+    local unique, seenName = {}, {}
+    for _, name in ipairs(inside) do
+      if not seenName[name] then
+        seenName[name] = true
+        unique[#unique + 1] = name
+      end
+    end
+    lines[#lines + 1] = string.format(L.DUNGEON_MISSING_INSIDE, table.concat(unique, ", "))
   end
   for _, line in ipairs(unavailable) do
     lines[#lines + 1] = line
