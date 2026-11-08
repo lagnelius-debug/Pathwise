@@ -262,6 +262,7 @@ Pathwise.Locales.deDE = {
   WHY_inLog = "in deinem Questlog",
   WHY_range = "zu schwer (rot) oder zu leicht (grau) für diese Stufe",
   WHY_done = "schon erledigt",
+  WHY_dungeon = "eine Dungeon-Quest: der Dungeon-Modus schlägt sie vor („Dungeons\" im To-do-Fenster)",
   WHY_item = "wird mit einem Gegenstand abgegeben, den du nicht dabei hast",
   WHY_pre = "eine Quest davor ist noch nicht erledigt",
   WHY_exclusive = "durch eine andere Quest ausgeschlossen, die du erledigt hast oder hast",

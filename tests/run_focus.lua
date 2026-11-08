@@ -90,3 +90,18 @@ local order = {}
 for _, item in ipairs(items) do order[#order + 1] = item.id end
 check("this zone, then the focus area as a route, then the rest (" .. table.concat(order, ",") .. ")",
   table.concat(order, ",") == "here,focus1,focus2,far")
+
+---------------------------------------------------------------------------
+section("Focus: quests under way first")
+
+-- Reported: a list of quests to pick up "just because they're close by"
+-- while the log is full of quests still to do.
+local function Doing(id) return { title = "Doing " .. id, level = S.level, questID = 7000 + id, suggestedGroup = 0,
+  objectives = { { text = "x: 0/1" } } } end
+local function Locate(quest) return quest.questID and quest.questID >= 7000 and At(1439) or nil end
+local log = { Doing(1), Doing(2), Doing(3) }
+check("quests under way: those with something to do at a known place",
+  QuestAdvisor.Ongoing(log, S.level, 6, Locate) == 3)
+log[#log + 1] = { title = "Done", level = S.level, questID = 7010, complete = 1, objectives = {}, suggestedGroup = 0 }
+log[#log + 1] = { title = "Red", level = S.level + 6, questID = 7011, objectives = { { text = "x: 0/1" } }, suggestedGroup = 0 }
+check("not ready, red or grey ones", QuestAdvisor.Ongoing(log, S.level, 6, Locate) == 3)

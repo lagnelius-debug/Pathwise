@@ -891,6 +891,7 @@ local function ScanQuest(id, scan)
     breadcrumbFor = Get(id, "breadcrumbForQuestId"),
     npcs = startedBy[1],
     objects = startedBy[2],
+    dungeon = dungeon, -- a dungeon's quest (its ID), for normal mode to leave out
   }
 end
 
@@ -1122,8 +1123,8 @@ function QuestieData:GetDungeonQuests(dungeonID)
 end
 
 -- Why a scanned quest can't be suggested now (ctx as for GetPickups): a
--- reason ("level", "inLog", "range", "done", "pre", "exclusive", "chain",
--- "skip", "questie"), or nil when it can. (/pw why shows these.)
+-- reason ("level", "inLog", "range", "done", "dungeon", "pre", "exclusive",
+-- "chain", "skip", "questie"), or nil when it can. (/pw why shows these.)
 local function NotEligibleReason(candidate, ctx)
   local isCompleted = Platform.IsQuestCompleted
   local level = candidate.level == -1 and ctx.level or candidate.level
@@ -1135,6 +1136,9 @@ local function NotEligibleReason(candidate, ctx)
     return "range"
   elseif isCompleted(candidate.id) then
     return "done"
+  -- A dungeon's quest: dungeon mode suggests it (ctx.noDungeon: normal mode).
+  elseif ctx.noDungeon and candidate.dungeon then
+    return "dungeon"
   elseif candidate.needsItem and not AnyCompleted(candidate.needsItem, function(item)
     return (Platform.GetItemCount(item) or 0) > 0
   end) then

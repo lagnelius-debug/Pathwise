@@ -96,6 +96,12 @@ check("Alliance: no Ragefire Chasm, but The Stockade and The Deadmines", not nam
   and names["The Stockade"] and names["The Deadmines"] and names["The Test Mines"])
 check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 6)
 check("normal mode: the normal quest is suggested", Item("pickup:9604") ~= nil)
+-- Reported: Gyrodrillmatic Excavationators (Gnomeregan) suggested in
+-- normal mode. A dungeon's quests wait for dungeon mode.
+check("normal mode: not the dungeon's quests", Item("pickup:9602") == nil and Item("pickup:9600") ~= nil)
+WoW.ClearChat()
+WoW.Slash("why mine quest")
+check("/pw why says it's a dungeon quest", WoW.ChatContains("a dungeon quest: dungeon mode suggests it"))
 
 ---------------------------------------------------------------------------
 section("Dungeons: dungeon mode")

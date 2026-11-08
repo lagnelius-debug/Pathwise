@@ -267,6 +267,7 @@ Pathwise.Locales.frFR = {
   WHY_inLog = "dans votre journal de quêtes",
   WHY_range = "trop difficile (rouge) ou trop facile (grise) pour ce niveau",
   WHY_done = "déjà faite",
+  WHY_dungeon = "une quête de donjon : le mode donjon la propose (« Donjons » dans la fenêtre À faire)",
   WHY_item = "elle se rend avec un objet que vous n'avez pas",
   WHY_pre = "une quête précédente n'est pas encore faite",
   WHY_exclusive = "exclue par une autre quête que vous avez faite ou en cours",

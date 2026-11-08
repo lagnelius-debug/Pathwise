@@ -108,18 +108,23 @@ function Hearthstone:BuildItem(items)
   local zone = ZoneGroup(mapID)
   local steps = 0
   -- (Built from the planned quest items; see OnQuestsPlanned.)
+  -- Quest work here counts (a combined step: each of its quests); a quest
+  -- to pick up counts half, unless it's turned in elsewhere; turn-ins
+  -- don't count - a city's quest givers and turn-ins alone don't make it
+  -- the place to quest in (reported: Stormwind, Ironforge).
   for _, item in ipairs(items) do
     local target = item.target
-    if target and (item.kind == "do" or item.kind == "turnIn" or item.kind == "pickup")
-      and ZoneGroup(target.mapID) == zone then
-      -- (A combined step counts each of its quests.)
-      local ids = 0
-      for _ in tostring(item.id):gmatch("[^+]+") do
-        ids = ids + 1
+    if target and ZoneGroup(target.mapID) == zone then
+      if item.kind == "do" then
+        for _ in tostring(item.id):gmatch("[^+]+") do
+          steps = steps + 1
+        end
+      elseif item.kind == "pickup" and not item.leadsAway then
+        steps = steps + 0.5
       end
-      steps = steps + ids
     end
   end
+  steps = math.floor(steps)
   if steps < Hearthstone.MIN_STEPS then
     return nil
   end

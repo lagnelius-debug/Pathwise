@@ -262,6 +262,7 @@ Pathwise.Locales.esES = {
   WHY_inLog = "en tu registro de misiones",
   WHY_range = "demasiado difícil (roja) o fácil (gris) para este nivel",
   WHY_done = "ya hecha",
+  WHY_dungeon = "una misión de mazmorra: la sugiere el modo mazmorra (\"Mazmorras\" en la ventana de tareas)",
   WHY_item = "se entrega con un objeto que no llevas",
   WHY_pre = "una misión anterior aún no está hecha",
   WHY_exclusive = "la excluye otra misión que hiciste o tienes",

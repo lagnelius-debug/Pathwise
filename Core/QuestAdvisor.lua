@@ -47,6 +47,13 @@ QuestAdvisor.TURN_IN_PULL = 0.75
 QuestAdvisor.MAX_PICKUPS = 4
 -- How many of the nearest pickups the focus area is chosen from.
 QuestAdvisor.PICKUP_POOL = 60
+-- With this many quests under way (each with a place to do it), new ones
+-- are only suggested right where the player stands, at most
+-- BUSY_PICKUPS of them: finish what's in the log first (reported: a list
+-- of quests to pick up "just because they're close by").
+QuestAdvisor.BUSY_QUESTS = 4
+QuestAdvisor.BUSY_PICKUP_YARDS = 100
+QuestAdvisor.BUSY_PICKUPS = 2
 -- Choosing the area to quest in when there's nothing to do in this one:
 -- this many yards of travel halve an area's worth.
 QuestAdvisor.FOCUS_DISTANCE = 2000
@@ -583,6 +590,20 @@ function QuestAdvisor.ZoneWork(quests, pickups, level, greenRange, location, loc
   return work
 end
 
+-- How many quests in the log are under way: there's something left to do
+-- for them, at a known place, and they're worth doing alone (not red,
+-- grey or group quests).
+function QuestAdvisor.Ongoing(quests, level, greenRange, locate)
+  local count = 0
+  for _, quest in ipairs(quests) do
+    local kind = TargetKind(quest, QuestAdvisor.Difficulty(quest.level, level, greenRange))
+    if kind == "do" and locate and locate(quest, kind) then
+      count = count + 1
+    end
+  end
+  return count
+end
+
 -- The area to quest in: the player's own while there's anything worth
 -- doing there (finish the zone first), else the one with the most to do
 -- for the way there - the quests already taken count most, so the guide
@@ -894,6 +915,9 @@ local function PickupContext(quests, level, greenRange)
   return {
     level = level,
     inLog = inLog,
+    -- Dungeon quests wait for dungeon mode (reported: Gyrodrillmatic
+    -- Excavationators suggested in Ironforge's Tinker Town).
+    noDungeon = true,
     -- Too easy (grey) or far too hard (red, e.g. the level 60 cloth
     -- donations that can be picked up at 12): not worth suggesting.
     outOfRange = function(questLevel)
@@ -929,6 +953,7 @@ function QuestAdvisor:IsSuggested(questID, title)
   local belongs = dungeon and DungeonGuide:GetQuests(dungeon)
   if belongs and (not questID or belongs.quests[questID]) then
     local dungeonCtx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
+    dungeonCtx.noDungeon = nil
     dungeonCtx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, Platform.GetQuestGreenRange(level), belongs.quests)
     dungeonCtx.only = belongs.quests
     if QuestieData:WouldSuggest(questID, title, dungeonCtx) then
@@ -1053,6 +1078,7 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
       return Locate(quest, kind)
     end
     local ctx = PickupContext(quests, level, greenRange)
+    ctx.noDungeon = nil
     ctx.only = belongs.quests
     -- A dungeon's quests count above the player's level too (it's done in a
     -- group). A grey one only while its chain leads on to a quest still
@@ -1171,7 +1197,17 @@ function QuestAdvisor:Update()
         local work = QuestAdvisor.ZoneWork(quests, pool, level, greenRange, location, LocateOnce)
         local nextZone
         focus, nextZone = QuestAdvisor.FocusZone(work, mapID and Travel.ZoneGroup(mapID))
-        pickups = QuestAdvisor.FocusPickups(pool, focus, nextZone, QuestAdvisor.MAX_PICKUPS)
+        if QuestAdvisor.Ongoing(quests, level, greenRange, LocateOnce) >= QuestAdvisor.BUSY_QUESTS then
+          local here = {}
+          for _, pickup in ipairs(pool) do
+            if pickup.distance <= QuestAdvisor.BUSY_PICKUP_YARDS and #here < QuestAdvisor.BUSY_PICKUPS then
+              here[#here + 1] = pickup
+            end
+          end
+          pickups = here
+        else
+          pickups = QuestAdvisor.FocusPickups(pool, focus, nextZone, QuestAdvisor.MAX_PICKUPS)
+        end
         -- Questing moves on to another area: say where, and why there.
         if focus and mapID and focus ~= Travel.ZoneGroup(mapID) then
           local count = 0

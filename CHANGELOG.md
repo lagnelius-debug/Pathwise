@@ -3,6 +3,20 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.44.0
+
+- Normal mode no longer suggests dungeon quests to pick up (reported:
+  Gyrodrillmatic Excavationators, and Gnomeregan's quests in Tinker Town).
+  Dungeon mode suggests them; `/pw why` says "a dungeon quest".
+- Quests under way first: with 4 or more quests in your log that still
+  have something to do, the guide only suggests picking up new ones right
+  where you stand (at most 2), instead of a list of quests "just because
+  they're close by".
+- Hearthstone tip: only quest work in the zone counts (a quest to pick up
+  counts half, an errand turned in elsewhere or a turn-in not at all), so
+  a city's quest givers alone no longer suggest setting your hearthstone
+  there (reported: Stormwind, Ironforge).
+
 ## 0.43.0
 
 - Dungeon mode: the "Missing ... quests" step is highlighted and tells you

@@ -70,6 +70,19 @@ local getActive = DungeonGuide.GetActive
 DungeonGuide.GetActive = function() return { id = 717, name = "The Stockade" } end
 check("dungeon mode: no hearthstone tip", Hearthstone:BuildItem(Steps(6)) == nil)
 DungeonGuide.GetActive = getActive
+-- Reported: "set your hearthstone in Elwynn Forest / Dun Morogh" from a
+-- city's quest givers and turn-ins alone.
+local function Kind(items, kind, extra)
+  for _, item in ipairs(items) do
+    item.kind = kind
+    for key, value in pairs(extra or {}) do item[key] = value end
+  end
+  return items
+end
+check("turn-ins don't count", Hearthstone:BuildItem(Kind(Steps(8), "turnIn")) == nil)
+check("pickups count half", Hearthstone:BuildItem(Kind(Steps(7), "pickup")) == nil
+  and Hearthstone:BuildItem(Kind(Steps(8), "pickup")) ~= nil)
+check("errands turned in elsewhere don't count", Hearthstone:BuildItem(Kind(Steps(10), "pickup", { leadsAway = true })) == nil)
 
 -- Set at the inn: the tip goes away
 bindName = "Auberdine"
