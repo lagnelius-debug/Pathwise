@@ -944,6 +944,14 @@ function Platform.GetTaxiNodes()
   return nodes
 end
 
+-- The flight points the character has discovered on a continent map
+-- (uiMapID), readable at any time: list of { name, x, y } (0..1 on that
+-- map), or nil where the game only tells while a flight map is open
+-- (Classic Era: see GetTaxiNodes).
+function Platform.GetDiscoveredTaxiNodes(uiMapID)
+  return nil
+end
+
 -- Where the hearthstone is set: the town's name (e.g. "Dolanaar"), or nil.
 function Platform.GetBindLocation()
   return GetBindLocation and GetBindLocation() or nil

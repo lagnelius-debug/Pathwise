@@ -93,6 +93,13 @@ function Hearthstone:BuildItem(items)
   if not Pathwise.db.hearthTips then
     return nil
   end
+  -- Dungeon mode: its steps are a trip to one dungeon, not a zone to
+  -- quest in (reported: "set your hearthstone in Elwynn Forest" because
+  -- The Stockade is in Stormwind).
+  local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+  if DungeonGuide:GetActive() or DungeonGuide:GetInside() then
+    return nil
+  end
   local mapID, x, y = Platform.GetPlayerMapPosition()
   local bindMap = BindMap()
   if not mapID or not bindMap or ZoneGroup(bindMap) == ZoneGroup(mapID) then

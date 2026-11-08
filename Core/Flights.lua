@@ -91,8 +91,46 @@ function Flights:OnTaxiMapOpened()
   Pathwise:FireCallback("FLIGHTS_UPDATED")
 end
 
+-- WoW Forever: every discovered flight point, read from the game at any
+-- time (Platform.GetDiscoveredTaxiNodes) - not only the ones seen on an
+-- open flight map. Points saved exactly (at the flight master) stay as
+-- they are; the others go to the flight master QuestieDB knows near
+-- their spot on the continent map.
+function Flights:ReadDiscovered()
+  local saved = Pathwise.charDB and Pathwise.charDB.flightNodes
+  if not saved then
+    return
+  end
+  local count = 0
+  for continent, continentMap in pairs(Data.Travel.CONTINENT_MAPS) do
+    for _, node in ipairs(Platform.GetDiscoveredTaxiNodes(continentMap) or {}) do
+      local old = saved[node.name]
+      if not (old and old.exact) then
+        local master = MatchFlightMaster(continentMap, node.x, node.y)
+        local entry
+        if master then
+          entry = { mapID = master.mapID, x = master.x, y = master.y, npc = master.npcName, exact = true }
+        else
+          entry = { mapID = continentMap, x = node.x, y = node.y, taxiX = node.x, taxiY = node.y }
+        end
+        entry.continent = continent
+        if not old or old.mapID ~= entry.mapID or old.x ~= entry.x or old.y ~= entry.y then
+          saved[node.name] = entry
+          count = count + 1
+        end
+      end
+    end
+  end
+  if count > 0 then
+    self:Debugf("Read %d discovered flight points.", count)
+    nodeCache = {}
+    Pathwise:FireCallback("FLIGHTS_UPDATED")
+  end
+end
+
 -- Spots saved before QuestieDB's NPC list was ready: match them now.
 function Flights:OnFlightMastersReady()
+  self:ReadDiscovered()
   local changed = false
   for _, entry in pairs(Pathwise.charDB.flightNodes) do
     if not entry.exact and entry.taxiX then
@@ -140,6 +178,9 @@ end
 
 function Flights:OnEnable()
   self:RegisterEvent("TAXIMAP_OPENED", "OnTaxiMapOpened")
+  -- (Forever: a newly discovered flight point, or the first login.)
+  self:RegisterEvent("TAXIMAP_CLOSED", "ReadDiscovered")
+  self:RegisterEvent("PLAYER_ENTERING_WORLD", "ReadDiscovered")
 end
 
 -- /pw flights: list the known flight points.

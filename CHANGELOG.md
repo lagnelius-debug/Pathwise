@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.43.0
+
+- Dungeon mode: the "Missing ... quests" step is highlighted and tells you
+  how to get each quest right under it (pick it up from whom and where,
+  what has to come first, or the level it needs). The arrow leads to the
+  first one you can get now, before the dungeon.
+- Dungeon mode no longer suggests moving your hearthstone (reported: "set
+  your hearthstone in Elwynn Forest" because The Stockade is in Stormwind).
+- WoW Forever: Pathwise knows every flight point you've discovered, read
+  from the game at any time - not only the ones it saw on an open flight
+  map. Reported: in Arathi Highlands it sent you to Menethil Harbor's
+  flight master although Refuge Pointe's was closer.
+
 ## 0.42.0
 
 - Dungeon mode: a "Missing 2 of 6 quests: ..." step names the dungeon's

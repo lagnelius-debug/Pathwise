@@ -161,8 +161,11 @@ check("a dungeon quest in the log: the arrow on the entrance", inside and inside
 -- have them all before going in.
 local missing = Item("dungeon:missing")
 check("missing: the dungeon's quests not done or in the log, named (" .. tostring(missing and missing.text) .. ")",
-  missing and missing.text:find("^Missing 5 of 6 quests: Into the Mines, Deep Mine Quest %+3 %- get them") ~= nil
+  missing and missing.text:find("^|cffff8040Missing 5 of 6 quests:|r Into the Mines, Deep Mine Quest %+3 %- %d+ m$") ~= nil
   and missing.priority == P.QUEST_ELSEWHERE)
+check("missing: highlighted, the arrow on the first one to get now, how to get each one underneath",
+  missing.target and missing.target.giver == "Mine Foreman" and missing.kind == "pickup"
+  and #missing.subLines == 5 and missing.subLines[1].text == "Into the Mines: pick it up from Mine Foreman, Map 1438")
 local function DetailHas(item, text)
   for _, line in ipairs(item and item.detail or {}) do
     if line == text then return true end

@@ -331,6 +331,38 @@ function Platform.GetQuestLog()
   return quests, collapsedHeaders
 end
 
+-- Forever's world map shows the flight points (C_TaxiMap.GetTaxiNodesForMap,
+-- as Blizzard's FlightPointDataProvider uses it): the discovered ones are
+-- known at any time, not only while a flight map is open.
+-- (Enum.FlightPathFaction: 0 neutral, 1 Horde, 2 Alliance.)
+local FLIGHT_FACTIONS = { [1] = "Horde", [2] = "Alliance" }
+function Platform.GetDiscoveredTaxiNodes(uiMapID)
+  if not (C_TaxiMap and C_TaxiMap.GetTaxiNodesForMap) then
+    return nil
+  end
+  local ok, nodes = pcall(C_TaxiMap.GetTaxiNodesForMap, uiMapID)
+  if not ok or type(nodes) ~= "table" then
+    return nil
+  end
+  local faction = UnitFactionGroup and UnitFactionGroup("player")
+  local list = {}
+  for _, node in ipairs(nodes) do
+    local side = FLIGHT_FACTIONS[node.faction]
+    local x, y
+    if node.position then
+      if node.position.GetXY then
+        x, y = node.position:GetXY()
+      else
+        x, y = node.position.x, node.position.y
+      end
+    end
+    if node.name and node.isUndiscovered == false and (not side or side == faction) and x and y then
+      list[#list + 1] = { name = node.name, x = x, y = y }
+    end
+  end
+  return list
+end
+
 -- GetQuestGreenRange became C_QuestLog.GetTrivialRange (same meaning: a
 -- quest this many levels below the player is still green).
 local classicGreenRange = Platform.GetQuestGreenRange

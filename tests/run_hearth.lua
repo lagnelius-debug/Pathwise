@@ -63,6 +63,13 @@ check("a combined step counts each quest", Hearthstone:BuildItem({ { id = "quest
   target = { mapID = 1439, x = 0.4, y = 0.4 } } }) ~= nil)
 At(1439, 0.37, 0.45, "Darkshore", "Auberdine")
 check("passing by the inn: now", Hearthstone:BuildItem(Steps(4)).priority == P.QUEST_NEAR)
+-- Reported: dungeon mode for The Stockade suggested moving the hearthstone
+-- to Elwynn Forest (the dungeon is in Stormwind).
+local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+local getActive = DungeonGuide.GetActive
+DungeonGuide.GetActive = function() return { id = 717, name = "The Stockade" } end
+check("dungeon mode: no hearthstone tip", Hearthstone:BuildItem(Steps(6)) == nil)
+DungeonGuide.GetActive = getActive
 
 -- Set at the inn: the tip goes away
 bindName = "Auberdine"

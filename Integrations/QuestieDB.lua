@@ -1235,6 +1235,29 @@ local function NearestGiver(candidate, mapID, x, y, keep)
   return best, bestDistance
 end
 
+-- Where a quest is picked up, as an arrow target: its giver's spot
+-- nearest to the player (a pickup's target), or nil (not a quest the guide
+-- knows a giver for, or the quest list isn't scanned).
+function QuestieData:GiverTarget(questID)
+  if not self:PickupsReady() then
+    return nil
+  end
+  local candidate = CandidateIndex().byId[questID]
+  if not candidate then
+    return nil
+  end
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  local best, distance
+  if mapID then
+    best, distance = NearestGiver(candidate, mapID, x, y)
+  end
+  if not best then
+    local ok, points = pcall(GiverPoints, candidate)
+    best = ok and points and points[1] or nil
+  end
+  return best, distance
+end
+
 -- Quests the guide would suggest a few levels from now but not yet: they
 -- need a higher level, or are still far too hard (red) at this one. The
 -- same rules as GetPickups, at each level up to toLevel: { questID, title,

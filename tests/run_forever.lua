@@ -707,6 +707,35 @@ check("/pw bug: the report says Forever", bugReport:find("on Forever\n", 1, true
   and bugReport:find("interface 16001", 1, true) ~= nil)
 _G.PathwiseBugReport:Hide()
 
+-- Flight points: Forever's world map knows the discovered ones at any
+-- time - Pathwise reads them all, not only those seen on an open flight
+-- map (reported: it sent the player to Menethil Harbor's flight master
+-- while Refuge Pointe's was closer).
+local function Pos(x, y) return { GetXY = function() return x, y end } end
+C_TaxiMap = { GetTaxiNodesForMap = function(uiMapID)
+  if uiMapID ~= 1415 then return {} end
+  return {
+    { name = "Refuge Pointe, Arathi", position = Pos(0.40, 0.35), faction = 2, isUndiscovered = false },
+    { name = "Southshore, Hillsbrad", position = Pos(0.35, 0.30), faction = 2, isUndiscovered = true },
+    { name = "Hammerfall, Arathi", position = Pos(0.45, 0.35), faction = 1, isUndiscovered = false },
+    { name = "Booty Bay, Stranglethorn", position = Pos(0.45, 0.90), faction = 0, isUndiscovered = false },
+  }
+end }
+local flightNodes = Pathwise.charDB.flightNodes
+flightNodes["Refuge Pointe, Arathi"] = nil
+WoW.FireEvent("PLAYER_ENTERING_WORLD", false, false)
+local refuge = flightNodes["Refuge Pointe, Arathi"]
+check("flight points: a discovered one is known without a flight map", refuge ~= nil and refuge.continent == 0
+  and refuge.mapID == 1415 and Near(refuge.x, 0.40) and Near(refuge.y, 0.35))
+check("flight points: neutral ones too", flightNodes["Booty Bay, Stranglethorn"] ~= nil)
+check("flight points: not undiscovered ones, nor the other faction's",
+  flightNodes["Southshore, Hillsbrad"] == nil and flightNodes["Hammerfall, Arathi"] == nil)
+local exact = { mapID = 1417, x = 0.46, y = 0.46, exact = true, continent = 0, npc = "Cedrik Prose" }
+flightNodes["Refuge Pointe, Arathi"] = exact
+Pathwise:GetModule("Flights"):ReadDiscovered()
+check("flight points: one saved at the flight master stays there", flightNodes["Refuge Pointe, Arathi"] == exact)
+C_TaxiMap = nil
+
 check("no errors (" .. tostring(WoW.errors[1]) .. ")", #WoW.errors == 0)
 print(string.format("%d passed, %d failed", passed, failed))
 os.exit(failed == 0 and 0 or 1)
