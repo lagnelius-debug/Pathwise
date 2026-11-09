@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.46.0
+
+- Dungeon mode: grey quests that lead to one of the dungeon's own quests
+  are steps too (e.g. the first part of The Defias Brotherhood for The
+  Deadmines at level 40), however long the chain - not only mentioned in
+  the "Missing" line. Grey quests that don't lead to the dungeon are still
+  left out.
+
 ## 0.45.3
 
 Bug check of 0.45.0-0.45.2 (296 simulated scenarios on the real quest

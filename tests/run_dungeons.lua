@@ -50,8 +50,8 @@ local quests = {
   [9609] = { name = "After The Errand", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, preQuestSingle = { 9608 },
     startedBy = { { 9702 } } },
   [9610] = { name = "Unrelated Grey", requiredLevel = 1, questLevel = 1, zoneOrSort = 141, startedBy = { { 9701 } } },
-  -- Reported: a grey pre-quest whose chain ends in grey quests too ("The
-  -- Coast Isn't Clear" at level 25) - useless, not suggested.
+  -- A grey pre-quest for a grey dungeon quest: a step in dungeon mode
+  -- (asked for in game), not in normal mode.
   [9611] = { name = "Grey Errand", requiredLevel = 1, questLevel = 1, zoneOrSort = 141, startedBy = { { 9701 } } },
   [9612] = { name = "Grey Dungeon Quest", requiredLevel = 1, questLevel = 2, zoneOrSort = 9500, preQuestSingle = { 9611 },
     startedBy = { { 9702 } } },
@@ -341,8 +341,9 @@ local QuestAdvisor = Pathwise:GetModule("QuestAdvisor")
 check("normal mode: a grey quest isn't suggested", not QuestAdvisor:IsSuggested(9608))
 DungeonGuide:SetDungeon(9500)
 check("dungeon mode: its grey pre-quest is (auto-accepted)", QuestAdvisor:IsSuggested(9608))
-check("nor a grey pre-quest whose dungeon quest is grey too", not QuestAdvisor:IsSuggested(9611)
-  and not QuestAdvisor:IsSuggested(9612))
+-- (Asked for in game: the dungeon's own quests count grey too, so the grey
+-- quests before them are steps as well.)
+check("and a grey pre-quest whose dungeon quest is grey too", QuestAdvisor:IsSuggested(9611))
 check("but not a grey quest that doesn't belong to it", not QuestAdvisor:IsSuggested(9610)
   and not QuestAdvisor:IsSuggested(nil, "Unrelated Grey"))
 local empty = { id = 9501, name = "The Empty Halls", min = 1, max = 60, instance = 9551, entrances = { { 141, 10, 10 } },

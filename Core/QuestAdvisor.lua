@@ -184,8 +184,8 @@ end
 -- grey too - they're done in the run anyway (reported: Knowledge in the
 -- Deeps in Ironforge was "missing" but never suggested). Any other grey
 -- one only while it leads on to one still worth doing - through its
--- chain, or as the pre-quest of one of the dungeon's quests
--- (`dungeonQuests`: [questID] = true, pre-quests included).
+-- chain, or as the pre-quest of one of the dungeon's quests, its own grey
+-- ones included (`dungeonQuests`: [questID] = true, pre-quests included).
 function QuestAdvisor.DungeonOutOfRange(level, greenRange, dungeonQuests, inDungeon)
   local QuestieData = Pathwise:GetModule("QuestieData")
   local function Grey(questID)
@@ -203,7 +203,10 @@ function QuestAdvisor.DungeonOutOfRange(level, greenRange, dungeonQuests, inDung
           needs = needs or id == questID
         end
       end
-      if needs and (not Grey(otherID) or (depth < 5 and Unlocks(otherID, depth + 1))) then
+      -- (The dungeon's own quests are worth it grey too, so the grey
+      -- quests before them are steps as well - asked for in game.)
+      if needs and (not Grey(otherID) or (inDungeon and inDungeon[otherID])
+        or (depth < 15 and Unlocks(otherID, depth + 1))) then
         return true
       end
     end
