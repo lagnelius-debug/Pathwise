@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.45.2
+
+- Fixed: with Pathwise on, Questie showed no available quests ("!") on the
+  map. Pathwise asked Questie whether quests are available while Questie
+  was still starting up, before it knew the player's race and class;
+  Questie then remembered "wrong race" for every race-limited quest and
+  hid them for the session. Pathwise now asks only once Questie has fully
+  started.
+
 ## 0.45.1
 
 - WoW Forever: the trainer list leaves out spells and ranks the game no

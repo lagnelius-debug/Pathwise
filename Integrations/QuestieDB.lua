@@ -1032,9 +1032,18 @@ end
 -- reputation, events, ...). true/false, or nil when it can't be asked (not
 -- installed, not set up yet, or changed). It's Questie's internal module,
 -- not a public API, so it's only ever called protected.
+-- Only once Questie has started (Questie.started, set at the end of its
+-- staged init): before that its player race and class are placeholders,
+-- and IsDoable caches "wrong race" for every race-limited quest and hides
+-- them for the session - reported: no "!" on Questie's map while Pathwise
+-- was on.
 local function QuestieIsDoable(questID)
   local loader = _G.QuestieLoader
   if type(loader) ~= "table" or type(loader.ImportModule) ~= "function" then
+    return nil
+  end
+  local questie = _G.Questie
+  if type(questie) ~= "table" or questie.started ~= true then
     return nil
   end
   local ok, result = pcall(function()

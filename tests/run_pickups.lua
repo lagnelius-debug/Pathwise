@@ -150,6 +150,7 @@ check("only givers in this zone (not Darkshore); three levels ahead: too far off
 QuestieLoader = { ImportModule = function() return { IsDoable = function(id)
   return not (quests[id] and quests[id].requiredLevel > S.level)
 end } end }
+Questie = { started = true }
 UpdateLog({})
 check("an older Questie's level check doesn't hide next level's quests", Item("level:next") ~= nil
   and table.concat(Item("level:next").detail, "|"):find("Next Level from Giver Mid", 1, true) ~= nil)
@@ -228,9 +229,17 @@ check("a later quest of its chain is in the log: not suggested", not Has(7015))
 -- Reported in game: "Pick up: The Hunter's Path (Jocaste)", a quest that's
 -- in the database but not in the game (Questie blacklists it). With the
 -- Questie addon loaded, its own check decides.
+local doableAsked = false
 QuestieLoader = { ImportModule = function(_, name)
-  return { IsDoable = function(id) return id ~= 7001 end }
+  return { IsDoable = function(id) doableAsked = true; return id ~= 7001 end }
 end }
+-- Reported: no "!" on Questie's map with Pathwise on. Asked before Questie
+-- has started, its IsDoable caches "wrong race" (its player race isn't set
+-- yet) and hides those quests for the session: not asked until it has.
+Questie = { started = false, db = { char = { hidden = {} } } }
+UpdateLog(WoW.questLog)
+check("Questie not started yet: never asked (its answers would stick)", not doableAsked and Has(7001))
+Questie.started = true
 UpdateLog(WoW.questLog)
 check("Questie says it isn't doable: not suggested", not Has(7001) and Has(7013))
 QuestieLoader = { ImportModule = function() return {} end } -- changed Questie: no IsDoable
