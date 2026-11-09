@@ -605,6 +605,7 @@ Pathwise.Locales.deDE = {
   DUNGEON_MISSING_PICKUP = "%s: bei %s annehmen, %s",
   DUNGEON_MISSING_FINISH = "%s: zuerst %s abschließen (in deinem Questlog)",
   DUNGEON_MISSING_FIRST = "%s: zuerst %s (%s, %s)",
+  DUNGEON_MISSING_CHAIN = "%s: zuerst die früheren Teile ihrer Questreihe (%s, %s)",
   DUNGEON_MISSING_FIRST_LEVEL = "%s: zuerst %s, ab Stufe %d (%s, %s)",
   DUNGEON_MISSING_LEVEL = "%s: ab Stufe %d (%s, %s)",
   DUNGEON_MISSING_FIRST_ITEM = "%s: zuerst %s (ein Gegenstand startet sie: %s)",

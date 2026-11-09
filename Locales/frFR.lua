@@ -612,6 +612,7 @@ Pathwise.Locales.frFR = {
   DUNGEON_MISSING_PICKUP = "%s : à prendre auprès de %s, %s",
   DUNGEON_MISSING_FINISH = "%s : terminez d'abord %s (dans votre journal de quêtes)",
   DUNGEON_MISSING_FIRST = "%s : faites d'abord %s (%s, %s)",
+  DUNGEON_MISSING_CHAIN = "%s : d'abord les étapes précédentes de sa suite (%s, %s)",
   DUNGEON_MISSING_FIRST_LEVEL = "%s : d'abord %s, dès le niveau %d (%s, %s)",
   DUNGEON_MISSING_LEVEL = "%s : dès le niveau %d (%s, %s)",
   DUNGEON_MISSING_FIRST_ITEM = "%s : d'abord %s (lancée par un objet : %s)",

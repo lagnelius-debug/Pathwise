@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.45.3
+
+Bug check of 0.45.0-0.45.2 (296 simulated scenarios on the real quest
+data, both factions; every trainer spell checked against Classic Era's and
+WoW Forever's spell data).
+
+- Dungeon mode's "Missing" step: a quest whose chain has earlier parts of
+  the same name says "first the earlier parts of its chain" instead of
+  "The Defias Brotherhood: first do The Defias Brotherhood".
+
 ## 0.45.2
 
 - Fixed: with Pathwise on, Questie showed no available quests ("!") on the

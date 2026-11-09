@@ -310,6 +310,10 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
         local giver, zone = Where(first)
         if required > level then
           line = string.format(L.DUNGEON_MISSING_FIRST_LEVEL, name, Name(first), required, giver, zone)
+        elseif Name(first) == name then
+          -- (A chain whose parts share the name: The Defias Brotherhood.)
+          line = string.format(L.DUNGEON_MISSING_CHAIN, name, giver, zone)
+          Aim(first)
         else
           line = string.format(L.DUNGEON_MISSING_FIRST, name, Name(first), giver, zone)
           Aim(first)
