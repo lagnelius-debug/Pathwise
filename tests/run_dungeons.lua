@@ -68,6 +68,10 @@ local quests = {
     preQuestSingle = { 9602 }, startedBy = { { 9702 } } },
   [9616] = { name = "Mine Quest Part Three", requiredLevel = 1, questLevel = L, zoneOrSort = 9500,
     preQuestSingle = { 9615 }, startedBy = { { 9702 } } },
+  -- A grey quest of the dungeon itself (reported: Knowledge in the Deeps
+  -- in Ironforge, "missing" but never suggested).
+  [9617] = { name = "Old Dungeon Quest", requiredLevel = 1, questLevel = 1, zoneOrSort = 9500,
+    startedBy = { { 9702 } } },
   [9606] = { name = "Chain End", requiredLevel = L + 3, questLevel = L + 4, zoneOrSort = 9500, preQuestSingle = { 9605 },
     startedBy = { { 9702 } } },
 }
@@ -93,7 +97,7 @@ LibQuestieDB.Npc.Get = function(id, key)
   if npcs[id] then return npcs[id][key] end
   return npcGet(id, key)
 end
-LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610, 9611, 9612, 9613, 9614, 9615, 9616 } end
+LibQuestieDB.Quest.GetAllIds = function() return { 9600, 9601, 9602, 9603, 9604, 9605, 9606, 9607, 9608, 9609, 9610, 9611, 9612, 9613, 9614, 9615, 9616, 9617 } end
 QuestieData:ResetPickups()
 QuestieData:PickupsReady()
 WoW.RunTimers()
@@ -107,7 +111,7 @@ local names = {}
 for _, d in ipairs(DungeonGuide.List()) do names[d.name] = true end
 check("Alliance: no Ragefire Chasm, but The Stockade and The Deadmines", not names["Ragefire Chasm"]
   and names["The Stockade"] and names["The Deadmines"] and names["The Test Mines"])
-check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 10)
+check("its quests (for this race and class), not repeatable ones", #QuestieData:GetDungeonQuests(9500) == 11)
 check("normal mode: the normal quest is suggested", Item("pickup:9604") ~= nil)
 -- Reported: Gyrodrillmatic Excavationators (Gnomeregan) suggested in
 -- normal mode. A dungeon's quests wait for dungeon mode.
@@ -146,6 +150,7 @@ local pre, own = Item("pickup:9600"), Item("pickup:9602")
 check("the pre-quest to pick up, marked as one", pre ~= nil and pre.detail[#pre.detail]:find("pre-quest", 1, true) ~= nil)
 check("the dungeon's own quest to pick up", own ~= nil)
 check("not the quest whose pre-quest isn't done", Item("pickup:9601") == nil)
+check("a grey quest of the dungeon itself: suggested (done in the run anyway)", Item("pickup:9617") ~= nil)
 check("no quests that don't belong to the dungeon", Item("pickup:9604") == nil)
 local entrance = Item("dungeon:entrance")
 check("a step to the entrance", entrance and entrance.target.mapID == 1438 and math.abs(entrance.target.x - 0.5) < 1e-9
@@ -180,11 +185,14 @@ check("a dungeon quest in the log: the arrow on the entrance", inside and inside
 -- have them all before going in.
 local missing = Item("dungeon:missing")
 check("missing: the dungeon's quests not done or in the log, named (" .. tostring(missing and missing.text) .. ")",
-  missing and missing.text:find("^|cffff8040Missing 6 of 10 quests:|r Into the Mines, Deep Mine Quest %+4 %- %d+ m$") ~= nil
+  missing and missing.text:find("^|cffff8040Missing 7 of 11 quests:|r Into the Mines, Deep Mine Quest %+5 %- %d+ m$") ~= nil
   and missing.priority == P.QUEST_ELSEWHERE)
-check("missing: highlighted, the arrow on the first one to get now, how to get each one underneath",
-  missing.target and missing.target.giver == "Mine Foreman" and missing.kind == "pickup"
-  and #missing.subLines == 6 and missing.subLines[1].text == "Into the Mines: pick it up from Mine Foreman, Map 1438")
+-- (The arrow: the nearest one to get now - Old Errand's Village Elder,
+-- nearer than the Mine Foreman. Reported: Darnassus before Ironforge
+-- from Stormwind for Blackfathom Deeps.)
+check("missing: highlighted, the arrow on the nearest one to get now, how to get each one underneath",
+  missing.target and missing.target.giver == "Village Elder" and missing.kind == "pickup"
+  and #missing.subLines == 7 and missing.subLines[1].text == "Into the Mines: pick it up from Mine Foreman, Map 1438")
 local function DetailHas(item, text)
   for _, line in ipairs(item and item.detail or {}) do
     if line == text then return true end

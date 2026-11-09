@@ -269,12 +269,13 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
     return giver or "?", mapID and Platform.GetMapName(mapID) or "?"
   end
   local names, lines, subLines, inside, unavailable = {}, {}, {}, {}, {}
-  -- The arrow goes to the first missing quest that can be had now (its
+  -- The arrow goes to the nearest missing quest that can be had now (its
   -- giver, or the giver of the quest that comes first in its chain).
   local target, distance
   local function Aim(questID)
-    if not target then
-      target, distance = QuestieData:GiverTarget(questID)
+    local spot, yards = QuestieData:GiverTarget(questID)
+    if spot and (not target or (yards and (not distance or yards < distance))) then
+      target, distance = spot, yards
     end
   end
   for _, questID in ipairs(quests.list) do

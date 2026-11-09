@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.45.0
+
+- Dungeon mode suggests all of the dungeon's own quests, grey ones too -
+  they're done in the run anyway (reported: Knowledge in the Deeps in
+  Ironforge was listed as missing for Blackfathom Deeps but never
+  suggested, so the guide sent a player in Stormwind to Darnassus first).
+  The pickups are walked as one route, nearest first (Stormwind, then
+  Ironforge, then Darnassus, then the entrance). Grey quests that only
+  lead to the dungeon are still left out unless they lead on to one worth
+  doing.
+- The "Missing" step's arrow goes to the nearest quest you can get now,
+  not the first one in the list.
+
 ## 0.44.2
 
 Bug check of the features since 0.41.0 (124 simulated scenarios on the real

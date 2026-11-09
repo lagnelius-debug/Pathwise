@@ -180,10 +180,13 @@ function QuestAdvisor.LeadsOnToWorthwhile(questID, level, greenRange)
 end
 
 -- Dungeon mode's level rule: a dungeon's quests count above the player's
--- level too (it's done in a group); a grey one only while it leads on to
--- one still worth doing - through its chain, or as the pre-quest of one of
--- the dungeon's quests (`dungeonQuests`: [questID] = true).
-function QuestAdvisor.DungeonOutOfRange(level, greenRange, dungeonQuests)
+-- level too (it's done in a group), and its own quests (`inDungeon`) when
+-- grey too - they're done in the run anyway (reported: Knowledge in the
+-- Deeps in Ironforge was "missing" but never suggested). Any other grey
+-- one only while it leads on to one still worth doing - through its
+-- chain, or as the pre-quest of one of the dungeon's quests
+-- (`dungeonQuests`: [questID] = true, pre-quests included).
+function QuestAdvisor.DungeonOutOfRange(level, greenRange, dungeonQuests, inDungeon)
   local QuestieData = Pathwise:GetModule("QuestieData")
   local function Grey(questID)
     local questLevel = QuestieData:QuestInfo(questID, "questLevel")
@@ -208,7 +211,8 @@ function QuestAdvisor.DungeonOutOfRange(level, greenRange, dungeonQuests)
   end
   return function(questLevel, questID)
     return QuestAdvisor.Difficulty(questLevel, level, greenRange) == "GREY"
-      and not (questID and (QuestAdvisor.LeadsOnToWorthwhile(questID, level, greenRange) or Unlocks(questID, 1)))
+      and not (questID and ((inDungeon and inDungeon[questID])
+        or QuestAdvisor.LeadsOnToWorthwhile(questID, level, greenRange) or Unlocks(questID, 1)))
   end
 end
 
@@ -982,7 +986,8 @@ function QuestAdvisor:IsSuggested(questID, title)
   if belongs and (not questID or belongs.quests[questID]) then
     local dungeonCtx = PickupContext(Platform.GetQuestLog(), level, Platform.GetQuestGreenRange(level))
     dungeonCtx.noDungeon = nil
-    dungeonCtx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, Platform.GetQuestGreenRange(level), belongs.quests)
+    dungeonCtx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, Platform.GetQuestGreenRange(level), belongs.quests,
+      belongs.inDungeon)
     dungeonCtx.only = belongs.quests
     if QuestieData:WouldSuggest(questID, title, dungeonCtx) then
       return true
@@ -1111,7 +1116,7 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
     -- A dungeon's quests count above the player's level too (it's done in a
     -- group). A grey one only while its chain leads on to a quest still
     -- worth doing (a grey pre-quest can unlock one).
-    ctx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, greenRange, belongs.quests)
+    ctx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, greenRange, belongs.quests, belongs.inDungeon)
     local pickups = Pathwise:GetModule("QuestieData"):GetPickups(ctx, DUNGEON_MAX_PICKUPS) or {}
     for _, pickup in ipairs(pickups) do
       pickup.finishMapID = nil
