@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.45.1
+
+- WoW Forever: the trainer list leaves out spells and ranks the game no
+  longer has (it asks the game whether each spell exists), and a spell
+  with one rank left is shown without "Rank 1" (reported: "Multi-Shot
+  (Rank 2)" at the trainer - Forever has only one rank). In Forever's spell
+  data 49 of Pathwise's 1281 trainer spells are gone, e.g. Multi-Shot and
+  Scorpid Sting ranks 2-4, Fire Nova Totem, Curse of the Elements and
+  Blessing of Sanctuary.
+
 ## 0.45.0
 
 - Dungeon mode suggests all of the dungeon's own quests, grey ones too -

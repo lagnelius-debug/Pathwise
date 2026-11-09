@@ -137,3 +137,28 @@ check("panel stays hidden when reopening", not panel:IsShown())
 tab:Click()
 check("tab shows it again", panel:IsShown() and Pathwise.db.trainerPanel == true)
 SpellBookFrame:Hide()
+
+---------------------------------------------------------------------------
+section("M4: spells the game doesn't have")
+
+-- Reported on WoW Forever: "Multi-Shot (Rank 2)" at the trainer, but
+-- Forever has only one rank (ranks 2-5 aren't in its spell data).
+for _, id in ipairs({ 14288, 14289, 14290, 25294 }) do WoW.removedSpells[id] = true end
+Trainer.ResetChains()
+WoW.knownSpells = {}
+Learn(1494, 13163, 1978, 3044, 1130, 5116, 3127, 14260, 13165, 13549, 19883)
+SetLevel(30)
+list = Trainer:GetList()
+local function AnyMultiShot(items)
+  for _, item in ipairs(items) do
+    if item.name == "Multi-Shot" then return Trainer.FormatName(item) end
+  end
+end
+check("a removed rank isn't listed; one rank left: no \"Rank 1\" (" .. tostring(AnyMultiShot(list.available)) .. ")",
+  AnyMultiShot(list.available) == "Multi-Shot")
+Learn(2643)
+SetLevel(40)
+list = Trainer:GetList()
+check("known: nothing more to learn for it", AnyMultiShot(list.available) == nil and AnyMultiShot(list.upcoming) == nil)
+WoW.removedSpells = {}
+Trainer.ResetChains()

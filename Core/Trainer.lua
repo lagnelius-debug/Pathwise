@@ -42,11 +42,14 @@ local function BuildChains(class)
   end
   local byName = {}
   for _, entry in ipairs(entries) do
-    byId[entry.id] = entry
-    byName[entry.name] = byName[entry.name] or {}
-    table.insert(byName[entry.name], entry)
-    if not entry.talent then
-      trainable[#trainable + 1] = entry
+    -- (WoW Forever: spells and ranks the game no longer has are left out.)
+    if Platform.SpellExists(entry.id) then
+      byId[entry.id] = entry
+      byName[entry.name] = byName[entry.name] or {}
+      table.insert(byName[entry.name], entry)
+      if not entry.talent then
+        trainable[#trainable + 1] = entry
+      end
     end
   end
   for _, chain in pairs(byName) do
@@ -58,7 +61,8 @@ local function BuildChains(class)
       for j = i + 1, #chain do
         higher[#higher + 1] = chain[j]
       end
-      chainInfo[entry] = { prev = chain[i - 1], base = chain[1], higher = higher }
+      -- (One rank left: shown without "Rank 1", as the game does.)
+      chainInfo[entry] = { prev = chain[i - 1], base = chain[1], higher = higher, single = #chain == 1 }
     end
   end
   table.sort(trainable, function(a, b)
@@ -120,7 +124,7 @@ local function MakeItem(entry, optional)
   return {
     id = entry.id,
     name = name,
-    rank = entry.rank,
+    rank = not chainInfo[entry].single and entry.rank or nil,
     level = entry.level,
     cost = entry.cost,
     optional = optional,
@@ -146,7 +150,9 @@ function Trainer:BuildList()
         -- The previous rank must be known, or learnable in the same visit.
         local prevOK = not info.prev or willBeAvailable[info.prev] or IsKnown(info.prev)
         local required = entry.requires and byId[entry.requires]
+        -- (A requirement the game no longer has can't be met: it's dropped.)
         local requiresOK = not entry.requires or Platform.IsSpellKnown(entry.requires)
+          or not Platform.SpellExists(entry.requires)
           or (required and (willBeAvailable[required] or IsKnown(required)))
         if prevOK and requiresOK then
           willBeAvailable[entry] = true
@@ -179,6 +185,12 @@ end
 
 function Trainer:GetList()
   return list
+end
+
+-- Forgets the per-class spell chains (they're built again on the next
+-- update).
+function Trainer.ResetChains()
+  chainsClass = nil
 end
 
 function Trainer.FormatName(item)

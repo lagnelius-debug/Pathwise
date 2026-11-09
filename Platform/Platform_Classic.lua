@@ -570,6 +570,17 @@ function Platform.GetSpellName(spellID)
   end
 end
 
+-- Whether the game has a spell at all (WoW Forever removed some Classic
+-- ranks and spells, e.g. Multi-Shot ranks 2-5). True when it can't tell.
+function Platform.SpellExists(spellID)
+  if C_Spell and C_Spell.DoesSpellExist then
+    return C_Spell.DoesSpellExist(spellID) and true or false
+  elseif GetSpellInfo then
+    return GetSpellInfo(spellID) ~= nil
+  end
+  return true
+end
+
 function Platform.GetSpellDisplay(spellID)
   local name, icon
   if GetSpellInfo then

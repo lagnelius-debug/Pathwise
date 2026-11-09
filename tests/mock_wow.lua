@@ -661,6 +661,9 @@ function GetSpellInfo(id)
   return name, nil, "icon" .. id
 end
 function GetSpellSubtext() return nil end
+-- Spells the game doesn't have (WoW Forever removed some Classic ranks).
+WoW.removedSpells = {}
+C_Spell = { DoesSpellExist = function(id) return not WoW.removedSpells[id] end }
 
 function hooksecurefunc(a, b, c)
   local tbl, name, fn = a, b, c

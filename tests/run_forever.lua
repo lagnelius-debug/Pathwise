@@ -79,6 +79,7 @@ C_Spell = {
     return name and { name = name, iconID = icon } or nil
   end,
   GetSpellSubtext = function() return "" end,
+  DoesSpellExist = function(id) return not WoW.removedSpells[id] end,
 }
 local petBook = {}
 C_SpellBook = {
