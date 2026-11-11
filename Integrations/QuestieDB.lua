@@ -1331,6 +1331,114 @@ function QuestieData:GiverTarget(questID)
   return best, distance
 end
 
+---------------------------------------------------------------------------
+-- /pw find: a quest giver or an NPC by name
+---------------------------------------------------------------------------
+
+local npcNameIndex -- [lowercase name] = { npcIds }, built on the first search
+
+-- The NPC ids whose name matches `text` (lowercase): exact matches, else
+-- the names that contain it.
+local function NpcsNamed(text)
+  if not npcNameIndex then
+    npcNameIndex = {}
+    local ok, ids = pcall(lib.Npc.GetAllIds)
+    for _, id in ipairs(ok and type(ids) == "table" and ids or {}) do
+      local name = lib.Npc.Get(id, "name")
+      if type(name) == "string" then
+        local key = name:lower()
+        npcNameIndex[key] = npcNameIndex[key] or {}
+        table.insert(npcNameIndex[key], id)
+      end
+    end
+  end
+  if npcNameIndex[text] then
+    return npcNameIndex[text]
+  end
+  local found = {}
+  for key, ids in pairs(npcNameIndex) do
+    if key:find(text, 1, true) then
+      for _, id in ipairs(ids) do
+        found[#found + 1] = id
+      end
+    end
+  end
+  return found
+end
+
+-- Where to find a quest giver (by the quest's name, for quests this
+-- character can take) or an NPC (by name): { target, name, quest } with
+-- target the spot nearest to the player, or nil. Quest names first, then
+-- NPC names; exact matches before partial ones.
+function QuestieData:Find(query)
+  if not Load() then
+    return nil
+  end
+  local text = (query or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+  if text == "" then
+    return nil
+  end
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  local function Nearest(points)
+    local Waypoints = Pathwise:GetModule("Waypoints")
+    local best, bestDistance
+    for _, point in ipairs(points) do
+      local distance = mapID and Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
+      if not best or (distance and (not bestDistance or distance < bestDistance)) then
+        best, bestDistance = point, distance
+      end
+    end
+    return best, bestDistance
+  end
+  -- Quests (the ones the guide knows givers for).
+  if self:PickupsReady() then
+    for _, exact in ipairs({ true, false }) do
+      local points = {}
+      for _, candidate in ipairs(pickupCandidates) do
+        local name = (candidate.name or ""):lower()
+        if (exact and name == text) or (not exact and name:find(text, 1, true)) then
+          local ok, list = pcall(GiverPoints, candidate)
+          for _, point in ipairs(ok and list or {}) do
+            points[#points + 1] = { point = point, candidate = candidate }
+          end
+        end
+      end
+      if #points > 0 then
+        local plain = {}
+        for i, entry in ipairs(points) do
+          plain[i] = entry.point
+          entry.point.findIndex = i
+        end
+        local best = Nearest(plain)
+        local candidate = points[best.findIndex].candidate
+        local target = {}
+        for key, value in pairs(best) do
+          target[key] = value
+        end
+        target.findIndex, target.spawn = nil, nil
+        target.label = string.format(L.FIND_QUEST_LABEL, candidate.name, best.giver or "?")
+        return { target = target, name = best.giver or "?", quest = candidate.name }
+      end
+    end
+  end
+  -- NPCs.
+  local ids = NpcsNamed(text)
+  if #ids > 0 then
+    local points = {}
+    for _, id in ipairs(ids) do
+      local name = lib.Npc.Get(id, "name")
+      AddSpawns(points, lib.Npc.Get(id, "spawns"), name, name)
+    end
+    local best = Nearest(points)
+    if best then
+      best.spawn = nil
+      best.names = best.npcName and { best.npcName } or nil
+      return { target = best, name = best.npcName or best.label or "?" }
+    end
+  end
+  return nil
+end
+
 -- Quests the guide would suggest a few levels from now but not yet: they
 -- need a higher level, or are still far too hard (red) at this one. The
 -- same rules as GetPickups, at each level up to toLevel: { questID, title,

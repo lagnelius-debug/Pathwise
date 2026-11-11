@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.48.0
+
+- `/pw find <quest or NPC name>` points the arrow at a quest's giver or at
+  an NPC (e.g. `/pw find Kor'geld`, `/pw find Raptor Thieves`) - asked for
+  in GitHub issue #2.
+- A suggested quest you pass up waits until your next level: if you reach
+  its giver and walk away without it, or press Next on it, it isn't
+  suggested again at this level, and chat says so. For quests whose
+  pre-quest QuestieDB doesn't know (GitHub issue #2: new WoW Forever
+  quests in Orgrimmar sent a player around in circles; QuestieDB 1.0.15
+  now knows those chains).
+
 ## 0.47.1
 
 - Hiding the To-do window (minimap button, key binding, /pw) hides the

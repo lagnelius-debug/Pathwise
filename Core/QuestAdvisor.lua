@@ -1494,6 +1494,32 @@ function QuestAdvisor:OnQuestGiverShown(event)
   end
 end
 
+-- A suggested quest the player passed up: walked away from its giver
+-- without it ("left"), or pressed Next on it ("next"). It's left out until
+-- the next level - its giver may not offer it yet (a pre-quest QuestieDB
+-- doesn't know), or the player doesn't want it.
+function QuestAdvisor:OnPickupPassedUp(_, questID, how)
+  if not questID or Platform.IsQuestCompleted(questID) then
+    return
+  end
+  for _, quest in ipairs(Platform.GetQuestLog()) do
+    if quest.questID == questID then
+      return
+    end
+  end
+  local title
+  for _, pickup in ipairs(lastPickups) do
+    if pickup.questID == questID then
+      title = pickup.title
+    end
+  end
+  local level = Pathwise:GetModule("Character"):GetSnapshot().level or 1
+  Pathwise.charDB.notOffered[questID] = level
+  Pathwise:Printf(how == "next" and L.PICKUP_SKIPPED or L.PICKUP_LEFT,
+    title or Pathwise:GetModule("QuestieData"):QuestInfo(questID, "name") or ("#" .. questID))
+  self:ScheduleUpdate()
+end
+
 function QuestAdvisor:ScheduleUpdate()
   if updatePending then
     return
@@ -1530,6 +1556,8 @@ function QuestAdvisor:OnInitialize()
   self:RegisterCallback("WAYPOINT_VISITED", "OnQuestEvent")
   -- QuestieDB's quest list is scanned: pickups can be suggested now.
   self:RegisterCallback("QUESTIE_PICKUPS_READY", "OnQuestEvent")
+  -- A suggested quest walked away from, or skipped with Next.
+  self:RegisterCallback("PICKUP_PASSED_UP", "OnPickupPassedUp")
 end
 
 -- Re-plans when the player has moved far enough since the last plan, so

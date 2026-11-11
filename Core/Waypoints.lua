@@ -271,6 +271,10 @@ function Waypoints:Next()
     self:MarkVisited(target)
     Pathwise:Print(L.ARROW_NEXT_SPAWN)
     Pathwise:FireCallback("WAYPOINT_VISITED", target)
+  elseif kind == "auto" and autoItemId and autoItemId:match("^pickup:%d+$") then
+    -- A quest to pick up: not wanted, or not offered - it's left out until
+    -- the next level (QuestAdvisor says so in chat).
+    Pathwise:FireCallback("PICKUP_PASSED_UP", tonumber(autoItemId:match("%d+")), "next")
   elseif kind == "auto" and autoItemId then
     -- Not a spawn, or every spawn of this step was already visited (the
     -- arrow fell back to one of them): skip the whole step.
@@ -282,6 +286,13 @@ function Waypoints:Next()
   end
 end
 
+-- A suggested quest giver the player reached: { questID, point }, until
+-- they walk away (see CheckLeftPickup).
+local reachedPickup
+-- Walking this far from a reached quest giver without the quest means it
+-- wasn't offered (or wasn't wanted).
+Waypoints.LEFT_PICKUP_YARDS = 40
+
 -- Called by the UI when the player reaches the target.
 function Waypoints:OnArrived()
   local target, kind = self:GetTarget()
@@ -290,6 +301,25 @@ function Waypoints:OnArrived()
   if kind == "manual" then
     Pathwise:Printf(L.WAY_ARRIVED, target.label or "")
     self:ClearManual()
+  elseif kind == "auto" and autoItemId and autoItemId:match("^pickup:%d+$") then
+    reachedPickup = { questID = tonumber(autoItemId:match("%d+")), point = target }
+  end
+end
+
+-- Called with the arrow's updates: the player walked away from a quest
+-- giver the guide sent them to. (Reported: givers of quests whose
+-- pre-quest QuestieDB didn't know sent players around in circles.)
+function Waypoints:CheckLeftPickup()
+  if not reachedPickup then
+    return
+  end
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  local point = reachedPickup.point
+  local distance = mapID and Waypoints.Vector(mapID, x, y, point.mapID, point.x, point.y)
+  if distance and distance > Waypoints.LEFT_PICKUP_YARDS then
+    local questID = reachedPickup.questID
+    reachedPickup = nil
+    Pathwise:FireCallback("PICKUP_PASSED_UP", questID, "left")
   end
 end
 
@@ -402,6 +432,31 @@ Pathwise:RegisterCommand("way", function(args)
   Waypoints:SetManual({ mapID = mapID, x = x / 100, y = y / 100, label = label })
   Pathwise:Printf(L.WAY_SET, label)
 end, L.CMD_WAY)
+
+-- /pw find <quest or NPC name>: the arrow to that quest's giver or that NPC.
+Pathwise:RegisterCommand("find", function(args)
+  if args == "" then
+    Pathwise:Print(L.FIND_USAGE)
+    return
+  end
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  if not QuestieData:IsAvailable() then
+    Pathwise:Print(L.FIND_NEEDS_QUESTIE)
+    return
+  end
+  local found = QuestieData:Find(args)
+  if not found then
+    Pathwise:Printf(L.FIND_NONE, args)
+    return
+  end
+  Waypoints:SetManual(found.target)
+  local where = Platform.GetMapName(found.target.mapID) or "?"
+  if found.quest then
+    Pathwise:Printf(L.FIND_QUEST, found.quest, found.name, where)
+  else
+    Pathwise:Printf(L.FIND_NPC, found.name, where)
+  end
+end, L.CMD_FIND)
 
 -- /pw next: same as the arrow's Next button.
 Pathwise:RegisterCommand("next", function()

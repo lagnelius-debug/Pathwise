@@ -83,6 +83,7 @@ end
 
 function Arrow:Update()
   local Waypoints = GetWaypoints()
+  Waypoints:CheckLeftPickup()
   local target, kind = Waypoints:GetTarget()
   if not Wanted(target, kind) then
     frame:Hide()

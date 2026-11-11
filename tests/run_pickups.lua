@@ -299,6 +299,53 @@ check("10 quests in the log: no new pickups (" .. Pickups() .. ")", Pickups() ==
 UpdateLog({})
 check("an empty log: pickups again", Pickups() ~= "")
 
+-- Reported (GitHub #2): the guide sent a player to givers of quests whose
+-- pre-quest QuestieDB didn't know yet, "in circles". A suggested quest the
+-- player walks away from, or skips with Next, waits until the next level.
+local Waypoints = Pathwise:GetModule("Waypoints")
+local function TopPickup()
+  local id = Waypoints:GetAutoItemId()
+  return id and id:match("^pickup:(%d+)$") and id
+end
+local skipped = TopPickup()
+check("the arrow is on a quest to pick up", skipped ~= nil)
+WoW.ClearChat()
+Waypoints:Next()
+UpdateLog({})
+check("Next on it: not suggested again this level", Item(skipped) == nil and WoW.ChatContains("until your next level"))
+local walked = TopPickup()
+local giver = Waypoints:GetTarget()
+local x0, y0 = S.mapX, S.mapY
+S.mapX, S.mapY = giver.x, giver.y
+Waypoints:OnArrived()
+S.mapX, S.mapY = giver.x, giver.y + 0.03 -- 90 yd away, without the quest
+WoW.ClearChat()
+Waypoints:CheckLeftPickup()
+UpdateLog({})
+check("walked away from its giver without it: not suggested again this level", walked ~= skipped
+  and Item(walked) == nil and WoW.ChatContains("you left its giver without it"))
+S.mapX, S.mapY = x0, y0
+Pathwise.charDB.notOffered = {}
+UpdateLog({})
+check("the next level (notOffered cleared): back", Item(skipped) ~= nil and Item(walked) ~= nil)
+
+-- /pw find: the arrow to a quest's giver or an NPC (asked for in GitHub #2).
+WoW.ClearChat()
+WoW.Slash("find far quest")
+local found = Waypoints:GetTarget()
+check("/pw find <quest>: its giver", found and found.label == "Pick up: Far Quest (Giver Far)"
+  and WoW.ChatContains("Arrow on Far Quest: Giver Far"))
+local npcIds = LibQuestieDB.Npc.GetAllIds
+LibQuestieDB.Npc.GetAllIds = function() return { 9101, 9102, 9103 } end
+WoW.Slash("find giver mid")
+found = Waypoints:GetTarget()
+check("/pw find <NPC>: that NPC", found and found.label == "Giver Mid" and found.names and found.names[1] == "Giver Mid")
+WoW.ClearChat()
+WoW.Slash("find nobody at all")
+check("/pw find: nothing found says so", WoW.ChatContains("Nothing found for \"nobody at all\""))
+LibQuestieDB.Npc.GetAllIds = npcIds
+Waypoints:ClearManual()
+
 -- Without a scannable QuestieDB: no pickups and no zone guesses
 LibQuestieDB.Quest.GetAllIds = nil
 QuestieData:ResetPickups()

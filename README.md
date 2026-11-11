@@ -52,6 +52,7 @@ Without them the upload is skipped. To upload the current version (e.g. after ad
 | `/pw` | Show or hide the Next Steps window |
 | `/pw quests` | List your quests in the recommended order in chat |
 | `/pw way <x> <y> [name]` | Point the arrow at coordinates on your current zone map, e.g. `/pw way 45.2 63.1 Trainer`. `/pw way clear` removes it |
+| `/pw find <quest or NPC name>` | Point the arrow at a quest's giver (quests your character can take) or at an NPC, e.g. `/pw find Kor'geld`. Needs QuestieDB |
 | `/pw next` | Move the arrow on to the next spot or step (same as the arrow's Next button) |
 | `/pw arrow` | Turn the arrow following your next step on or off |
 | `/pw talents` | Show your next talent points from the build for your path. `/pw talents check` compares the build data with the game's talent tree |
