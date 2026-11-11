@@ -1001,9 +1001,10 @@ local function FinishMap(candidate)
     ObjectPoints(points, finishedBy[2])
     if points[1] then
       candidate.finishMapID = points[1].mapID
+      candidate.finishPoint = points[1]
     end
   end
-  return candidate.finishMapID or nil
+  return candidate.finishMapID or nil, candidate.finishPoint
 end
 
 -- (Negative IDs in preQuestGroup mean the same quest, without its
@@ -1468,9 +1469,10 @@ function QuestieData:GetPickups(ctx, limit)
         end
       end
       if best then
-        local okFinish, finishMapID = pcall(FinishMap, candidate)
+        local okFinish, finishMapID, finishPoint = pcall(FinishMap, candidate)
         found[#found + 1] = { questID = candidate.id, title = candidate.name, level = level,
-          target = best, giver = best.giver, distance = bestDistance, finishMapID = okFinish and finishMapID or nil }
+          target = best, giver = best.giver, distance = bestDistance, finishMapID = okFinish and finishMapID or nil,
+          finishPoint = okFinish and finishPoint or nil }
       end
     end
   end

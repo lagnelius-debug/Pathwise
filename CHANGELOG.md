@@ -3,6 +3,22 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.47.0
+
+- Starting areas are finished before the zone's next town: while you're in
+  Coldridge Valley, Northshire Valley, Shadowglen, the Valley of Trials,
+  Camp Narache or Deathknell, the guide suggests only that area's quests,
+  not Kharanos's or another zone's.
+- A quest that's turned in far from where it's picked up (more than 600
+  yards, even in the same zone) waits until there's nothing else to do
+  around here - reported: Supplies to Tannok (Coldridge Valley to Kharanos)
+  suggested while Coldridge Valley's quests were still open. Its details
+  say where it leads.
+- WoW Forever: flight points the game keeps under an old name ("zzOLD...",
+  e.g. "zzOLDRiverglades, Farholde Keep") are never used for flights -
+  reported: "Fly from Stormwind to zzOLDRiverglades". Ones saved by earlier
+  versions are dropped.
+
 ## 0.46.0
 
 - Dungeon mode: grey quests that lead to one of the dungeon's own quests

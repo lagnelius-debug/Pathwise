@@ -88,6 +88,10 @@ LibQuestieDB.Quest.GetAllIds = function()
 end
 QuestieData:ResetPickups()
 S.mapID, S.mapX, S.mapY = 1438, 0.58, 0.40
+-- (This spot is in Shadowglen; the starting-area rule has its own tests in
+-- run_focus.lua.)
+local startAreas = Pathwise.Data.StartAreas
+Pathwise.Data.StartAreas = {}
 
 ---------------------------------------------------------------------------
 section("Pickups: what's available")
@@ -295,3 +299,5 @@ LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Object.Get = questGet
 C_QuestLog = nil
 QuestieData:ResetPickups()
 UpdateLog({})
+
+Pathwise.Data.StartAreas = startAreas

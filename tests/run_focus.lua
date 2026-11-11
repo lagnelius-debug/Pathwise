@@ -105,3 +105,34 @@ check("quests under way: those with something to do at a known place",
 log[#log + 1] = { title = "Done", level = S.level, questID = 7010, complete = 1, objectives = {}, suggestedGroup = 0 }
 log[#log + 1] = { title = "Red", level = S.level + 6, questID = 7011, objectives = { { text = "x: 0/1" } }, suggestedGroup = 0 }
 check("not ready, red or grey ones", QuestAdvisor.Ongoing(log, S.level, 6, Locate) == 3)
+
+---------------------------------------------------------------------------
+section("Focus: starting areas and quests that lead away")
+
+-- Reported: Supplies to Tannok (Coldridge Valley to Kharanos, both Dun
+-- Morogh) suggested while Coldridge Valley's quests were still open.
+-- Teldrassil (1438) with Shadowglen as its starting area.
+check("in Shadowglen", QuestAdvisor.StartAreaAt(1438, 0.58, 0.40) ~= nil
+  and QuestAdvisor.StartAreaAt(1438, 0.56, 0.60) == nil and QuestAdvisor.StartAreaAt(1439, 0.58, 0.40) == nil)
+local function P(id, x, y, distance, finish)
+  return { questID = id, distance = distance, target = { mapID = 1438, x = x, y = y },
+    finishMapID = finish and 1438 or nil, finishPoint = finish and { mapID = 1438, x = finish[1], y = finish[2] } }
+end
+local breadcrumb = P(1, 0.60, 0.45, 150, { 0.56, 0.75 })   -- turned in down in Dolanaar
+check("a quest turned in far away (same zone) leads away", QuestAdvisor.PickupLeadsAway(breadcrumb)
+  and not QuestAdvisor.PickupLeadsAway(P(9, 0.60, 0.45, 150, { 0.61, 0.46 })))
+local area = QuestAdvisor.StartAreaAt(1438, 0.58, 0.40)
+local pool = {
+  P(1, 0.60, 0.45, 150, { 0.56, 0.75 }),  -- the breadcrumb
+  P(2, 0.57, 0.35, 400, { 0.57, 0.35 }),  -- in Shadowglen
+  P(3, 0.56, 0.60, 900, { 0.56, 0.60 }),  -- Dolanaar
+}
+check("in a starting area: its own quests, not the town's, and the breadcrumb waits",
+  Ids(QuestAdvisor.FocusPickups(pool, 1438, 1439, 4, false, area)) == "2")
+pool = { P(1, 0.60, 0.45, 150, { 0.56, 0.75 }), P(3, 0.56, 0.60, 900, { 0.56, 0.60 }) }
+check("nothing else to pick up, quests still under way: it still waits",
+  Ids(QuestAdvisor.FocusPickups(pool, 1438, 1439, 4, true, area)) == "")
+check("the starting area is done: the breadcrumb leads on",
+  Ids(QuestAdvisor.FocusPickups(pool, 1438, 1439, 4, false, area)) == "1")
+check("outside a starting area: the town's quests as before",
+  Ids(QuestAdvisor.FocusPickups({ P(3, 0.56, 0.60, 900, { 0.56, 0.60 }) }, 1438, nil, 4, false, nil)) == "3")

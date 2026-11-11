@@ -720,15 +720,21 @@ C_TaxiMap = { GetTaxiNodesForMap = function(uiMapID)
     { name = "Southshore, Hillsbrad", position = Pos(0.35, 0.30), faction = 2, isUndiscovered = true },
     { name = "Hammerfall, Arathi", position = Pos(0.45, 0.35), faction = 1, isUndiscovered = false },
     { name = "Booty Bay, Stranglethorn", position = Pos(0.45, 0.90), faction = 0, isUndiscovered = false },
+    -- Reported: "Fly from Stormwind to zzOLDRiverglades" - an old placement
+    -- the game still lists as discovered.
+    { name = "zzOLDRiverglades, Farholde Keep", position = Pos(0.40, 0.50), faction = 2, isUndiscovered = false },
   }
 end }
 local flightNodes = Pathwise.charDB.flightNodes
 flightNodes["Refuge Pointe, Arathi"] = nil
+flightNodes["zzOLDBolder'ok, Riverglades"] = { mapID = 1415, x = 0.4, y = 0.5, continent = 0 } -- saved by 0.43-0.46
 WoW.FireEvent("PLAYER_ENTERING_WORLD", false, false)
 local refuge = flightNodes["Refuge Pointe, Arathi"]
 check("flight points: a discovered one is known without a flight map", refuge ~= nil and refuge.continent == 0
   and refuge.mapID == 1415 and Near(refuge.x, 0.40) and Near(refuge.y, 0.35))
 check("flight points: neutral ones too", flightNodes["Booty Bay, Stranglethorn"] ~= nil)
+check("flight points: never Blizzard's obsolete \"zz\" ones, and saved ones are dropped",
+  flightNodes["zzOLDRiverglades, Farholde Keep"] == nil and flightNodes["zzOLDBolder'ok, Riverglades"] == nil)
 check("flight points: not undiscovered ones, nor the other faction's",
   flightNodes["Southshore, Hillsbrad"] == nil and flightNodes["Hammerfall, Arathi"] == nil)
 local exact = { mapID = 1417, x = 0.46, y = 0.46, exact = true, continent = 0, npc = "Cedrik Prose" }

@@ -54,6 +54,10 @@ QuestAdvisor.PICKUP_POOL = 60
 QuestAdvisor.BUSY_QUESTS = 4
 QuestAdvisor.BUSY_PICKUP_YARDS = 100
 QuestAdvisor.BUSY_PICKUPS = 2
+-- A quest turned in this far from where it's picked up leads on to another
+-- place (Supplies to Tannok: Coldridge Valley to Kharanos, both Dun
+-- Morogh): it waits until the work around here is done.
+QuestAdvisor.LEADS_AWAY_YARDS = 600
 -- Choosing the area to quest in when there's nothing to do in this one:
 -- this many yards of travel halve an area's worth.
 QuestAdvisor.FOCUS_DISTANCE = 2000
@@ -515,10 +519,12 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
       local detail = { string.format(L.QA_PICKUP_DETAIL, pickup.giver or "?") }
       -- Turned in in another zone (e.g. "Flight to Auberdine"): taking it
       -- leads away, so it waits until the steps in this zone are done.
-      local leadsAway = pickup.finishMapID ~= nil
-        and Travel.ZoneGroup(pickup.finishMapID) ~= Travel.ZoneGroup(pickup.target.mapID)
+      local leadsAway = QuestAdvisor.PickupLeadsAway(pickup)
       if leadsAway then
-        detail[#detail + 1] = string.format(L.QA_PICKUP_LEADS_AWAY, Platform.GetMapName(pickup.finishMapID) or "?")
+        local finish = pickup.finishPoint
+        detail[#detail + 1] = finish and finish.npcName
+          and string.format(L.QA_PICKUP_LEADS_ON, finish.npcName, Platform.GetMapName(pickup.finishMapID) or "?")
+          or string.format(L.QA_PICKUP_LEADS_AWAY, Platform.GetMapName(pickup.finishMapID) or "?")
       end
       if pickup.note then
         detail[#detail + 1] = pickup.note
@@ -589,7 +595,7 @@ function QuestAdvisor.ZoneWork(quests, pickups, level, greenRange, location, loc
   for _, pickup in ipairs(pickups or {}) do
     local difficulty = QuestAdvisor.Difficulty(pickup.level, level, greenRange)
     local zone = Travel.ZoneGroup(pickup.target.mapID)
-    local away = pickup.finishMapID ~= nil and Travel.ZoneGroup(pickup.finishMapID) ~= zone
+    local away = QuestAdvisor.PickupLeadsAway(pickup)
     local inDungeon = DungeonGuide.Get(QuestieData:QuestInfo(pickup.questID, "zoneOrSort") or 0) ~= nil
     work[#work + 1] = { zone = zone, value = away and 0.2 or inDungeon and 0.3 or difficulty == "GREEN" and 0.6 or 1,
       distance = pickup.distance }
@@ -642,10 +648,51 @@ function QuestAdvisor.FocusZone(work, currentZone)
     scores[2] and scores[2].score > 0 and scores[2].zone or nil
 end
 
+-- The starting area (Data.StartAreas) a map position is in, or nil.
+function QuestAdvisor.StartAreaAt(mapID, x, y)
+  if not (mapID and x and y) then
+    return nil
+  end
+  for index, area in ipairs(Pathwise.Data.StartAreas or {}) do
+    local box = area.box
+    if area.mapID == mapID and x >= box[1] and x <= box[3] and y >= box[2] and y <= box[4] then
+      return index
+    end
+  end
+  return nil
+end
+
+-- Whether picking up a quest leads away from here: it's turned in in
+-- another zone, or far from its giver in this one.
+function QuestAdvisor.PickupLeadsAway(pickup)
+  if pickup.leadsAway ~= nil then
+    return pickup.leadsAway
+  end
+  local Travel = Pathwise:GetModule("Travel")
+  local away = false
+  if pickup.target and pickup.finishMapID then
+    away = Travel.ZoneGroup(pickup.finishMapID) ~= Travel.ZoneGroup(pickup.target.mapID)
+  end
+  local finish = pickup.finishPoint
+  if not away and pickup.target and finish and finish.x then
+    local yards = Pathwise:GetModule("Waypoints").Vector(pickup.target.mapID, pickup.target.x, pickup.target.y,
+      finish.mapID, finish.x, finish.y)
+    away = yards ~= nil and yards > QuestAdvisor.LEADS_AWAY_YARDS
+  end
+  pickup.leadsAway = away
+  return away
+end
+
 -- The pickups to suggest (pool: nearest first): the close ones and the
 -- focus area's, then - if there's room - the next area's. Not single
 -- quests scattered over the map.
-function QuestAdvisor.FocusPickups(pool, focus, nextZone, limit)
+-- Quests that lead away (QuestAdvisor.PickupLeadsAway) wait until there's
+-- nothing else here: no other pickups and, with `busy`, quests under way
+-- (reported: Supplies to Tannok suggested before Coldridge Valley's
+-- quests were done).
+-- startArea: the starting area the player is in (QuestAdvisor.StartAreaAt):
+-- only its own pickups, besides the close ones.
+function QuestAdvisor.FocusPickups(pool, focus, nextZone, limit, busy, startArea)
   local Travel = Pathwise:GetModule("Travel")
   local chosen, taken = {}, {}
   local function Take(keep)
@@ -656,12 +703,22 @@ function QuestAdvisor.FocusPickups(pool, focus, nextZone, limit)
       end
     end
   end
+  local function Here(pickup)
+    local target = pickup.target
+    return pickup.distance <= QuestAdvisor.NEAR_YARDS or (Travel.ZoneGroup(target.mapID) == focus
+      and (not startArea or QuestAdvisor.StartAreaAt(target.mapID, target.x, target.y) == startArea))
+  end
   Take(function(pickup)
-    return pickup.distance <= QuestAdvisor.NEAR_YARDS or Travel.ZoneGroup(pickup.target.mapID) == focus
+    return Here(pickup) and not QuestAdvisor.PickupLeadsAway(pickup)
   end)
-  if nextZone then
+  if #chosen == 0 and not busy then
+    Take(Here)
+  end
+  -- (Not from a starting area: it's finished first, then its breadcrumb
+  -- leads on.)
+  if nextZone and not startArea then
     Take(function(pickup)
-      return Travel.ZoneGroup(pickup.target.mapID) == nextZone
+      return Travel.ZoneGroup(pickup.target.mapID) == nextZone and not QuestAdvisor.PickupLeadsAway(pickup)
     end)
   end
   table.sort(chosen, function(a, b) return a.distance < b.distance end)
@@ -1234,16 +1291,19 @@ function QuestAdvisor:Update()
         local work = QuestAdvisor.ZoneWork(quests, pool, level, greenRange, location, LocateOnce)
         local nextZone
         focus, nextZone = QuestAdvisor.FocusZone(work, mapID and Travel.ZoneGroup(mapID))
-        if QuestAdvisor.Ongoing(quests, level, greenRange, LocateOnce) >= QuestAdvisor.BUSY_QUESTS then
+        local ongoing = QuestAdvisor.Ongoing(quests, level, greenRange, LocateOnce)
+        if ongoing >= QuestAdvisor.BUSY_QUESTS then
           local here = {}
           for _, pickup in ipairs(pool) do
-            if pickup.distance <= QuestAdvisor.BUSY_PICKUP_YARDS and #here < QuestAdvisor.BUSY_PICKUPS then
+            if pickup.distance <= QuestAdvisor.BUSY_PICKUP_YARDS and #here < QuestAdvisor.BUSY_PICKUPS
+              and not QuestAdvisor.PickupLeadsAway(pickup) then
               here[#here + 1] = pickup
             end
           end
           pickups = here
         else
-          pickups = QuestAdvisor.FocusPickups(pool, focus, nextZone, QuestAdvisor.MAX_PICKUPS)
+          pickups = QuestAdvisor.FocusPickups(pool, focus, nextZone, QuestAdvisor.MAX_PICKUPS, ongoing > 0,
+            QuestAdvisor.StartAreaAt(mapID, x, y))
         end
         -- Questing moves on to another area: say where, and why there.
         if focus and mapID and focus ~= Travel.ZoneGroup(mapID) then

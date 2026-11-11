@@ -234,6 +234,7 @@ Pathwise.Locales.esES = {
   QA_PICKUP = "Coger: %s",
   QA_PICKUP_DETAIL = "Misión de %s.",
   QA_PICKUP_LEADS_AWAY = "Se entrega en %s, así que va después de los pasos de esta zona.",
+  QA_PICKUP_LEADS_ON = "Se entrega a %s (%s), lejos de aquí, así que va después de las misiones de esta zona.",
   TASK_PICKUP = "Coge la misión de %s",
   ARROW_PICKUP = "Coger: %s (%%s)",
   ZONE_RANGE = "%s (%d-%d)",

@@ -234,6 +234,7 @@ Pathwise.Locales.deDE = {
   QA_PICKUP = "Annehmen: %s",
   QA_PICKUP_DETAIL = "Quest von %s.",
   QA_PICKUP_LEADS_AWAY = "Sie wird in %s abgegeben und kommt deshalb nach den Schritten in diesem Gebiet.",
+  QA_PICKUP_LEADS_ON = "Sie wird bei %s (%s) abgegeben, weiter weg - deshalb kommt sie nach den Quests hier in der Gegend.",
   TASK_PICKUP = "Quest bei %s annehmen",
   ARROW_PICKUP = "Annehmen: %s (%%s)",
   ZONE_RANGE = "%s (%d-%d)",

@@ -237,6 +237,7 @@ Pathwise.Locales.frFR = {
   QA_PICKUP = "Prendre : %s",
   QA_PICKUP_DETAIL = "Quête donnée par %s.",
   QA_PICKUP_LEADS_AWAY = "Elle se rend à %s, elle vient donc après les étapes de cette zone.",
+  QA_PICKUP_LEADS_ON = "Elle se rend auprès de %s (%s), loin d'ici : elle vient donc après les quêtes du coin.",
   TASK_PICKUP = "Prendre la quête auprès de %s",
   ARROW_PICKUP = "Prendre : %s (%%s)",
   ZONE_RANGE = "%s (%d-%d)",

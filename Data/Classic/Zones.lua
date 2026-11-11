@@ -86,3 +86,17 @@ Pathwise.Data.Zones = {
     { name = "Silithus", min = 55, max = 60 },
   },
 }
+
+-- The starting areas inside their zones, as boxes on the zone map (x1, y1,
+-- x2, y2; from where their quest givers stand, widened to the valley). A
+-- starting area is finished before the zone's next town: quests there
+-- aren't suggested from inside it (reported: Supplies to Tannok and
+-- Kharanos's quests while Coldridge Valley's were still open).
+Pathwise.Data.StartAreas = {
+  { name = "Coldridge Valley", mapID = 1426, box = { 0.18, 0.62, 0.37, 0.85 } },
+  { name = "Northshire Valley", mapID = 1429, box = { 0.40, 0.21, 0.57, 0.48 } },
+  { name = "Shadowglen", mapID = 1438, box = { 0.52, 0.26, 0.70, 0.50 } },
+  { name = "Valley of Trials", mapID = 1411, box = { 0.36, 0.52, 0.50, 0.82 } },
+  { name = "Camp Narache", mapID = 1412, box = { 0.30, 0.72, 0.60, 0.98 } },
+  { name = "Deathknell", mapID = 1420, box = { 0.25, 0.55, 0.42, 0.75 } },
+}

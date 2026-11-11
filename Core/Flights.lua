@@ -30,6 +30,13 @@ local function ContinentOf(mapID)
   return rect and rect.continent
 end
 
+-- Blizzard's names for flight points no longer in use start with "zz"
+-- (WoW Forever: "zzOLDRiverglades, Farholde Keep" - an old placement the
+-- game still lists as discovered). Never a place to fly from or to.
+function Flights.IsObsoleteName(name)
+  return type(name) ~= "string" or name:lower():sub(1, 2) == "zz"
+end
+
 -- Town name from a flight point name: "Rut'theran Village, Teldrassil" ->
 -- "Rut'theran Village".
 function Flights.TownName(nodeName)
@@ -62,7 +69,7 @@ function Flights:OnTaxiMapOpened()
   local saved = Pathwise.charDB.flightNodes
   local count = 0
   for _, node in ipairs(nodes) do
-    if node.name and (node.state == "CURRENT" or node.state == "REACHABLE") then
+    if node.name and not Flights.IsObsoleteName(node.name) and (node.state == "CURRENT" or node.state == "REACHABLE") then
       local entry
       if node.state == "CURRENT" then
         -- Standing at it: the exact spot and the flight master's name.
@@ -102,9 +109,19 @@ function Flights:ReadDiscovered()
     return
   end
   local count = 0
+  -- (Obsolete ones saved by an earlier version are dropped.)
+  for name in pairs(saved) do
+    if Flights.IsObsoleteName(name) then
+      saved[name] = nil
+      count = count + 1
+    end
+  end
   for continent, continentMap in pairs(Data.Travel.CONTINENT_MAPS) do
     for _, node in ipairs(Platform.GetDiscoveredTaxiNodes(continentMap) or {}) do
       local old = saved[node.name]
+      if Flights.IsObsoleteName(node.name) then
+        old = { exact = true } -- (skipped)
+      end
       if not (old and old.exact) then
         local master = MatchFlightMaster(continentMap, node.x, node.y)
         local entry
@@ -156,7 +173,7 @@ function Flights:GetNodes(continent)
   end
   local list = {}
   for name, entry in pairs(saved) do
-    if entry.continent == continent then
+    if entry.continent == continent and not Flights.IsObsoleteName(name) then
       list[#list + 1] = { name = name, town = Flights.TownName(name), mapID = entry.mapID, x = entry.x, y = entry.y,
         npc = entry.npc }
     end
@@ -187,7 +204,9 @@ end
 Pathwise:RegisterCommand("flights", function()
   local names = {}
   for name in pairs(Pathwise.charDB.flightNodes) do
-    names[#names + 1] = Flights.TownName(name)
+    if not Flights.IsObsoleteName(name) then
+      names[#names + 1] = Flights.TownName(name)
+    end
   end
   table.sort(names)
   if #names == 0 then
