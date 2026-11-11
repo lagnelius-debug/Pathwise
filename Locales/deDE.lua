@@ -320,6 +320,7 @@ Pathwise.Locales.deDE = {
   TASK_TALK = "Sprich mit %s",
   TASK_LOOT = "Töte %s für %s",
   TASK_COLLECT = "Sammle %s",
+  TASK_CRAFT_OR_BUY = "%s herstellen oder kaufen (Beruf oder Auktionshaus)",
   TASK_BUY = "Kaufe %s bei %s",
   TASK_GET = "Hol %s bei %s",
   TASK_USE = "Benutze %s",

@@ -185,6 +185,9 @@ local function IsCustomText(text, name)
   return text:sub(1, #name) ~= name and text:find(name, 1, true) ~= nil and not text:find(" slain", 1, true)
 end
 
+-- QuestieDB's item class for trade goods (cloth, thread, metal, ...).
+local TRADE_GOODS_CLASS = 7
+
 local function IsFinished(quest, name)
   if not name then
     return false
@@ -531,6 +534,16 @@ local function DoTarget(quest)
     if not IsFinished(quest, objective[2] or itemName) then
       local npcDrops, sellers, givers = DroppersAndSellers(objective[1], lib.Item.Get(objective[1], "npcDrops"))
       local objectDrops = lib.Item.Get(objective[1], "objectDrops")
+      -- Trade goods (cloth, thread, bolts, ...): crafted or bought, not
+      -- hunted - their drops are rare and their "objects" are random loot
+      -- containers (reported: "Collect Bolt of Woolen Cloth" on the way).
+      -- Only who sells or gives them is a place to go.
+      if lib.Item.Get(objective[1], "class") == TRADE_GOODS_CLASS then
+        npcDrops, objectDrops = {}, nil
+        if #sellers == 0 and #givers == 0 then
+          AddTask(tasks, string.format(L.TASK_CRAFT_OR_BUY, itemName or "?"))
+        end
+      end
       local first = #points + 1
       NpcPoints(points, npcDrops, nil, itemName)
       if #npcDrops > 0 then

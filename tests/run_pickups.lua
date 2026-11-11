@@ -288,6 +288,17 @@ WoW.Slash("why 7021")
 check("with the book: suggested", WoW.ChatContains("Level " .. S.level .. ": suggested"))
 WoW.bagCounts[9950] = nil
 
+-- Reported: with 19 quests in the log, a quest giver 23 m away was still
+-- suggested. A full log (10 or more) means no new pickups at all.
+local full = {}
+for i = 1, 10 do
+  full[i] = { title = "Errand " .. i, level = S.level, questID = 9900 + i, complete = 1, objectives = {} }
+end
+UpdateLog(full)
+check("10 quests in the log: no new pickups (" .. Pickups() .. ")", Pickups() == "")
+UpdateLog({})
+check("an empty log: pickups again", Pickups() ~= "")
+
 -- Without a scannable QuestieDB: no pickups and no zone guesses
 LibQuestieDB.Quest.GetAllIds = nil
 QuestieData:ResetPickups()

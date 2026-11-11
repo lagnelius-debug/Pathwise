@@ -47,13 +47,13 @@ QuestAdvisor.TURN_IN_PULL = 0.75
 QuestAdvisor.MAX_PICKUPS = 4
 -- How many of the nearest pickups the focus area is chosen from.
 QuestAdvisor.PICKUP_POOL = 60
--- With this many quests under way (each with a place to do it), new ones
--- are only suggested right where the player stands, at most
--- BUSY_PICKUPS of them: finish what's in the log first (reported: a list
--- of quests to pick up "just because they're close by").
+-- With this many quests under way (each with a place to do it), or this
+-- many in the log at all (ready to hand in too), no new ones are
+-- suggested: finish what's in the log first (reported: a list of quests
+-- to pick up "just because they're close by", and with 19 quests in the
+-- log a quest giver 23 m away).
 QuestAdvisor.BUSY_QUESTS = 4
-QuestAdvisor.BUSY_PICKUP_YARDS = 100
-QuestAdvisor.BUSY_PICKUPS = 2
+QuestAdvisor.BUSY_LOG_QUESTS = 10
 -- A quest turned in this far from where it's picked up leads on to another
 -- place (Supplies to Tannok: Coldridge Valley to Kharanos, both Dun
 -- Morogh): it waits until the work around here is done.
@@ -1292,15 +1292,8 @@ function QuestAdvisor:Update()
         local nextZone
         focus, nextZone = QuestAdvisor.FocusZone(work, mapID and Travel.ZoneGroup(mapID))
         local ongoing = QuestAdvisor.Ongoing(quests, level, greenRange, LocateOnce)
-        if ongoing >= QuestAdvisor.BUSY_QUESTS then
-          local here = {}
-          for _, pickup in ipairs(pool) do
-            if pickup.distance <= QuestAdvisor.BUSY_PICKUP_YARDS and #here < QuestAdvisor.BUSY_PICKUPS
-              and not QuestAdvisor.PickupLeadsAway(pickup) then
-              here[#here + 1] = pickup
-            end
-          end
-          pickups = here
+        if ongoing >= QuestAdvisor.BUSY_QUESTS or #quests >= QuestAdvisor.BUSY_LOG_QUESTS then
+          pickups = {}
         else
           pickups = QuestAdvisor.FocusPickups(pool, focus, nextZone, QuestAdvisor.MAX_PICKUPS, ongoing > 0,
             QuestAdvisor.StartAreaAt(mapID, x, y))

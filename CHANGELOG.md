@@ -3,6 +3,20 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.47.1
+
+- Hiding the To-do window (minimap button, key binding, /pw) hides the
+  arrow too; showing it brings the arrow back. A waypoint you set with
+  /pw way still shows.
+- No new quests to pick up while your log is busy: with 4 or more quests
+  still to do, or 10 or more in the log at all (ready to hand in too), the
+  guide doesn't suggest any - not even right next to you (reported: with
+  19 quests in the log, a quest giver 23 m away).
+- Trade goods a quest asks for (cloth, thread, bolts, ...) aren't hunted
+  any more: their drops are rare and QuestieDB's "objects" for them are
+  random loot containers. The guide points to who sells them, or says to
+  make or buy them (reported: "On the way: Collect Bolt of Woolen Cloth").
+
 ## 0.47.0
 
 - Starting areas are finished before the zone's next town: while you're in

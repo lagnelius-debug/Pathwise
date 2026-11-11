@@ -74,10 +74,17 @@ local function RestorePosition()
   end
 end
 
+-- The arrow goes with the To-do window: hiding the window (minimap button,
+-- key binding, /pw) hides it too - except a waypoint the player set
+-- (/pw way).
+local function Wanted(target, kind)
+  return target ~= nil and (kind == "manual" or Pathwise.db.nextSteps.shown ~= false)
+end
+
 function Arrow:Update()
   local Waypoints = GetWaypoints()
-  local target = Waypoints:GetTarget()
-  if not target then
+  local target, kind = Waypoints:GetTarget()
+  if not Wanted(target, kind) then
     frame:Hide()
     return
   end
@@ -209,8 +216,8 @@ local function CreateArrow()
   frame:Hide()
 end
 
-function Arrow:OnWaypointChanged(_, target)
-  if target then
+function Arrow:OnWaypointChanged()
+  if Wanted(GetWaypoints():GetTarget()) then
     frame:Show()
     self:Update()
   else
@@ -221,10 +228,11 @@ end
 function Arrow:OnInitialize()
   CreateArrow()
   self:RegisterCallback("WAYPOINT_CHANGED", "OnWaypointChanged")
+  self:RegisterCallback("NEXT_STEPS_SHOWN", "OnWaypointChanged")
 end
 
 function Arrow:OnEnable()
-  if GetWaypoints():GetTarget() then
+  if Wanted(GetWaypoints():GetTarget()) then
     frame:Show()
   end
 end

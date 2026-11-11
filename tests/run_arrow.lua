@@ -125,6 +125,20 @@ check("turn-in points to where it was picked up", target and Near(target.x, 0.58
   and target.label == "Turn in: The Balance of Nature (where you got it)")
 Tick()
 check("arrow shown for auto target", arrow:IsShown())
+-- Reported: hiding the To-do window (minimap button) left the arrow up.
+local NextStepsFrame = Pathwise:GetModule("NextStepsFrame")
+local windowShown = Pathwise.db.nextSteps.shown
+NextStepsFrame:SetShown(false)
+Tick()
+check("To-do window hidden: the arrow too", not arrow:IsShown())
+WoW.Slash("way 50 40 My spot")
+Tick()
+check("a waypoint the player set still shows", arrow:IsShown() and arrow.label:GetText() == "My spot")
+WoW.Slash("way clear")
+NextStepsFrame:SetShown(true)
+Tick()
+check("window back: the arrow too", arrow:IsShown())
+NextStepsFrame:SetShown(windowShown)
 
 S.mapX, S.mapY = 0.59, 0.41
 WoW.FireEvent("QUEST_TURNED_IN", 456, 450, 0)

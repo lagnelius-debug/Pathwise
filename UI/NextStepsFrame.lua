@@ -397,6 +397,8 @@ function NextStepsFrame:SetShown(shown)
   Pathwise.db.nextSteps.shown = shown
   frame:SetShown(shown)
   self:Render()
+  -- (The arrow goes with the window.)
+  Pathwise:FireCallback("NEXT_STEPS_SHOWN", shown)
 end
 
 function NextStepsFrame:Toggle()
@@ -437,6 +439,7 @@ function NextStepsFrame:OnSettingsReset()
   RestorePosition()
   frame:SetShown(Pathwise.db.nextSteps.shown)
   self:Render()
+  Pathwise:FireCallback("NEXT_STEPS_SHOWN", Pathwise.db.nextSteps.shown)
 end
 
 -- "/pw" with no arguments toggles the window.

@@ -325,6 +325,7 @@ Pathwise.Locales.frFR = {
   TASK_TALK = "Parler à %s",
   TASK_LOOT = "Tuer %s pour %s",
   TASK_COLLECT = "Ramasser %s",
+  TASK_CRAFT_OR_BUY = "Fabriquez ou achetez %s (un métier ou l'hôtel des ventes)",
   TASK_BUY = "Acheter %s auprès de %s",
   TASK_GET = "Obtenir %s auprès de %s",
   TASK_USE = "Utiliser %s",
