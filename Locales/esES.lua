@@ -665,6 +665,7 @@ Pathwise.Locales.esES = {
   FEATURE_FLIGHT_TIMER = "Temporizador de vuelo bajo la ventana de tareas",
   FLIGHT_TIMER = "Volando a %s · %s",
   FLIGHT_LANDING = "Aterrizando en %s",
+  FLIGHT_OVERDUE = "Volando a %s · %s (más de lo estimado)",
   FEATURE_TRAINER = "Recordatorio del instructor (línea de tareas y chat)",
   FEATURE_TRAINER_PANEL = "Lista de entrenamiento junto al libro de hechizos",
   FEATURE_TALENTS = "Consejos de talentos (línea de tareas y brillo en la ventana de talentos)",

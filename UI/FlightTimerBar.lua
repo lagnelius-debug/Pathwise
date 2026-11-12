@@ -61,6 +61,9 @@ function FlightTimerBar:Render()
     if state.remaining > 0 then
       local time = FlightTimerBar.FormatTime(state.remaining)
       frame.text:SetText(string.format(L.FLIGHT_TIMER, town, state.estimated and ("~" .. time) or time))
+    elseif state.estimated then
+      -- (Only a known time says "landing": an estimate can be short.)
+      frame.text:SetText(string.format(L.FLIGHT_OVERDUE, town, FlightTimerBar.FormatTime(state.elapsed)))
     else
       frame.text:SetText(string.format(L.FLIGHT_LANDING, town))
     end

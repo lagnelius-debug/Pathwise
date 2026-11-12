@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.50.1
+
+- Flight timer: the first flight on a route is estimated from the route the
+  flight map shows - through the flight points in between - not the
+  straight line between start and end, which was far too short on long
+  routes. An estimate that runs out says how long you've been flying
+  ("Flying to Ironforge · 3:12 (longer than estimated)") instead of
+  "Landing in Ironforge" (reported: "Landing in Ironforge" far from
+  Ironforge). "Landing" is only said for a route's learned time.
+
 ## 0.50.0
 
 - Flight timer: when you take a flight, a bar under the To-do window counts

@@ -51,6 +51,28 @@ function FlightTimer.Duration(from, to)
   return math.floor(yards * FlightTimer.PATH_FACTOR / FlightTimer.SPEED + FlightTimer.OVERHEAD + 0.5), true
 end
 
+-- An estimate from the hops of the route on the open flight map (a
+-- flight goes through the flight points in between: much longer than the
+-- straight line - reported: "Landing in Ironforge" far from Ironforge), or
+-- nil. The flight map shows the player's continent.
+function FlightTimer.EstimateFromHops(hops)
+  local mapID = Platform.GetPlayerMapPosition()
+  local rect = mapID and Platform.GetMapWorldRect(mapID)
+  local continentMap = rect and Pathwise.Data.Travel.CONTINENT_MAPS[rect.continent]
+  if not (hops and continentMap) then
+    return nil
+  end
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  local yards = 0
+  for _, hop in ipairs(hops) do
+    yards = yards + (Waypoints.Vector(continentMap, hop[1], hop[2], continentMap, hop[3], hop[4]) or 0)
+  end
+  if yards <= 0 then
+    return nil
+  end
+  return math.floor(yards * FlightTimer.PATH_FACTOR / FlightTimer.SPEED + FlightTimer.OVERHEAD * #hops + 0.5)
+end
+
 -- The player picked a destination on the flight map.
 function FlightTimer:OnTakeoff(index)
   if not Pathwise.db.flightTimer then
@@ -67,6 +89,15 @@ function FlightTimer:OnTakeoff(index)
     end
   end
   local duration, estimated = FlightTimer.Duration(from, to)
+  if estimated ~= false then
+    -- (Not learned yet: the route's hops, or the straight line - the longer
+    -- one, as too short is the worse mistake.)
+    local hops = FlightTimer.EstimateFromHops(Platform.GetTaxiRouteHops(index))
+    if hops and (not duration or hops > duration) then
+      duration = hops
+    end
+    estimated = duration ~= nil
+  end
   flight = { from = from, to = to, picked = Platform.GetTime(), duration = duration, estimated = estimated }
   Pathwise:FireCallback("FLIGHT_TIMER")
 end

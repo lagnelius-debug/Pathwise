@@ -665,6 +665,7 @@ Pathwise.Locales.deDE = {
   FEATURE_FLIGHT_TIMER = "Flugtimer unter dem To-do-Fenster",
   FLIGHT_TIMER = "Flug nach %s · %s",
   FLIGHT_LANDING = "Landung in %s",
+  FLIGHT_OVERDUE = "Flug nach %s · %s (länger als geschätzt)",
   FEATURE_TRAINER = "Lehrer-Erinnerung (To-do-Zeile und Chat)",
   FEATURE_TRAINER_PANEL = "Trainingsliste neben dem Zauberbuch",
   FEATURE_TALENTS = "Talenttipps (To-do-Zeile und Leuchten im Talentfenster)",

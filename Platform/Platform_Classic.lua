@@ -989,6 +989,24 @@ function Platform.HookTaxiTakeoff(fn)
   return true
 end
 
+-- The hops of the flight to a node on the open flight map, as the map
+-- draws them (the flight passes the flight points in between): list of
+-- { x1, y1, x2, y2 } on the flight map (0..1), or nil.
+function Platform.GetTaxiRouteHops(index)
+  if not (GetNumRoutes and TaxiGetNodeSlot and TaxiNodePosition) then
+    return nil
+  end
+  local hops = {}
+  for route = 1, GetNumRoutes(index) or 0 do
+    local x1, y1 = TaxiNodePosition(TaxiGetNodeSlot(index, route, true))
+    local x2, y2 = TaxiNodePosition(TaxiGetNodeSlot(index, route, false))
+    if x1 and y1 and x2 and y2 then
+      hops[#hops + 1] = { x1, y1, x2, y2 }
+    end
+  end
+  return #hops > 0 and hops or nil
+end
+
 -- The name of a node on the open flight map ("Stormwind, Elwynn"), or nil.
 function Platform.GetTaxiNodeName(index)
   return TaxiNodeName and TaxiNodeName(index) or nil

@@ -141,7 +141,10 @@ WoW.RunTickers()
 check("halfway: half full", bar._value and math.abs(bar._value - 0.5) < 0.02)
 WoW.now = 1001 + first.duration + 5
 WoW.RunTickers()
-check("past the estimate, still flying: landing", bar.text:GetText() == "Landing in Auberdine" and bar._value == 0)
+-- Reported: "Landing in Ironforge" while far from Ironforge - an estimate
+-- that ran out isn't a landing.
+check("past the estimate, still flying: how long, not \"landing\" (" .. tostring(bar.text:GetText()) .. ")",
+  bar.text:GetText():find("^Flying to Auberdine · %d+:%d%d %(longer than estimated%)$") ~= nil and bar._value == 0)
 UnitOnTaxi = nil
 WoW.now = 1001 + 75
 WoW.RunTickers()
@@ -154,10 +157,36 @@ WoW.now = 2001
 WoW.RunTickers()
 check("next time: the learned time, no \"~\" (" .. tostring(bar.text:GetText()) .. ")",
   bar.text:GetText() == "Flying to Auberdine · 1:15")
+WoW.now = 2001 + 80
+WoW.RunTickers()
+check("a learned time ran out: landing", bar.text:GetText() == "Landing in Auberdine")
 UnitOnTaxi = nil
 WoW.now = 2008
 WoW.RunTickers()
 check("a flight cut short isn't learned", Pathwise.db.flightTimes["Rut'theran Village, Teldrassil > Auberdine, Darkshore"] == 75)
+-- The route on the flight map: Rut'theran to Auberdine by way of Southern
+-- Point is much longer than the straight line, and the estimate says so.
+function GetNumRoutes(index) return index == 2 and 2 or 1 end
+function TaxiGetNodeSlot(index, route, source)
+  if index ~= 2 then return source and 1 or index end
+  if route == 1 then return source and 1 or 3 end
+  return source and 3 or 2
+end
+Pathwise.db.flightTimes = {}
+local straight = FlightTimer.Duration("Rut'theran Village, Teldrassil", "Auberdine, Darkshore")
+WoW.now = 2500
+TakeTaxiNode(2)
+UnitOnTaxi = function() return true end
+WoW.now = 2501
+WoW.RunTickers()
+local viaHops = FlightTimer:GetFlight()
+check("the estimate follows the route's hops (" .. tostring(straight) .. " s straight, "
+  .. tostring(viaHops and viaHops.duration) .. " s by the route)", viaHops and viaHops.estimated
+  and viaHops.duration > straight * 1.5)
+UnitOnTaxi = nil
+WoW.now = 2600
+WoW.RunTickers()
+GetNumRoutes, TaxiGetNodeSlot = nil, nil
 WoW.now = 3000
 TakeTaxiNode(3)
 WoW.now = 3010

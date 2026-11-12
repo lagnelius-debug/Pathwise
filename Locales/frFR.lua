@@ -672,6 +672,7 @@ Pathwise.Locales.frFR = {
   FEATURE_FLIGHT_TIMER = "Minuteur de vol sous la fenêtre À faire",
   FLIGHT_TIMER = "Vol vers %s · %s",
   FLIGHT_LANDING = "Atterrissage à %s",
+  FLIGHT_OVERDUE = "Vol vers %s · %s (plus long que prévu)",
   FEATURE_TRAINER = "Rappel du maître (ligne À faire et discussion)",
   FEATURE_TRAINER_PANEL = "Liste d'apprentissage à côté du grimoire",
   FEATURE_TALENTS = "Conseils de talents (ligne À faire et surbrillance dans la fenêtre des talents)",
