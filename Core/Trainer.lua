@@ -141,13 +141,25 @@ function Trainer:BuildList()
   local available, upcoming = {}, {}
   local willBeAvailable = {}
 
+  -- Learnable now: the previous rank and any required spell must be known,
+  -- or learnable in the same visit - whatever order they come in (Create
+  -- Healthstone (Minor) needs Drain Soul, both at 10: it was offered a
+  -- level late). Passes repeat until nothing new turns up.
+  local pending = {}
   for _, entry in ipairs(trainable) do
     local info = chainInfo[entry]
     -- Ranks of a talent spell only matter if the player has the talent.
     local talentOK = not info.base.talent or IsKnown(info.base)
-    if talentOK and ForPlayer(entry, snapshot) and not IsKnown(entry) then
-      if entry.level <= level then
-        -- The previous rank must be known, or learnable in the same visit.
+    if talentOK and ForPlayer(entry, snapshot) and not IsKnown(entry) and entry.level <= level then
+      pending[#pending + 1] = entry
+    end
+  end
+  local added = true
+  while added do
+    added = false
+    for _, entry in ipairs(pending) do
+      if not willBeAvailable[entry] then
+        local info = chainInfo[entry]
         local prevOK = not info.prev or willBeAvailable[info.prev] or IsKnown(info.prev)
         local required = entry.requires and byId[entry.requires]
         -- (A requirement the game no longer has can't be met: it's dropped.)
@@ -156,9 +168,23 @@ function Trainer:BuildList()
           or (required and (willBeAvailable[required] or IsKnown(required)))
         if prevOK and requiresOK then
           willBeAvailable[entry] = true
-          available[#available + 1] = MakeItem(entry, IsOptional(entry, snapshot.class, spec))
+          added = true
         end
-      elseif entry.level <= level + UPCOMING_LEVELS
+      end
+    end
+  end
+  -- (In level order, as the data is sorted.)
+  for _, entry in ipairs(pending) do
+    if willBeAvailable[entry] then
+      available[#available + 1] = MakeItem(entry, IsOptional(entry, snapshot.class, spec))
+    end
+  end
+
+  for _, entry in ipairs(trainable) do
+    local info = chainInfo[entry]
+    local talentOK = not info.base.talent or IsKnown(info.base)
+    if talentOK and ForPlayer(entry, snapshot) and not IsKnown(entry) then
+      if entry.level > level and entry.level <= level + UPCOMING_LEVELS
         -- (Not when it needs something from a class quest the player
         -- hasn't done, e.g. bear abilities without Bear Form.)
         and (not entry.requires or byId[entry.requires] or Platform.IsSpellKnown(entry.requires)) then
@@ -200,6 +226,27 @@ function Trainer.FormatName(item)
   return item.name
 end
 
+-- A cost as text: "?" when the game's data doesn't say (WoW Forever's
+-- spells that are talents in Classic, see Data/Forever/ClassSpells.lua).
+-- format: how to write a known amount (default Pathwise.FormatMoney).
+function Trainer.CostText(cost, format)
+  if cost == nil then
+    return L.TRAINER_COST_UNKNOWN
+  end
+  return (format or Pathwise.FormatMoney)(cost)
+end
+
+-- The total of a list as text, "+ ?" when some costs aren't known.
+function Trainer.TotalText(items, format)
+  local text = (format or Pathwise.FormatMoney)(Trainer.TotalCost(items))
+  for _, item in ipairs(items) do
+    if item.cost == nil then
+      return text .. " + " .. L.TRAINER_COST_UNKNOWN
+    end
+  end
+  return text
+end
+
 function Trainer.TotalCost(items)
   local total = 0
   for _, item in ipairs(items) do
@@ -226,7 +273,7 @@ local function Announce()
   if #list.optional > 0 then
     text = text .. string.format(L.TRAINER_PLUS_OPTIONAL, #list.optional)
   end
-  Pathwise:Printf(L.TRAINER_ANNOUNCE, text, Pathwise.FormatMoney(Trainer.TotalCost(recommended)))
+  Pathwise:Printf(L.TRAINER_ANNOUNCE, text, Trainer.TotalText(recommended))
 end
 
 local function UpdateNextSteps()
@@ -240,7 +287,7 @@ local function UpdateNextSteps()
     items[1] = {
       id = "trainer",
       priority = NextSteps.PRIORITY.TRAINER,
-      text = string.format(L.NS_TRAINER, #list.recommended, Pathwise.FormatMoney(Trainer.TotalCost(list.recommended))),
+      text = string.format(L.NS_TRAINER, #list.recommended, Trainer.TotalText(list.recommended)),
       detail = detail,
     }
   end
@@ -301,15 +348,15 @@ function Trainer:PrintList()
     Pathwise:Print(L.TRAINER_NONE)
   end
   if #list.recommended > 0 then
-    Pathwise:Printf(L.TRAINER_RECOMMENDED_HEADER, specName, Pathwise.FormatMoney(Trainer.TotalCost(list.recommended)))
+    Pathwise:Printf(L.TRAINER_RECOMMENDED_HEADER, specName, Trainer.TotalText(list.recommended))
     for _, item in ipairs(list.recommended) do
-      Pathwise:PrintLine(string.format("  %s - %s", Trainer.FormatName(item), Pathwise.FormatMoney(item.cost)))
+      Pathwise:PrintLine(string.format("  %s - %s", Trainer.FormatName(item), Trainer.CostText(item.cost)))
     end
   end
   if #list.optional > 0 then
-    Pathwise:PrintLine(string.format(L.TRAINER_OPTIONAL_HEADER, Pathwise.FormatMoney(Trainer.TotalCost(list.optional))))
+    Pathwise:PrintLine(string.format(L.TRAINER_OPTIONAL_HEADER, Trainer.TotalText(list.optional)))
     for _, item in ipairs(list.optional) do
-      Pathwise:PrintLine(string.format("  %s - %s", Trainer.FormatName(item), Pathwise.FormatMoney(item.cost)))
+      Pathwise:PrintLine(string.format("  %s - %s", Trainer.FormatName(item), Trainer.CostText(item.cost)))
     end
   end
   if #list.upcoming > 0 then

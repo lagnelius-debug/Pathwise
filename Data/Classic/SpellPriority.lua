@@ -71,6 +71,10 @@ Pathwise.Data.SpellPriority = {
     common = {
       ["Turn Undead"] = true,
     },
+    -- (WoW Forever's trainers teach Holy Shock: a healer's spell.)
+    LEVELING = { ["Holy Shock"] = true },
+    PROTECTION = { ["Holy Shock"] = true },
+    RETRIBUTION = { ["Holy Shock"] = true },
   },
   ROGUE = {
     common = {
@@ -88,7 +92,10 @@ Pathwise.Data.SpellPriority = {
     LEVELING = {
       ["Smite"] = true,
       ["Holy Fire"] = true,
+      ["Lightwell"] = true,
     },
+    -- (WoW Forever's trainers teach Lightwell: for group healers.)
+    SHADOW = { ["Lightwell"] = true },
   },
   SHAMAN = {
     common = {
@@ -122,7 +129,11 @@ Pathwise.Data.SpellPriority = {
     },
     LEVELING = {
       ["Searing Pain"] = true,
+      ["Conflagrate"] = true,
     },
+    -- (WoW Forever's trainers teach Conflagrate: a Destruction spell.)
+    AFFLICTION = { ["Conflagrate"] = true },
+    DEMONOLOGY = { ["Conflagrate"] = true },
   },
   DRUID = {
     common = {

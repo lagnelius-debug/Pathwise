@@ -205,6 +205,7 @@ Pathwise.Locales.frFR = {
   TRAINER_UPCOMING_HEADER = "Bientôt :",
   TRAINER_AT_LEVEL = "Niveau %d : %s",
   TRAINER_OPTIONAL_TAG = "(facultatif)",
+  TRAINER_COST_UNKNOWN = "?",
   PANEL_TITLE = "Pathwise : Apprentissage",
   PANEL_RECOMMENDED = "Recommandé pour %s",
   PANEL_OPTIONAL = "Facultatif (peut être sauté)",

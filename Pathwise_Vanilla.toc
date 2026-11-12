@@ -3,7 +3,7 @@
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
 ## X-Curse-Project-ID: 1767676
-## Version: 0.48.0
+## Version: 0.49.0
 ## OptionalDeps: QuestieDB
 ## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB
@@ -51,6 +51,7 @@ Data\Classic\ClassSpecs.lua
 Data\Classic\StatWeights.lua
 Data\Classic\ClassGear.lua
 Data\Classic\ClassSpells.lua
+Data\Forever\ClassSpells.lua
 Data\Classic\SpellPriority.lua
 Data\Classic\TalentBuilds.lua
 Data\Forever\TalentBuilds.lua

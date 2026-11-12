@@ -743,6 +743,35 @@ Pathwise:GetModule("Flights"):ReadDiscovered()
 check("flight points: one saved at the flight master stays there", flightNodes["Refuge Pointe, Arathi"] == exact)
 C_TaxiMap = nil
 
+-- Trainer: spells that are talents in Classic but that Forever's trainers
+-- teach (reported: Consecration and Blessing of Kings never showed).
+do
+  local Trainer = Pathwise:GetModule("Trainer")
+  local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
+  local saved = { class = snapshot.class, raceID = snapshot.raceID, faction = snapshot.faction, level = snapshot.level }
+  local known = WoW.knownSpells
+  WoW.knownSpells = {}
+  snapshot.class, snapshot.raceID, snapshot.faction, snapshot.level = "PALADIN", 1, "Alliance", 20
+  local names = {}
+  for _, item in ipairs(Trainer:BuildList().available) do
+    names[item.name] = item
+  end
+  check("Forever paladin at 20: Consecration and Blessing of Kings to learn",
+    names["Consecration"] ~= nil and names["Blessing of Kings"] ~= nil)
+  check("their cost isn't in the game's data: shown as \"?\"", names["Consecration"]
+    and Trainer.CostText(names["Consecration"].cost) == "?")
+  snapshot.level = 40
+  snapshot.raceID = 1
+  local holyShock
+  for _, item in ipairs(Trainer:BuildList().optional) do
+    if item.name == "Holy Shock" then holyShock = item end
+  end
+  check("Holy Shock: optional on the leveling path", holyShock ~= nil)
+  WoW.knownSpells = known
+  snapshot.class, snapshot.raceID, snapshot.faction, snapshot.level = saved.class, saved.raceID, saved.faction, saved.level
+  dofile("./tests/trainer_walk.lua")(WoW, Pathwise, check, "Forever")
+end
+
 check("no errors (" .. tostring(WoW.errors[1]) .. ")", #WoW.errors == 0)
 print(string.format("%d passed, %d failed", passed, failed))
 os.exit(failed == 0 and 0 or 1)

@@ -124,15 +124,15 @@ function TrainerPanel:Render()
   if #list.recommended > 0 then
     Add("header", string.format(L.PANEL_RECOMMENDED, specName))
     for _, item in ipairs(list.recommended) do
-      Add("item", Trainer.FormatName(item), MoneyText(item.cost or 0), item.id)
+      Add("item", Trainer.FormatName(item), Trainer.CostText(item.cost, MoneyText), item.id)
     end
-    Add("text", L.PANEL_TOTAL, MoneyText(Trainer.TotalCost(list.recommended)))
+    Add("text", L.PANEL_TOTAL, Trainer.TotalText(list.recommended, MoneyText))
   end
   if #list.optional > 0 then
     Add("spacer")
     Add("header", L.PANEL_OPTIONAL)
     for _, item in ipairs(list.optional) do
-      Add("item", Trainer.FormatName(item), MoneyText(item.cost or 0), item.id, true)
+      Add("item", Trainer.FormatName(item), Trainer.CostText(item.cost, MoneyText), item.id, true)
     end
   end
 

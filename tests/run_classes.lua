@@ -126,6 +126,9 @@ check("druid: cat abilities coming soon (Cat Form is a trainer spell)", Upcoming
 snapshot.class, snapshot.raceID, snapshot.faction, snapshot.level = saved.class, saved.raceID, saved.faction, saved.level
 Trainer:BuildList()
 
+-- Every trainer spell of every class shows up at its level.
+dofile("./tests/trainer_walk.lua")(WoW, Pathwise, check, "Classic Era")
+
 ---------------------------------------------------------------------------
 section("Classes: talent picks split over two steps")
 

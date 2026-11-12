@@ -3,6 +3,26 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.49.0
+
+- WoW Forever: spells that are talents in Classic but that Forever's
+  trainers teach now show up in the training list at their level -
+  Consecration and Blessing of Kings (20) and Holy Shock (40) for
+  paladins, Aimed Shot (20) and Trueshot Aura (40) for hunters, Divine
+  Spirit (30) and Lightwell (40) for priests, Conflagrate (40) for
+  warlocks, Nature's Grasp (10) for druids (reported: Consecration and
+  Blessing of Kings missing). They're the ones in none of Forever's talent
+  trees; their cost isn't in the game's data, so it shows as "?". Holy
+  Shock, Lightwell and Conflagrate are optional on the paths that don't use
+  them.
+- A spell that needs another one learned at the same visit is offered right
+  away, not a level later (Create Healthstone (Minor) with Drain Soul at
+  level 10).
+- Classic Era: Greater Blessing of Kings needs Blessing of Kings (the
+  talent) first.
+- New test: every class levels from 1 to 60 on Classic Era and Forever, and
+  every trainer spell must show up at the level it can be learned.
+
 ## 0.48.0
 
 - `/pw find <quest or NPC name>` points the arrow at a quest's giver or at

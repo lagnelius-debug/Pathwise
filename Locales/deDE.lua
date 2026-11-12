@@ -202,6 +202,7 @@ Pathwise.Locales.deDE = {
   TRAINER_UPCOMING_HEADER = "Bald:",
   TRAINER_AT_LEVEL = "Stufe %d: %s",
   TRAINER_OPTIONAL_TAG = "(optional)",
+  TRAINER_COST_UNKNOWN = "?",
   PANEL_TITLE = "Pathwise: Training",
   PANEL_RECOMMENDED = "Empfohlen für %s",
   PANEL_OPTIONAL = "Optional (auslassbar)",

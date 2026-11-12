@@ -405,7 +405,7 @@ Pathwise.Data.ClassSpells = {
     { id = 10293, name = "Devotion Aura", rank = 7, level = 60, cost = 46000 },
     { id = 10314, name = "Exorcism", rank = 6, level = 60, cost = 46000 },
     { id = 19900, name = "Fire Resistance Aura", rank = 3, level = 60, cost = 46000 },
-    { id = 25898, name = "Greater Blessing of Kings", level = 60, cost = 2070 },
+    { id = 25898, name = "Greater Blessing of Kings", level = 60, cost = 2070, requires = 20217 },
     { id = 25890, name = "Greater Blessing of Light", rank = 1, level = 60, cost = 46000, requires = 19979 }, -- needs Blessing of Light
     { id = 25916, name = "Greater Blessing of Might", rank = 2, level = 60, cost = 41400, requires = 25291 }, -- needs Blessing of Might
     { id = 25895, name = "Greater Blessing of Salvation", level = 60, cost = 46000, requires = 1038 }, -- needs Blessing of Salvation
