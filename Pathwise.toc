@@ -3,7 +3,7 @@
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
 ## X-Curse-Project-ID: 1767676
-## Version: 0.49.0
+## Version: 0.50.0
 ## OptionalDeps: QuestieDB
 ## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB
@@ -73,6 +73,7 @@ Core\QuestAdvisor.lua
 Core\AutoAccept.lua
 Core\DungeonGuide.lua
 Core\Flights.lua
+Core\FlightTimer.lua
 Core\Travel.lua
 Core\Waypoints.lua
 Core\TargetMacro.lua
@@ -96,6 +97,7 @@ UI\QuestRewardUI.lua
 UI\TrainerPanel.lua
 UI\TalentHighlight.lua
 UI\NextStepsFrame.lua
+UI\FlightTimerBar.lua
 UI\DungeonPicker.lua
 UI\Arrow.lua
 UI\TargetButton.lua

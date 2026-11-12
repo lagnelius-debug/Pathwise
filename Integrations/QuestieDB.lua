@@ -188,6 +188,10 @@ end
 -- QuestieDB's item class for trade goods (cloth, thread, metal, ...).
 local TRADE_GOODS_CLASS = 7
 
+local function HasEntries(list)
+  return type(list) == "table" and next(list) ~= nil
+end
+
 local function IsFinished(quest, name)
   if not name then
     return false
@@ -534,11 +538,14 @@ local function DoTarget(quest)
     if not IsFinished(quest, objective[2] or itemName) then
       local npcDrops, sellers, givers = DroppersAndSellers(objective[1], lib.Item.Get(objective[1], "npcDrops"))
       local objectDrops = lib.Item.Get(objective[1], "objectDrops")
-      -- Trade goods (cloth, thread, bolts, ...): crafted or bought, not
+      -- Crafted trade goods (bolts of cloth, ...): made or bought, not
       -- hunted - their drops are rare and their "objects" are random loot
-      -- containers (reported: "Collect Bolt of Woolen Cloth" on the way).
-      -- Only who sells or gives them is a place to go.
-      if lib.Item.Get(objective[1], "class") == TRADE_GOODS_CLASS then
+      -- containers or lockboxes (reported: "Collect Bolt of Woolen Cloth"
+      -- on the way). Only who sells or gives them is a place to go. (Not
+      -- meat, fins, eggs or silk: trade goods too, but dropped by the beasts
+      -- the quest sends you to, and never found in containers.)
+      if lib.Item.Get(objective[1], "class") == TRADE_GOODS_CLASS
+        and (HasEntries(objectDrops) or HasEntries(lib.Item.Get(objective[1], "itemDrops"))) then
         npcDrops, objectDrops = {}, nil
         if #sellers == 0 and #givers == 0 then
           AddTask(tasks, string.format(L.TASK_CRAFT_OR_BUY, itemName or "?"))
@@ -1404,18 +1411,19 @@ function QuestieData:Find(query)
         end
       end
       if #points > 0 then
-        local plain = {}
+        local plain, candidateOf = {}, {}
         for i, entry in ipairs(points) do
           plain[i] = entry.point
-          entry.point.findIndex = i
+          candidateOf[entry.point] = entry.candidate
         end
         local best = Nearest(plain)
-        local candidate = points[best.findIndex].candidate
+        local candidate = candidateOf[best]
+        -- (A copy: the giver's spots are kept for the pickups.)
         local target = {}
         for key, value in pairs(best) do
           target[key] = value
         end
-        target.findIndex, target.spawn = nil, nil
+        target.spawn = nil
         target.label = string.format(L.FIND_QUEST_LABEL, candidate.name, best.giver or "?")
         return { target = target, name = best.giver or "?", quest = candidate.name }
       end

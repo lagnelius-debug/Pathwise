@@ -3,6 +3,7 @@
 local WoW, Pathwise, check, section = ...
 local S = WoW.state
 
+local errorsAtStart = #WoW.errors
 local NextSteps = Pathwise:GetModule("NextSteps")
 local QuestieData = Pathwise:GetModule("QuestieData")
 local DungeonGuide = Pathwise:GetModule("DungeonGuide")
@@ -29,7 +30,10 @@ local dungeon = { id = 9500, name = "The Test Mines", min = L - 2, max = L + 5, 
   instance = 9550, bosses = { { "Mine Boss", "the deep end" }, { "Foreman Boss", "the office" } } }
 table.insert(Pathwise.Data.Dungeons, dungeon)
 local quests = {
-  [9600] = { name = "Pre-quest", requiredLevel = 1, questLevel = L, zoneOrSort = 141, startedBy = { { 9701 } } },
+  -- (Turned in far from its giver: in normal mode it would "lead away" -
+  -- reported crash: dungeon mode broke on such a quest in 0.47.0-0.49.0.)
+  [9600] = { name = "Pre-quest", requiredLevel = 1, questLevel = L, zoneOrSort = 141, startedBy = { { 9701 } },
+    finishedBy = { { 9704 } } },
   [9601] = { name = "Into the Mines", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, preQuestSingle = { 9600 },
     startedBy = { { 9702 } } },
   [9602] = { name = "Mine Quest", requiredLevel = 1, questLevel = L, zoneOrSort = 9500, startedBy = { { 9702 } },
@@ -78,6 +82,7 @@ local quests = {
 local npcs = {
   [9701] = { name = "Village Elder", spawns = { [141] = { { 58, 41 } } } },
   [9702] = { name = "Mine Foreman", spawns = { [141] = { { 60, 45 } } } },
+  [9704] = { name = "Far Away Sage", spawns = { [141] = { { 20, 20 } } } },
   [9801] = { name = "Mine Boss" },
   [9802] = { name = "Mine Rat" },
 }
@@ -115,7 +120,8 @@ check("its quests (for this race and class), not repeatable ones", #QuestieData:
 check("normal mode: the normal quest is suggested", Item("pickup:9604") ~= nil)
 -- Reported: Gyrodrillmatic Excavationators (Gnomeregan) suggested in
 -- normal mode. A dungeon's quests wait for dungeon mode.
-check("normal mode: not the dungeon's quests", Item("pickup:9602") == nil and Item("pickup:9600") ~= nil)
+-- (The pre-quest is turned in far away: in normal mode it waits.)
+check("normal mode: not the dungeon's quests", Item("pickup:9602") == nil and Item("pickup:9604") ~= nil)
 WoW.ClearChat()
 WoW.Slash("why mine quest")
 check("/pw why says it's a dungeon quest", WoW.ChatContains("a dungeon quest: dungeon mode suggests it"))
@@ -146,6 +152,8 @@ window:FitTitle()
 _, size = window.title:GetFont()
 check("room again: full size", size == 16)
 check("the mode button offers the normal guide", window.dungeons.text:GetText() == "Normal mode")
+check("a pre-quest turned in far away: no error, and nothing \"leads away\" in dungeon mode",
+  #WoW.errors == errorsAtStart and Item("pickup:9600") ~= nil and not Item("pickup:9600").leadsAway)
 local pre, own = Item("pickup:9600"), Item("pickup:9602")
 check("the pre-quest to pick up, marked as one", pre ~= nil and pre.detail[#pre.detail]:find("pre-quest", 1, true) ~= nil)
 check("the dungeon's own quest to pick up", own ~= nil)

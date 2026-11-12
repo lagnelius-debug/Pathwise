@@ -3,6 +3,25 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.50.0
+
+- Flight timer: when you take a flight, a bar under the To-do window counts
+  down to the landing ("Flying to Stormwind · 1:23") and goes away when
+  you land. The first flight on a route is an estimate from the distance
+  ("~1:23"); after that Pathwise knows the route's real time (saved for
+  all your characters). It can be switched off on the Features page.
+
+Bug check of 0.46.0-0.49.0:
+- Fixed: dungeon mode could stop updating (a Lua error) when one of the
+  dungeon's quests is turned in far from where it's picked up - The
+  Deadmines, Blackfathom Deeps, Gnomeregan and others (since 0.47.0).
+- Fixed: quests that need meat, fins, eggs or spider silk had lost their
+  hunting spots since 0.47.1 (they're "trade goods" too). Only crafted ones
+  found in loot containers, like Bolt of Woolen Cloth, say "make or buy".
+- Starting areas only hold a character up to level 12 (a higher one passing
+  through Northshire gets the usual suggestions).
+- /pw find no longer changes Pathwise's saved quest giver spots.
+
 ## 0.49.0
 
 - WoW Forever: spells that are talents in Classic but that Forever's

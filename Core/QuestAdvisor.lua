@@ -522,9 +522,10 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
       local leadsAway = QuestAdvisor.PickupLeadsAway(pickup)
       if leadsAway then
         local finish = pickup.finishPoint
-        detail[#detail + 1] = finish and finish.npcName
-          and string.format(L.QA_PICKUP_LEADS_ON, finish.npcName, Platform.GetMapName(pickup.finishMapID) or "?")
-          or string.format(L.QA_PICKUP_LEADS_AWAY, Platform.GetMapName(pickup.finishMapID) or "?")
+        local finishMap = pickup.finishMapID or (finish and finish.mapID)
+        local mapName = finishMap and Platform.GetMapName(finishMap) or "?"
+        detail[#detail + 1] = finish and finish.npcName and string.format(L.QA_PICKUP_LEADS_ON, finish.npcName, mapName)
+          or string.format(L.QA_PICKUP_LEADS_AWAY, mapName)
       end
       if pickup.note then
         detail[#detail + 1] = pickup.note
@@ -647,6 +648,10 @@ function QuestAdvisor.FocusZone(work, currentZone)
   return scores[1] and scores[1].score > 0 and scores[1].zone or nil,
     scores[2] and scores[2].score > 0 and scores[2].zone or nil
 end
+
+-- The starting areas only hold a character up to this level (a higher one
+-- passing through Northshire isn't kept there).
+QuestAdvisor.START_AREA_MAX_LEVEL = 12
 
 -- The starting area (Data.StartAreas) a map position is in, or nil.
 function QuestAdvisor.StartAreaAt(mapID, x, y)
@@ -1179,7 +1184,8 @@ local function DungeonPlan(dungeon, quests, level, greenRange, location, Locate)
     ctx.outOfRange = QuestAdvisor.DungeonOutOfRange(level, greenRange, belongs.quests, belongs.inDungeon)
     local pickups = Pathwise:GetModule("QuestieData"):GetPickups(ctx, DUNGEON_MAX_PICKUPS) or {}
     for _, pickup in ipairs(pickups) do
-      pickup.finishMapID = nil
+      -- (Dungeon mode routes everything as one trip: nothing "leads away".)
+      pickup.finishMapID, pickup.finishPoint, pickup.leadsAway = nil, nil, false
       if not belongs.inDungeon[pickup.questID] then
         pickup.note = string.format(L.DUNGEON_PREQUEST, dungeon.name)
       end
@@ -1296,7 +1302,7 @@ function QuestAdvisor:Update()
           pickups = {}
         else
           pickups = QuestAdvisor.FocusPickups(pool, focus, nextZone, QuestAdvisor.MAX_PICKUPS, ongoing > 0,
-            QuestAdvisor.StartAreaAt(mapID, x, y))
+            level <= QuestAdvisor.START_AREA_MAX_LEVEL and QuestAdvisor.StartAreaAt(mapID, x, y) or nil)
         end
         -- Questing moves on to another area: say where, and why there.
         if focus and mapID and focus ~= Travel.ZoneGroup(mapID) then

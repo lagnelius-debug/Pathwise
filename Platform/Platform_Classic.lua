@@ -978,6 +978,22 @@ end
 -- The Hearthstone spell (cast when the item is used).
 Platform.HEARTHSTONE_SPELL = 8690
 
+-- Calls fn(nodeIndex) when the player picks a destination on an open
+-- flight map (TakeTaxiNode; Classic's taxi map and Forever's flight map
+-- both use it). False when the client has no such function.
+function Platform.HookTaxiTakeoff(fn)
+  if type(TakeTaxiNode) ~= "function" or not hooksecurefunc then
+    return false
+  end
+  hooksecurefunc("TakeTaxiNode", fn)
+  return true
+end
+
+-- The name of a node on the open flight map ("Stormwind, Elwynn"), or nil.
+function Platform.GetTaxiNodeName(index)
+  return TaxiNodeName and TaxiNodeName(index) or nil
+end
+
 -- True while the player is on a flight.
 function Platform.IsOnTaxi()
   return UnitOnTaxi and UnitOnTaxi("player") and true or false
@@ -1021,7 +1037,8 @@ function Platform.CoinText(copper)
 end
 
 function Platform.GetMapName(mapID)
-  if C_Map and C_Map.GetMapInfo then
+  -- (C_Map.GetMapInfo raises an error for nil.)
+  if mapID and C_Map and C_Map.GetMapInfo then
     local info = C_Map.GetMapInfo(mapID)
     return info and info.name
   end

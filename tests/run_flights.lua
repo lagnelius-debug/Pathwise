@@ -116,6 +116,62 @@ check("in the air: straight at the target", via == nil)
 UnitOnTaxi = nil
 Waypoints:ClearManual()
 
+---------------------------------------------------------------------------
+section("Flights: the flight timer")
+
+-- Asked for in game: a bar under the To-do window that counts down while
+-- flying and ends on landing.
+local FlightTimer = Pathwise:GetModule("FlightTimer")
+local bar = _G.PathwiseFlightTimer
+Pathwise.db.flightTimes = {}
+At(1438, 0.58, 0.93)
+WoW.now = 1000
+TakeTaxiNode(2) -- Rut'theran Village -> Auberdine
+WoW.RunTickers()
+check("picked, not in the air yet: no bar", not bar:IsShown())
+UnitOnTaxi = function() return true end
+WoW.now = 1001
+WoW.RunTickers()
+local first = FlightTimer:GetFlight()
+check("flying: the bar, an estimate from the distance (" .. tostring(bar.text:GetText()) .. ")", bar:IsShown()
+  and first and first.estimated and first.duration > 20
+  and bar.text:GetText():find("^Flying to Auberdine · ~%d+:%d%d$") ~= nil and bar._value == 1)
+WoW.now = 1001 + first.duration / 2
+WoW.RunTickers()
+check("halfway: half full", bar._value and math.abs(bar._value - 0.5) < 0.02)
+WoW.now = 1001 + first.duration + 5
+WoW.RunTickers()
+check("past the estimate, still flying: landing", bar.text:GetText() == "Landing in Auberdine" and bar._value == 0)
+UnitOnTaxi = nil
+WoW.now = 1001 + 75
+WoW.RunTickers()
+check("landed: the bar goes, the real time is learned", not bar:IsShown()
+  and Pathwise.db.flightTimes["Rut'theran Village, Teldrassil > Auberdine, Darkshore"] == 75)
+WoW.now = 2000
+TakeTaxiNode(2)
+UnitOnTaxi = function() return true end
+WoW.now = 2001
+WoW.RunTickers()
+check("next time: the learned time, no \"~\" (" .. tostring(bar.text:GetText()) .. ")",
+  bar.text:GetText() == "Flying to Auberdine · 1:15")
+UnitOnTaxi = nil
+WoW.now = 2008
+WoW.RunTickers()
+check("a flight cut short isn't learned", Pathwise.db.flightTimes["Rut'theran Village, Teldrassil > Auberdine, Darkshore"] == 75)
+WoW.now = 3000
+TakeTaxiNode(3)
+WoW.now = 3010
+WoW.RunTickers()
+check("picked but never took off: nothing", FlightTimer:GetFlight() == nil and not bar:IsShown())
+Pathwise.db.flightTimer = false
+TakeTaxiNode(2)
+UnitOnTaxi = function() return true end
+WoW.RunTickers()
+check("switched off on the Features page: no bar", not bar:IsShown())
+UnitOnTaxi = nil
+WoW.RunTickers()
+Pathwise.db.flightTimer = true
+
 -- Without known flight points: on foot as before
 Pathwise.charDB.flightNodes = {}
 Flights:ClearCache()

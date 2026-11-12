@@ -200,12 +200,22 @@ check("target macro gets the mobs", together.names[1] == "Timberling")
 
 -- Reported: "On the way: Collect Bolt of Woolen Cloth" - a trade good
 -- QuestieDB lists in random loot containers. Crafted or bought, not hunted.
-db.Quest[923] = { finishedBy = { { 1240 } }, objectives = { nil, nil, { { 2997, nil, 1 } } } }
+-- (The cloak also needs Yeti Fur: that part keeps its spots.)
+db.Quest[923] = { finishedBy = { { 1240 } }, objectives = { nil, nil, { { 2997, nil, 1 }, { 5168, nil, 2 } } } }
 db.Item[2997] = { name = "Bolt of Woolen Cloth", class = 7, objectDrops = { 600 }, npcDrops = { 2022 } }
-local cloth = QuestieData:GetTarget({ questID = 923, title = "Cloak", objectives = { { text = "Bolt of Woolen Cloth: 0/1" } } },
+local errorsBefore = #WoW.errors
+local cloth = QuestieData:GetTarget({ questID = 923, title = "Cloak",
+  objectives = { { text = "Bolt of Woolen Cloth: 0/1" }, { text = "Timberling Seed: 0/8" } } }, "do")
+local clothTasks = cloth and table.concat(cloth.tasks or {}, "|") or ""
+check("a crafted trade good: not hunted, made or bought (" .. clothTasks .. ")", cloth ~= nil
+  and clothTasks:find("Make or buy Bolt of Woolen Cloth", 1, true) ~= nil
+  and not clothTasks:find("Collect Bolt", 1, true) and #WoW.errors == errorsBefore)
+-- Meat, fins, eggs: trade goods too, but dropped by the quest's beasts.
+db.Quest[924] = { finishedBy = { { 1240 } }, objectives = { nil, nil, { { 2672, nil, 1 } } } }
+db.Item[2672] = { name = "Stringy Wolf Meat", class = 7, npcDrops = { 2022 } }
+local meat = QuestieData:GetTarget({ questID = 924, title = "Wolf Stew", objectives = { { text = "Stringy Wolf Meat: 0/5" } } },
   "do")
-check("a trade good: no spots to hunt it at (" .. tostring(cloth and cloth.label) .. ")",
-  cloth == nil or not cloth.spawnPoints or #cloth.spawnPoints == 0)
+check("meat a beast drops: still hunted", meat ~= nil and table.concat(meat.tasks or {}, "|"):find("Kill Timberling", 1, true) ~= nil)
 
 -- The Next Steps window lists each quest with its tasks under the current step
 Pathwise:GetModule("NextStepsFrame"):SetShown(true)

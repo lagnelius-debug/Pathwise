@@ -148,6 +148,12 @@ function FrameMethods:SetTexture(path) self._texture = path end
 function FrameMethods:SetTexCoord(...) self._texcoord = { ... } end
 function FrameMethods:SetColorTexture(r, g, b, a) self._colorTexture = { r, g, b, a } end
 function FrameMethods:SetBackdrop(backdrop) self._backdrop = backdrop end
+-- Status bars.
+function FrameMethods:SetStatusBarTexture(path) self._barTexture = path end
+function FrameMethods:SetStatusBarColor(r, g, b, a) self._barColor = { r, g, b, a } end
+function FrameMethods:SetMinMaxValues(low, high) self._min, self._max = low, high end
+function FrameMethods:SetValue(value) self._value = value end
+function FrameMethods:GetValue() return self._value end
 function FrameMethods:SetBackdropColor(r, g, b, a) self._backdropColor = { r, g, b, a } end
 function FrameMethods:SetBackdropBorderColor(r, g, b, a) self._borderColor = { r, g, b, a } end
 function FrameMethods:SetTextColor(r, g, b) self._textColor = { r, g, b } end
@@ -298,6 +304,8 @@ MerchantFrame._shown = false
 ---------------------------------------------------------------------------
 
 WoW.tickers = {}
+-- The flight map's "fly there" (hooked by Pathwise's flight timer).
+function TakeTaxiNode(index) WoW.takenTaxiNode = index end
 C_Timer = {
   After = function(seconds, fn)
     WoW.timers[#WoW.timers + 1] = fn
