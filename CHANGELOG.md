@@ -3,6 +3,19 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.54.2
+
+- Questlines: the "questing here" rule counts every quest of the area you're
+  in - also the ones that are part of a questline themselves (a chain in
+  this area), and ones whose place isn't known (reputation quests), by
+  the zone the quest log lists them under. Only the questline elsewhere
+  waits (reported: in Desolace, with Strange Alliance and Brutal Politics
+  taken as follow-ups, the guide went back to the Sealed Folder in
+  Hillsbrad).
+- Dungeon mode plans its quests as one trip, without a questline first.
+- /pw bug: each step's priority, and the questline (which quests, how
+  many quests in your area, whether it waits).
+
 ## 0.54.1
 
 - Questlines: they wait while you're questing somewhere else - with three

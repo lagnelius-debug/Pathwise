@@ -150,6 +150,25 @@ S.mapID, S.mapX, S.mapY = 1439, 0.40, 0.50
 UpdateLog({ Log(8104, "Near Work"), Log(8107, "Near Work Two"), Log(8108, "Near Work Three"), Log(8102, "Chain Next") })
 check("moved on (Darkshore): the questline first again", Item("quest:8102").priority == P.QUEST_CHAIN)
 S.mapID, S.mapX, S.mapY = 1438, 0.58, 0.40
+-- Quests whose place isn't known (reputation quests) count by the zone the
+-- quest log lists them under.
+local function Unplaced(id) return { title = "Unplaced " .. id, level = L, questID = id, zone = S.zone,
+  objectives = { { text = "Some Clan: Neutral / Friendly" } } } end
+UpdateLog({ { header = true, title = S.zone }, Unplaced(8301), Unplaced(8302), Log(8104, "Near Work"),
+  { header = true, title = "Hillsbrad Foothills" }, Log(8102, "Chain Next") })
+check("quests listed under this zone without a known place count too",
+  Item("quest:8102").priority ~= P.QUEST_CHAIN and QuestAdvisor:GetQuestlineState().localWork == 3)
+UpdateLog({ { header = true, title = "Darkshore" }, { title = "Elsewhere", level = L, questID = 8303,
+  objectives = { { text = "Some Clan: Neutral / Friendly" } } }, Log(8104, "Near Work"), Log(8102, "Chain Next") })
+check("... not the ones listed under another zone", Item("quest:8102").priority == P.QUEST_CHAIN)
+-- Reported: Desolace's own follow-ups were questline quests too, so they
+-- didn't count as questing here, and the far questline came first again.
+Pathwise.charDB.questline = { [8102] = true, [8104] = true, [8107] = true }
+UpdateLog({ Log(8104, "Near Work"), Log(8107, "Near Work Two"), Log(8108, "Near Work Three"), Log(8102, "Chain Next") })
+check("questline quests here count as questing here: the far one waits",
+  Item("quest:8102").priority ~= P.QUEST_CHAIN and QuestAdvisor:GetQuestlineState().localWork == 3
+  and Position("quest:8104") < Position("quest:8102") and Position("quest:8107") < Position("quest:8102"))
+Pathwise.charDB.questline = { [8102] = true }
 -- Next on the questline's step: it no longer comes first.
 Pathwise:FireCallback("STEP_SKIPPED", "quest:8102")
 WoW.RunTimers()

@@ -59,8 +59,17 @@ function BugReport:Build()
   Add("")
   Add("To-do (%d steps):", #items)
   for i = 1, math.min(#items, MAX_STEPS) do
-    Add("- [%s] %s", tostring(items[i].id), Plain(items[i].text))
+    Add("- [%s %s] %s", tostring(items[i].id), tostring(items[i].priority or "?"), Plain(items[i].text))
   end
+  -- The questline the player is on (QuestAdvisor), and whether it waits.
+  local questline = {}
+  for questID in pairs(Pathwise.charDB and Pathwise.charDB.questline or {}) do
+    questline[#questline + 1] = tostring(questID)
+  end
+  table.sort(questline)
+  local state = Pathwise:GetModule("QuestAdvisor"):GetQuestlineState()
+  Add("Questline: %s%s", #questline > 0 and table.concat(questline, ", ") or "none",
+    state and string.format(" (%d quests here, %s)", state.localWork, state.waits and "waits" or "first") or "")
 
   -- Quests nearby the guide doesn't suggest, and why.
   local okNearby, nearby = pcall(Pathwise:GetModule("QuestAdvisor").NearbyNotSuggested,

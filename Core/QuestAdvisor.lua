@@ -95,6 +95,13 @@ QuestAdvisor.QUESTLINE_PICKUPS = 3
 -- on purpose, to the questline's hard Sealed Folder in Hillsbrad).
 QuestAdvisor.QUESTLINE_LOCAL_WORK = 3
 local recentTurnIns = {} -- [questID] = time it was turned in
+local questlineState -- { localWork, waits } of the last plan (/pw bug)
+
+-- How the questline stood at the last plan: { localWork = quests under way
+-- in the player's area, waits = true when they come first }, or nil.
+function QuestAdvisor:GetQuestlineState()
+  return questlineState
+end
 local logBefore -- [questID] = true: the quest log at the last plan
 
 -- Quests turned in within QUESTLINE_SECONDS: list of IDs.
@@ -1368,6 +1375,12 @@ function QuestAdvisor:Update()
   local level = snapshot.level or 1
   local quests, collapsed = QuestAdvisor.Guided(Platform.GetQuestLog())
   local recentTurnIns = MarkQuestline(quests)
+  -- (Dungeon mode plans one trip: no questline first there.)
+  if inside or dungeon then
+    for _, quest in ipairs(quests) do
+      quest.questline = nil
+    end
+  end
   local zone = snapshot.zone or {}
   local mapID, x, y = Platform.GetPlayerMapPosition()
   local location = { zone = zone.zone, subZone = zone.subZone, mapID = mapID, x = x, y = y }
@@ -1416,20 +1429,30 @@ function QuestAdvisor:Update()
     -- Questing here (enough quests under way in this area, apart from the
     -- questline): the questline waits until the player moves on.
     local here = mapID and Pathwise:GetModule("Travel").ZoneGroup(mapID)
-    -- (Quests to do or turn in here, at a known place: red and grey ones
-    -- aren't work.)
-    local localWork = 0
+    -- (Quests to do or turn in here - at a known place in this area, or
+    -- listed under this zone in the quest log when their place isn't known,
+    -- like reputation quests; red and grey ones aren't work.)
+    -- Questline quests here count too (a chain in this area is questing
+    -- here - reported: Desolace's own follow-ups left out, and the
+    -- questline in Hillsbrad came first again).
+    local localWork, isHere = 0, {}
     for _, quest in ipairs(here and quests or {}) do
-      local kind = not quest.questline and TargetKind(quest, QuestAdvisor.Difficulty(quest.level, level, greenRange))
+      local kind = TargetKind(quest, QuestAdvisor.Difficulty(quest.level, level, greenRange))
       local target = kind and LocateOnce(quest, kind)
-      if target and Pathwise:GetModule("Travel").ZoneGroup(target.mapID) == here then
+      if kind and (target and Pathwise:GetModule("Travel").ZoneGroup(target.mapID) == here
+        or not target and quest.zone ~= nil and quest.zone == zone.zone) then
         localWork = localWork + 1
+        isHere[quest] = true
       end
     end
     local questlineWaits = localWork >= QuestAdvisor.QUESTLINE_LOCAL_WORK
+    questlineState = { localWork = localWork, waits = questlineWaits }
     if questlineWaits then
+      -- (Only the questline elsewhere waits.)
       for _, quest in ipairs(quests) do
-        quest.questline = nil
+        if not isHere[quest] then
+          quest.questline = nil
+        end
       end
     end
     local pickups, focus, areaItem
