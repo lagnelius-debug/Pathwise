@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.51.0
+
+- Flight timer: the first flight on a route now counts down from a real
+  recorded time - about 880 Classic routes for both factions (e.g.
+  Stormwind to Booty Bay 4:05), from the flight times InFlight's players
+  recorded (MIT License). A route through flight points that are only
+  recorded in parts adds the parts up (shown with "~"). Routes with no
+  record (WoW Forever's own flight points) are estimated as before, and
+  every flight that lands still saves your own time, which wins next
+  time (reported: the timer was still off).
+
 ## 0.50.1
 
 - Flight timer: the first flight on a route is estimated from the route the

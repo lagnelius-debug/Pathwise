@@ -1007,6 +1007,59 @@ function Platform.GetTaxiRouteHops(index)
   return #hops > 0 and hops or nil
 end
 
+-- The taxi node IDs (TaxiNodes.db2) of the open flight map's slots:
+-- [slot] = nodeID, or nil.
+local function TaxiNodeIDs()
+  if not (C_TaxiMap and C_TaxiMap.GetAllTaxiNodes) then
+    return nil
+  end
+  local mapID
+  if FlightMapFrame and FlightMapFrame.GetMapID then
+    mapID = FlightMapFrame:GetMapID()
+  end
+  if not mapID and GetTaxiMapID then
+    mapID = GetTaxiMapID()
+  end
+  if not mapID then
+    return nil
+  end
+  local ok, nodes = pcall(C_TaxiMap.GetAllTaxiNodes, mapID)
+  if not ok or type(nodes) ~= "table" then
+    return nil
+  end
+  local ids = {}
+  for _, node in ipairs(nodes) do
+    if node.slotIndex and node.nodeID then
+      ids[node.slotIndex] = node.nodeID
+    end
+  end
+  return ids
+end
+
+-- The flight to a node on the open flight map as taxi node IDs, from the
+-- flight point the player is at through the ones in between to the
+-- destination: { fromID, ..., toID }, or nil.
+function Platform.GetTaxiRoute(index)
+  if not (GetNumRoutes and TaxiGetNodeSlot) then
+    return nil
+  end
+  local ids = TaxiNodeIDs()
+  local hops = GetNumRoutes(index) or 0
+  if not ids or hops < 1 then
+    return nil
+  end
+  local route = { ids[TaxiGetNodeSlot(index, 1, true)] }
+  for hop = 1, hops do
+    route[hop + 1] = ids[TaxiGetNodeSlot(index, hop, false)]
+  end
+  for i = 1, hops + 1 do
+    if not route[i] then
+      return nil
+    end
+  end
+  return route
+end
+
 -- The name of a node on the open flight map ("Stormwind, Elwynn"), or nil.
 function Platform.GetTaxiNodeName(index)
   return TaxiNodeName and TaxiNodeName(index) or nil

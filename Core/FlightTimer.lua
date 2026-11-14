@@ -1,10 +1,11 @@
 local addonName, Pathwise = ...
 
--- How long the current flight takes. The game doesn't say, so the first
--- flight on a route is estimated from the distance between its flight
--- points (marked as an estimate); every flight that lands saves its real
--- time (Pathwise.db.flightTimes, shared by every character: routes don't
--- change), so the next one on that route counts down exactly.
+-- How long the current flight takes. The game doesn't say: the time comes
+-- from the player's own flights (every flight that lands saves its real
+-- time in Pathwise.db.flightTimes, shared by every character: routes don't
+-- change), else from the times InFlight's players recorded
+-- (Data/Classic/FlightTimes.lua), else it's estimated from the route on
+-- the flight map (marked as an estimate).
 -- UI/FlightTimerBar.lua shows it under the To-do window.
 
 local Platform = Pathwise.Platform
@@ -73,6 +74,38 @@ function FlightTimer.EstimateFromHops(hops)
   return math.floor(yards * FlightTimer.PATH_FACTOR / FlightTimer.SPEED + FlightTimer.OVERHEAD * #hops + 0.5)
 end
 
+-- The recorded time of a flight (Data.FlightTimes) along a route of taxi
+-- node IDs ({ fromID, ..., toID }, Platform.GetTaxiRoute) for a faction:
+-- the whole flight's, or else the sum of recorded parts of it (an
+-- estimate: second result true), or nil.
+function FlightTimer.RecordedTime(route, faction)
+  local times = Pathwise.Data.FlightTimes and Pathwise.Data.FlightTimes[faction]
+  if not (times and route and #route >= 2) then
+    return nil
+  end
+  local whole = times[route[1]] and times[route[1]][route[#route]]
+  if whole then
+    return whole, false
+  end
+  -- From each point, the furthest one along the route with a time.
+  local total, i = 0, 1
+  while i < #route do
+    local from, j = times[route[i]], nil
+    for k = #route, i + 1, -1 do
+      if from and from[route[k]] then
+        j = k
+        break
+      end
+    end
+    if not j then
+      return nil
+    end
+    total = total + from[route[j]]
+    i = j
+  end
+  return total, true
+end
+
 -- The player picked a destination on the flight map.
 function FlightTimer:OnTakeoff(index)
   if not Pathwise.db.flightTimer then
@@ -88,15 +121,22 @@ function FlightTimer:OnTakeoff(index)
       from = node.name
     end
   end
+  -- Flown before: the learned time. Else the recorded one, or the sum of
+  -- recorded parts of the route; else an estimate from the route's hops or
+  -- the straight line - the longer one, as too short is the worse mistake.
   local duration, estimated = FlightTimer.Duration(from, to)
   if estimated ~= false then
-    -- (Not learned yet: the route's hops, or the straight line - the longer
-    -- one, as too short is the worse mistake.)
-    local hops = FlightTimer.EstimateFromHops(Platform.GetTaxiRouteHops(index))
-    if hops and (not duration or hops > duration) then
-      duration = hops
+    local faction = Pathwise:GetModule("Character"):GetSnapshot().faction
+    local recorded, partly = FlightTimer.RecordedTime(Platform.GetTaxiRoute(index), faction)
+    if recorded then
+      duration, estimated = recorded, partly
+    else
+      local hops = FlightTimer.EstimateFromHops(Platform.GetTaxiRouteHops(index))
+      if hops and (not duration or hops > duration) then
+        duration = hops
+      end
+      estimated = duration ~= nil
     end
-    estimated = duration ~= nil
   end
   flight = { from = from, to = to, picked = Platform.GetTime(), duration = duration, estimated = estimated }
   Pathwise:FireCallback("FLIGHT_TIMER")

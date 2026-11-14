@@ -433,6 +433,7 @@ From docs/PATHWISE_THEMES_V4.md. **Fully restart WoW** first (not just `/reload`
 - Quest locations can come from [QuestieDB](https://github.com/Questie/QuestieDB) (GPL-3.0). It's an optional dependency read at runtime through its public `LibQuestieDB` API; Pathwise ships none of its data.
 - Pet ability ranks and the beasts that teach them come from [LibTameable-1.0](https://github.com/Langmans/LibTameable-1.0) by Langmans (GPL-3.0), embedded in `Libs/` with its license. Its data is built from [CMaNGOS](https://github.com/cmangos) (GPL-3.0) and Tamed (MIT; see `Libs/LibTameable-1.0/Data/Tamed-LICENSE.txt`). [LibStub](https://www.wowace.com/projects/libstub) is public domain.
 - Class trainer data (`Data/Classic/ClassSpells.lua`) is based on [WhatsTraining](https://github.com/fusionpit/WhatsTraining) by fusionpit, MIT License. English spell names for the other classes come from the [vmangos](https://github.com/vmangos/core) world database.
+- Flight times (`Data/Classic/FlightTimes.lua`) come from the recorded Classic times of [InFlight](https://github.com/LudiusMaximus/InFlight) by TotalPackage, Deranjata and LudiusMaximus, MIT License (notice in the file). `tools/import_flight_times.py` rebuilds the file from InFlight's `Defaults.lua`.
 - Talent positions in the builds were checked against the Classic talent data of [wowsims](https://github.com/wowsims/sod) (MIT).
 - The `tests/` and `docs/` folders aren't listed in the TOC, so WoW ignores them.
 

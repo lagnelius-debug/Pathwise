@@ -186,6 +186,60 @@ check("the estimate follows the route's hops (" .. tostring(straight) .. " s str
 UnitOnTaxi = nil
 WoW.now = 2600
 WoW.RunTickers()
+-- Recorded times (Data/Classic/FlightTimes.lua, by taxi node ID): the
+-- first flight on a route counts down from what InFlight's players
+-- recorded (reported: the estimate was still off, e.g. to Booty Bay).
+local RecordedTime = FlightTimer.RecordedTime
+Pathwise.Data.FlightTimes.Test = { [1] = { [2] = 10, [3] = 25 }, [3] = { [4] = 40 } }
+local whole, partly = RecordedTime({ 1, 2 }, "Test")
+check("recorded: the whole flight's time", whole == 10 and partly == false)
+whole, partly = RecordedTime({ 1, 2, 3, 4 }, "Test")
+check("else the recorded parts of the route, added up (an estimate)", whole == 65 and partly == true)
+check("a part not recorded: nothing", RecordedTime({ 1, 5, 4 }, "Test") == nil
+  and RecordedTime({ 1 }, "Test") == nil and RecordedTime(nil, "Test") == nil and RecordedTime({ 1, 2 }, "Nobody") == nil)
+Pathwise.Data.FlightTimes.Test = nil
+check("the real data: Stormwind to Booty Bay 4:05 (Alliance), the Horde's own",
+  RecordedTime({ 2, 19 }, "Alliance") == 245 and RecordedTime({ 27, 26 }, "Horde") == nil
+  and RecordedTime({ 27, 26 }, "Alliance") == 86)
+local taxiIDs = { 27, 26, 999 } -- Rut'theran, Auberdine, Southern Point (none recorded)
+C_TaxiMap = { GetAllTaxiNodes = function(mapID)
+  local nodes = {}
+  for slot, id in ipairs(taxiIDs) do nodes[#nodes + 1] = { slotIndex = slot, nodeID = id } end
+  return mapID == 1414 and nodes or {}
+end }
+GetTaxiMapID = function() return 1414 end
+-- Points not recorded (Forever's own, say): the estimate from the hops.
+taxiIDs = { 27, 998, 999 }
+Pathwise.db.flightTimes = {}
+WoW.now = 2700
+TakeTaxiNode(2)
+UnitOnTaxi = function() return true end
+WoW.now = 2701
+WoW.RunTickers()
+local f = FlightTimer:GetFlight()
+check("a route not recorded: estimated from its hops (" .. tostring(f and f.duration) .. " vs " .. tostring(straight) .. ", " .. tostring(f and f.estimated) .. ")", f and f.estimated and f.duration > straight * 1.5)
+UnitOnTaxi = nil
+WoW.now = 2800
+WoW.RunTickers()
+-- Straight there: recorded, exact.
+taxiIDs = { 27, 26, 999 }
+Pathwise.db.flightTimes = {}
+GetNumRoutes = function() return 1 end
+TaxiGetNodeSlot = function(index, route, source) return source and 1 or index end
+WoW.now = 2900
+TakeTaxiNode(2)
+UnitOnTaxi = function() return true end
+WoW.now = 2901
+WoW.RunTickers()
+f = FlightTimer:GetFlight()
+check("recorded: counts down from it, no \"~\" (" .. tostring(bar.text:GetText()) .. ")",
+  f and f.duration == 86 and f.estimated == false and bar.text:GetText() == "Flying to Auberdine · 1:26")
+UnitOnTaxi = nil
+WoW.now = 2990
+WoW.RunTickers()
+check("landed: the player's own time is learned (it wins next time)",
+  Pathwise.db.flightTimes["Rut'theran Village, Teldrassil > Auberdine, Darkshore"] == 89)
+C_TaxiMap, GetTaxiMapID = nil, nil
 GetNumRoutes, TaxiGetNodeSlot = nil, nil
 WoW.now = 3000
 TakeTaxiNode(3)
