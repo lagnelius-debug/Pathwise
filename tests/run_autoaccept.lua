@@ -16,7 +16,14 @@ local quests = {
   [8002] = { name = "Grey Quest", requiredLevel = 1, questLevel = 1, startedBy = { { 9301 } } },
   [8003] = { name = "Chain Follow-up", requiredLevel = 1, questLevel = L, preQuestSingle = { 8001 },
     startedBy = { { 9302 } } },
+  [8004] = { name = "Deadmines Quest", requiredLevel = 1, questLevel = L, zoneOrSort = 1581,
+    startedBy = { { 9301 } } },
+  -- Not tagged with the dungeon in QuestieDB: listed by ID in Pathwise's
+  -- dungeon data (as The Drowned City's on WoW Forever).
+  [8005] = { name = "Untagged Deadmines Quest", requiredLevel = 1, questLevel = L, startedBy = { { 9301 } } },
 }
+local deadmines = Pathwise:GetModule("DungeonGuide").Get(1581)
+deadmines.quests = { 8005 }
 local npcs = {
   [9301] = { name = "Giver Here", spawns = { [141] = { { 58, 41 } } } },
   [9302] = { name = "Giver Far Away", spawns = { [141] = { { 10, 90 } } } },
@@ -30,7 +37,7 @@ LibQuestieDB.Npc.Get = function(id, key)
   if npcs[id] then return npcs[id][key] end
   return npcGet(id, key)
 end
-LibQuestieDB.Quest.GetAllIds = function() return { 8001, 8002, 8003 } end
+LibQuestieDB.Quest.GetAllIds = function() return { 8001, 8002, 8003, 8004, 8005 } end
 QuestieData:ResetPickups()
 QuestieData:PickupsReady()
 WoW.RunTimers()
@@ -83,10 +90,9 @@ check("without a quest ID: by title", accepted == 4)
 ---------------------------------------------------------------------------
 section("Auto-accept: picking from the giver's list")
 
+local available = { { title = "Suggested Quest", questID = 8001 } }
 C_GossipInfo = {
-  GetAvailableQuests = function()
-    return { { title = "Grey Quest", questID = 8002 }, { title = "Suggested Quest", questID = 8001 } }
-  end,
+  GetAvailableQuests = function() return available end,
   SelectAvailableQuest = function(id) opened[#opened + 1] = id end,
 }
 WoW.FireEvent("GOSSIP_SHOW")
@@ -98,15 +104,71 @@ shift = true
 WoW.FireEvent("GOSSIP_SHOW")
 check("Shift: the list stays as it is", #opened == 1)
 shift = false
+
+-- Several quests to pick up: the player chooses (reported: two Drowned
+-- City quests taken at once in Booty Bay).
+local before = accepted
+S.npcName = "Krazek"
+WoW.now = WoW.now + 5
+available = { { title = "Grey Quest", questID = 8002 }, { title = "Suggested Quest", questID = 8001 } }
+WoW.FireEvent("GOSSIP_SHOW")
+check("several quests: none is opened", #opened == 1)
+Detail(8001, "Suggested Quest")
+check("... and the one the player opens isn't accepted for them", accepted == before)
+-- The follow-up of the quest just turned in is taken all the same.
+completed[8001] = true
+WoW.FireEvent("QUEST_TURNED_IN", 8001)
+WoW.now = WoW.now + 1
+available = { { title = "Grey Quest", questID = 8002 }, { title = "Chain Follow-up", questID = 8003 } }
+WoW.FireEvent("GOSSIP_SHOW")
+check("several quests: the follow-up of the quest just turned in is opened", opened[#opened] == 8003)
+Detail(8003, "Chain Follow-up")
+check("... and accepted", accepted == before + 1)
+WoW.now = WoW.now + 200
+WoW.FireEvent("GOSSIP_SHOW")
+check("long after the turn-in: not any more", #opened == 2)
+completed[8001] = nil
+-- Another giver later: a quest window straight away is accepted as before.
+S.npcName = "Someone Else"
+Detail(8001, "Suggested Quest")
+check("another giver: accepted as before", accepted == before + 2)
+S.npcName = nil
 C_GossipInfo = nil
 
-local titles = { "Grey Quest", "Suggested Quest" }
+local titles = { "Suggested Quest" }
 GetNumAvailableQuests = function() return #titles end
 GetAvailableTitle = function(i) return titles[i] end
 SelectAvailableQuest = function(i) opened[#opened + 1] = "greeting " .. i end
+WoW.now = WoW.now + 5
 WoW.FireEvent("QUEST_GREETING")
-check("greeting window: by title", opened[#opened] == "greeting 2")
+check("greeting window: by title", opened[#opened] == "greeting 1")
+WoW.now = WoW.now + 5
+titles = { "Grey Quest", "Suggested Quest" }
+WoW.FireEvent("QUEST_GREETING")
+check("greeting window with several: the player chooses", opened[#opened] == "greeting 1" and #opened == 3)
 GetNumAvailableQuests, GetAvailableTitle, SelectAvailableQuest = nil, nil, nil
+WoW.now = WoW.now + 200
+
+---------------------------------------------------------------------------
+section("Auto-accept: dungeon quests")
+
+-- Only in dungeon mode for that dungeon.
+local DungeonGuide = Pathwise:GetModule("DungeonGuide")
+before = accepted
+Detail(8004, "Deadmines Quest")
+check("a dungeon quest outside dungeon mode: left alone", accepted == before)
+DungeonGuide:SetDungeon(717) -- The Stockade
+Detail(8004, "Deadmines Quest")
+check("in dungeon mode for another dungeon: left alone", accepted == before)
+Detail(8005, "Untagged Deadmines Quest")
+check("one listed by ID in the dungeon data: left alone too", accepted == before)
+DungeonGuide:SetDungeon(1581) -- The Deadmines
+Detail(8004, "Deadmines Quest")
+check("in dungeon mode for its dungeon: accepted", accepted == before + 1)
+Detail(8005, "Untagged Deadmines Quest")
+check("... the one listed by ID too", accepted == before + 2)
+DungeonGuide:SetDungeon(nil)
+deadmines.quests = nil
 
 ---------------------------------------------------------------------------
 section("Auto-accept: class quests")

@@ -324,6 +324,23 @@ if Pathwise.Platform.flavor == "Forever" then
       id = 16732, name = "Excavation Site: Wetlands", min = 26, max = 33, instance = 2998,
       entrances = { { 11, 47.79, 56.16 } },
     },
+    -- Not in QuestieDB's dungeon list (no area ID, its quests have no
+    -- zone): its quests are listed here by ID. The entrance is the one
+    -- guides give, underwater west of the Vile Reef (21.4, 27.9); bosses
+    -- from Warcraft Tavern's guide. (Reported: its Booty Bay quests were
+    -- taken outside dungeon mode.)
+    {
+      id = "TheDrownedCity", name = "The Drowned City", min = 35, max = 40,
+      entrances = { { 33, 21.4, 27.9 } },
+      quests = { 95775, 95776, 95787, 95788, 95789, 95791, 96774, 97130 },
+      bossOrder = false,
+      bosses = {
+        { "Zul'Alai" },
+        { "Zin'aka" },
+        { "Var'Taka" },
+        { "Captain Dreadrise" },
+      },
+    },
     {
       id = 16544, name = "City of Dalaran", min = 30, max = 37, instance = 2959,
       entrances = { { 36, 8.46, 59.21 } },

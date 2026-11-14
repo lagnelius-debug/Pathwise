@@ -14,6 +14,10 @@ local addonName, Pathwise = ...
 -- ask for gold.
 -- Hold Shift while talking to skip both; each has a switch on the Features
 -- page. Quests shared by other players are never accepted.
+-- A giver with several quests to pick up leaves the choice to the player
+-- (none is opened or accepted), except the follow-up of the quest just
+-- turned in. Dungeon quests only in dungeon mode for that dungeon
+-- (QuestAdvisor:IsSuggested).
 
 local L = Pathwise.L
 local Platform = Pathwise.Platform
@@ -25,6 +29,38 @@ local AutoAccept = Pathwise:NewModule("AutoAccept")
 local REOPEN_SECONDS = 3
 
 local opened = {} -- [questID or title] = time it was opened
+
+-- A turned-in quest's follow-up is still taken from a list this long after.
+local FOLLOW_UP_SECONDS = 60
+-- After a list with several quests, a quest window from that giver this
+-- soon after was opened by the player: not accepted for them.
+local CHOOSE_SECONDS = 120
+
+local lastTurnIn -- { questID, time }
+local choosing -- { npc, time }: a list with several quests was shown
+
+-- Whether a quest follows on from another one (its pre-quest, or the next
+-- in its chain).
+function AutoAccept.FollowsOn(questID, doneID)
+  if not (questID and doneID) then
+    return false
+  end
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  for _, key in ipairs({ "preQuestSingle", "preQuestGroup" }) do
+    local before = QuestieData:QuestInfo(questID, key)
+    for _, id in ipairs(type(before) == "table" and before or {}) do
+      if math.abs(id) == doneID then
+        return true
+      end
+    end
+  end
+  return QuestieData:QuestInfo(doneID, "nextQuestInChain") == questID
+end
+
+-- The quest just turned in (within FOLLOW_UP_SECONDS), or nil.
+local function JustTurnedIn(now)
+  return lastTurnIn and now - lastTurnIn.time <= FOLLOW_UP_SECONDS and lastTurnIn.questID or nil
+end
 
 local function Active()
   return Pathwise.db.autoAccept and not Platform.IsShiftKeyDown()
@@ -101,14 +137,29 @@ function AutoAccept:OnQuestGiver(event)
     return
   end
   local now = Platform.GetTime()
-  for _, entry in ipairs(Platform.GetOfferedQuests(event) or {}) do
+  local offered = Platform.GetOfferedQuests(event) or {}
+  -- Several to pick up: the player chooses - only the follow-up of the
+  -- quest just turned in is taken (reported: two Drowned City quests taken
+  -- at once in Booty Bay).
+  local done = #offered > 1 and JustTurnedIn(now)
+  choosing = #offered > 1 and { npc = Platform.GetInteractionNPCName(), time = now } or nil
+  for _, entry in ipairs(offered) do
     local key = entry.questID or entry.title
-    if key and not (opened[key] and now - opened[key] < REOPEN_SECONDS) and Suggested(entry.questID, entry.title) then
+    if key and not (opened[key] and now - opened[key] < REOPEN_SECONDS)
+      and (#offered == 1 or AutoAccept.FollowsOn(entry.questID, done))
+      and Suggested(entry.questID, entry.title) then
       opened[key] = now
       Platform.SelectOfferedQuest(event, entry)
       return
     end
   end
+end
+
+-- Whether the player is choosing among the giver's quests (a list with
+-- several was shown by this giver just before).
+local function Choosing(now)
+  return choosing ~= nil and now - choosing.time < CHOOSE_SECONDS
+    and choosing.npc == Platform.GetInteractionNPCName()
 end
 
 -- The quest window: accept a suggested quest.
@@ -121,6 +172,10 @@ function AutoAccept:OnQuestDetail()
     questID = nil
   end
   if not (questID or title) or not Suggested(questID, title) then
+    return
+  end
+  local now = Platform.GetTime()
+  if Choosing(now) and not AutoAccept.FollowsOn(questID, JustTurnedIn(now)) then
     return
   end
   Platform.AcceptQuest()
@@ -188,6 +243,14 @@ function AutoAccept:OnQuestComplete()
   end
 end
 
+-- A quest was turned in (by Pathwise or the player): its follow-up may
+-- be taken from the giver's list.
+function AutoAccept:OnQuestTurnedIn(_, questID)
+  if questID then
+    lastTurnIn = { questID = questID, time = Platform.GetTime() }
+  end
+end
+
 -- Bags changed: the rewards may fit now.
 function AutoAccept:OnCharacterUpdated(_, _, section)
   if section == "bags" then
@@ -205,4 +268,5 @@ function AutoAccept:OnEnable()
   self:RegisterEvent("QUEST_DETAIL", "OnQuestDetail")
   self:RegisterEvent("QUEST_PROGRESS", "OnQuestProgress")
   self:RegisterEvent("QUEST_COMPLETE", "OnQuestComplete")
+  self:RegisterEvent("QUEST_TURNED_IN", "OnQuestTurnedIn")
 end

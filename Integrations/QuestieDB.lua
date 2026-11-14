@@ -872,7 +872,7 @@ local function ScanQuest(id, scan)
   -- Dungeon quests (tagged with the dungeon's area) for the dungeon guide -
   -- also the ones an item starts. (Not repeatable ones like Dire Maul's
   -- tributes: they never count as done.)
-  local dungeon = scan.dungeonAreas[sort or 0]
+  local dungeon = scan.dungeonAreas[sort or 0] or scan.questDungeons[id]
   if dungeon then
     scan.dungeons[dungeon] = scan.dungeons[dungeon] or {}
     table.insert(scan.dungeons[dungeon], id)
@@ -954,15 +954,19 @@ function QuestieData:PickupsReady()
         raceBit = enum.raceMaskById[snapshot.raceID]
       end
       -- Area ID -> dungeon ID, for the dungeon quests (Data/Classic/Dungeons.lua).
-      local dungeonAreas = {}
+      local dungeonAreas, questDungeons = {}, {}
       for _, dungeon in ipairs(Pathwise.Data.Dungeons) do
         dungeonAreas[dungeon.id] = dungeon.id
         for _, area in ipairs(dungeon.alt or {}) do
           dungeonAreas[area] = dungeon.id
         end
+        -- (Quests QuestieDB doesn't tag with the dungeon, by ID.)
+        for _, questID in ipairs(dungeon.quests or {}) do
+          questDungeons[questID] = dungeon.id
+        end
       end
       pickupScan = {
-        ids = ids, next = 1, list = {}, dungeonAreas = dungeonAreas, dungeons = {},
+        ids = ids, next = 1, list = {}, dungeonAreas = dungeonAreas, questDungeons = questDungeons, dungeons = {},
         raceBit = raceBit,
         classBit = snapshot.classID and 2 ^ (snapshot.classID - 1),
       }

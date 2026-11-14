@@ -323,7 +323,12 @@ for _, dungeon in ipairs(DungeonGuide.List()) do
   previous = dungeon.min
 end
 check("Forever's dungeons in the list, in level order", names["The Hall of Thanes"] and names["Ruins of Lordaeron"]
-  and names["Excavation Site: Wetlands"] and names["City of Dalaran"] and ordered)
+  and names["Excavation Site: Wetlands"] and names["City of Dalaran"] and names["The Drowned City"] and ordered)
+-- The Drowned City: QuestieDB doesn't tag its quests with it - by ID.
+local drowned = names["The Drowned City"]
+local ids = {}
+for _, id in ipairs(drowned and drowned.quests or {}) do ids[id] = true end
+check("The Drowned City: its quests by ID (Shady Saltseers, The Saltseer Captain)", ids[95789] and ids[95791])
 IsInInstance = function() return true, "party" end
 GetInstanceInfo = function() return "Ruins of Lordaeron", "party", 1, "Normal", 5, 0, false, 2999 end
 check("inside the Ruins of Lordaeron: known by its instance", DungeonGuide:GetInside() == names["Ruins of Lordaeron"])

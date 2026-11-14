@@ -3,6 +3,21 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.52.0
+
+- Auto-accept: a quest giver with several quests to pick up leaves the
+  choice to you - none is opened or accepted, not even the one you open
+  yourself - except the follow-up of the quest you just turned in
+  (reported: two Drowned City quests taken at once in Booty Bay). A
+  giver with one quest works as before.
+- Auto-accept: dungeon quests are only taken in dungeon mode for that
+  dungeon (as the guide only suggests them there).
+- WoW Forever: The Drowned City (levels 35-40) in the dungeon list, with
+  its quests (QuestieDB doesn't link them to it, so they counted as
+  ordinary quests), the entrance underwater west of the Vile Reef in
+  Stranglethorn Vale (21.4, 27.9, from the guides) and its four bosses.
+  Its quests now wait for dungeon mode like other dungeons' quests.
+
 ## 0.51.1
 
 - Quest rewards: "Best to sell" compares every reward's vendor price,
