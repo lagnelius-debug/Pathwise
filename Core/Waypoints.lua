@@ -280,6 +280,7 @@ function Waypoints:Next()
     -- arrow fell back to one of them): skip the whole step.
     skippedSteps[autoItemId] = Platform.GetTime()
     Pathwise:Print(L.ARROW_NEXT_STEP)
+    Pathwise:FireCallback("STEP_SKIPPED", autoItemId)
     self:RefreshAuto()
   else
     Pathwise:Print(L.ARROW_NOTHING_TO_SKIP)

@@ -42,6 +42,10 @@ local quests = {
     objectives = { { { 9406 } } } },
   [8106] = { name = "Chain Third", requiredLevel = 1, questLevel = L, preQuestSingle = { 8102 },
     startedBy = { { 9403 } } },
+  [8107] = { name = "Near Work Two", requiredLevel = 1, questLevel = L, startedBy = { { 9401 } },
+    objectives = { { { 9407 } } } },
+  [8108] = { name = "Near Work Three", requiredLevel = 1, questLevel = L, startedBy = { { 9401 } },
+    objectives = { { { 9408 } } } },
 }
 local npcs = {
   [9401] = { name = "Giver Here", spawns = { [141] = { { 58, 41 } } } },
@@ -49,6 +53,8 @@ local npcs = {
   [9404] = { name = "Darkshore Beast", spawns = { [148] = { { 40, 50 } } } },
   [9405] = { name = "Teldrassil Beast", spawns = { [141] = { { 59, 42 } } } },
   [9406] = { name = "Other Darkshore Beast", spawns = { [148] = { { 55, 20 } } } },
+  [9407] = { name = "Teldrassil Owl", spawns = { [141] = { { 45, 60 } } } },
+  [9408] = { name = "Teldrassil Cat", spawns = { [141] = { { 70, 30 } } } },
 }
 local questGet, npcGet, allIds = LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Quest.GetAllIds
 LibQuestieDB.Quest.Get = function(id, key)
@@ -59,7 +65,7 @@ LibQuestieDB.Npc.Get = function(id, key)
   if npcs[id] then return npcs[id][key] end
   return npcGet(id, key)
 end
-LibQuestieDB.Quest.GetAllIds = function() return { 8101, 8102, 8103, 8104, 8105, 8106 } end
+LibQuestieDB.Quest.GetAllIds = function() return { 8101, 8102, 8103, 8104, 8105, 8106, 8107, 8108 } end
 QuestieData:ResetPickups()
 S.mapID, S.mapX, S.mapY = 1438, 0.58, 0.40
 local startAreas = Pathwise.Data.StartAreas
@@ -128,6 +134,26 @@ check("long after the turn-in: its follow-up isn't pushed any more (an ordinary 
 UpdateLog({ Log(8104, "Near Work"), Log(8102, "Chain Next") })
 check("... and taken then, it's an ordinary quest", not Pathwise.charDB.questline[8102]
   and Item("quest:8102").priority ~= P.QUEST_CHAIN)
+
+---------------------------------------------------------------------------
+section("Questline: questing somewhere else")
+
+-- Reported: Desolace's quests taken on purpose, and the guide still pulled
+-- away to the questline's hard Sealed Folder in Hillsbrad.
+Pathwise.charDB.questline = { [8102] = true }
+UpdateLog({ Log(8104, "Near Work"), Log(8102, "Chain Next") })
+check("one quest under way here: the questline still first", Item("quest:8102").priority == P.QUEST_CHAIN)
+UpdateLog({ Log(8104, "Near Work"), Log(8107, "Near Work Two"), Log(8108, "Near Work Three"), Log(8102, "Chain Next") })
+check("three quests under way here: the questline waits (" .. tostring(Item("quest:8102").priority) .. ")",
+  Item("quest:8102").priority ~= P.QUEST_CHAIN and Pathwise.charDB.questline[8102] == true)
+S.mapID, S.mapX, S.mapY = 1439, 0.40, 0.50
+UpdateLog({ Log(8104, "Near Work"), Log(8107, "Near Work Two"), Log(8108, "Near Work Three"), Log(8102, "Chain Next") })
+check("moved on (Darkshore): the questline first again", Item("quest:8102").priority == P.QUEST_CHAIN)
+S.mapID, S.mapX, S.mapY = 1438, 0.58, 0.40
+-- Next on the questline's step: it no longer comes first.
+Pathwise:FireCallback("STEP_SKIPPED", "quest:8102")
+WoW.RunTimers()
+check("skipped with Next: no longer the questline", Pathwise.charDB.questline[8102] == nil)
 
 -- Clean up
 LibQuestieDB.Quest.Get, LibQuestieDB.Npc.Get, LibQuestieDB.Quest.GetAllIds = questGet, npcGet, allIds

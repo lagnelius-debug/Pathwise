@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.54.1
+
+- Questlines: they wait while you're questing somewhere else - with three
+  or more quests to do or turn in in the area you're in, those come first,
+  and the questline is first again once you move on (reported: the guide
+  pulled away from Desolace's quests, taken on purpose, to the
+  questline's hard Sealed Folder in Hillsbrad). Next on a questline step
+  drops it for good.
+- Flight timer: easier to read - white text with a black outline, on a
+  darker fill (reported: hard to see on the gold bar).
+
 ## 0.54.0
 
 - Questlines: after you turn a quest in, the quest that follows on from it

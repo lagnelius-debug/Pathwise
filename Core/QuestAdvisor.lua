@@ -89,6 +89,11 @@ local knownComplete -- [questID] = true; nil until the first scan
 QuestAdvisor.QUESTLINE_SECONDS = 900
 -- At most this many next quests of the questline to pick up.
 QuestAdvisor.QUESTLINE_PICKUPS = 3
+-- Questing somewhere else: with this many quests under way in the area the
+-- player is in (not of the questline), the questline waits until they
+-- leave it (reported: the guide pulled away from Desolace's quests, taken
+-- on purpose, to the questline's hard Sealed Folder in Hillsbrad).
+QuestAdvisor.QUESTLINE_LOCAL_WORK = 3
 local recentTurnIns = {} -- [questID] = time it was turned in
 local logBefore -- [questID] = true: the quest log at the last plan
 
@@ -139,6 +144,21 @@ function QuestAdvisor:OnQuestTurnedIn(_, questID)
     Pathwise.charDB.questline[questID] = nil
   end
   self:ScheduleUpdate()
+end
+
+-- A step skipped with Next: a questline quest in it no longer comes first.
+function QuestAdvisor:OnStepSkipped(_, itemId)
+  local saved = Pathwise.charDB.questline
+  local any = false
+  for id in tostring(itemId):gmatch("quest:(%d+)") do
+    id = tonumber(id)
+    if saved[id] then
+      saved[id], any = nil, true
+    end
+  end
+  if any then
+    self:ScheduleUpdate()
+  end
 end
 
 -- A quest left the log (abandoned): no longer a questline.
@@ -1393,6 +1413,25 @@ function QuestAdvisor:Update()
       end
       return located[key] or nil
     end
+    -- Questing here (enough quests under way in this area, apart from the
+    -- questline): the questline waits until the player moves on.
+    local here = mapID and Pathwise:GetModule("Travel").ZoneGroup(mapID)
+    -- (Quests to do or turn in here, at a known place: red and grey ones
+    -- aren't work.)
+    local localWork = 0
+    for _, quest in ipairs(here and quests or {}) do
+      local kind = not quest.questline and TargetKind(quest, QuestAdvisor.Difficulty(quest.level, level, greenRange))
+      local target = kind and LocateOnce(quest, kind)
+      if target and Pathwise:GetModule("Travel").ZoneGroup(target.mapID) == here then
+        localWork = localWork + 1
+      end
+    end
+    local questlineWaits = localWork >= QuestAdvisor.QUESTLINE_LOCAL_WORK
+    if questlineWaits then
+      for _, quest in ipairs(quests) do
+        quest.questline = nil
+      end
+    end
     local pickups, focus, areaItem
     if Pathwise.db.questPickups then
       local pool = QuestieData:GetPickups(PickupContext(quests, level, greenRange), QuestAdvisor.PICKUP_POOL)
@@ -1425,7 +1464,7 @@ function QuestAdvisor:Update()
       end
     end
     -- The questline's next quests: even elsewhere, or with a full log.
-    if Pathwise.db.questPickups then
+    if Pathwise.db.questPickups and not questlineWaits then
       for _, next in ipairs(QuestlinePickups(recentTurnIns, quests, level, greenRange)) do
         local known = false
         for _, pickup in ipairs(pickups or {}) do
@@ -1683,6 +1722,8 @@ function QuestAdvisor:OnInitialize()
   self:RegisterCallback("QUESTIE_PICKUPS_READY", "OnQuestEvent")
   -- A suggested quest walked away from, or skipped with Next.
   self:RegisterCallback("PICKUP_PASSED_UP", "OnPickupPassedUp")
+  -- A step skipped with Next.
+  self:RegisterCallback("STEP_SKIPPED", "OnStepSkipped")
 end
 
 -- Re-plans when the player has moved far enough since the last plan, so

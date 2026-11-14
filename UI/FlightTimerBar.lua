@@ -9,14 +9,21 @@ local FlightTimerBar = Pathwise:NewModule("FlightTimerBar")
 
 local frame
 
+-- How much of the theme's title colour the fill keeps.
+FlightTimerBar.FILL_SHADE = 0.55
+
 local function Colors()
   local theme = Pathwise.Theme.Get(Pathwise.Theme.GetActiveId())
   local function RGB(hex, alpha)
     return Pathwise.HexToRGB(hex or "#ffd100", alpha)
   end
   frame.bg:SetColorTexture(RGB(theme.bg, 0.9))
-  frame:SetStatusBarColor(RGB(theme.title))
-  frame.text:SetTextColor(RGB(theme.text or "#ffffff"))
+  -- The fill a shade darker than the theme's title colour, and the text
+  -- white with a black outline: readable over the fill and the empty part
+  -- alike (reported: white on a bright gold fill was hard to read).
+  local r, g, b = RGB(theme.title)
+  frame:SetStatusBarColor(r * FlightTimerBar.FILL_SHADE, g * FlightTimerBar.FILL_SHADE, b * FlightTimerBar.FILL_SHADE)
+  frame.text:SetTextColor(1, 1, 1)
 end
 
 local function Create()
@@ -26,8 +33,16 @@ local function Create()
   frame:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
   frame.bg = frame:CreateTexture(nil, "BACKGROUND")
   frame.bg:SetAllPoints(frame)
-  frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
   frame.text:SetPoint("CENTER", frame, "CENTER", 0, 0)
+  local font, size = frame.text:GetFont()
+  if font then
+    frame.text:SetFont(font, size, "OUTLINE")
+  end
+  if frame.text.SetShadowColor then
+    frame.text:SetShadowColor(0, 0, 0, 1)
+    frame.text:SetShadowOffset(1, -1)
+  end
   frame:Hide()
 end
 
