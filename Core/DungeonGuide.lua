@@ -98,7 +98,12 @@ end
 
 -- The dungeon of dungeon mode, or nil.
 function DungeonGuide:GetActive()
-  return DungeonGuide.Get(Pathwise.charDB.dungeon)
+  local dungeon = DungeonGuide.Get(Pathwise.charDB.dungeon)
+  -- (Saved for the whole Scarlet Monastery: from now on the wing.)
+  if dungeon and dungeon.id ~= Pathwise.charDB.dungeon then
+    Pathwise.charDB.dungeon = dungeon.id
+  end
+  return dungeon
 end
 
 -- Turns dungeon mode on for a dungeon (or off with nil). The dungeon is
@@ -124,7 +129,11 @@ end
 
 -- The dungeon Toggle switches to: the last one picked, or nil.
 function DungeonGuide:GetLast()
-  return DungeonGuide.Get(Pathwise.charDB.lastDungeon)
+  local dungeon = DungeonGuide.Get(Pathwise.charDB.lastDungeon)
+  if dungeon then
+    Pathwise.charDB.lastDungeon = dungeon.id
+  end
+  return dungeon
 end
 
 -- Switches between dungeon mode (the last dungeon picked) and the normal

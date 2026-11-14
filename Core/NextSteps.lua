@@ -26,6 +26,7 @@ NextSteps.PRIORITY = {
   QUEST_NEAR_ALMOST_DONE = 76,
   AMMO_LOW = 72,
   QUEST_ALMOST_DONE = 70,
+  QUEST_CHAIN = 68, -- the questline the player is on (QuestAdvisor): before what's merely near
   QUEST_NEAR = 66,
   PROFESSION_NEAR = 64, -- a profession step whose trainer is close by
   QUEST_HERE = 60,

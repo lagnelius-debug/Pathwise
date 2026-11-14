@@ -139,20 +139,35 @@ function FlightTimer:OnTakeoff(index)
     end
   end
   flight = { from = from, to = to, picked = Platform.GetTime(), duration = duration, estimated = estimated }
+  -- (Saved, so a /reload during the flight keeps it.)
+  Pathwise.charDB.flight = flight
   Pathwise:FireCallback("FLIGHT_TIMER")
 end
 
 -- Every quarter second: the flight starts, goes on, or lands.
+-- How long after its start a saved flight is still picked up again.
+FlightTimer.RESUME_MAX = 1800
+
 function FlightTimer:Tick()
-  if not flight then
-    return
-  end
   local now, onTaxi = Platform.GetTime(), Platform.IsOnTaxi()
+  if not flight then
+    -- After a /reload in the air: the flight saved at take-off.
+    local saved = Pathwise.charDB and Pathwise.charDB.flight
+    if saved and onTaxi and saved.start and now >= saved.start and now - saved.start < FlightTimer.RESUME_MAX then
+      flight = saved
+    elseif saved then
+      Pathwise.charDB.flight = nil
+      return
+    else
+      return
+    end
+  end
   if not flight.start then
     if onTaxi then
       flight.start = now
     elseif now - flight.picked > FlightTimer.TAKEOFF_WAIT then
       flight = nil
+      Pathwise.charDB.flight = nil
     end
   elseif not onTaxi then
     local seconds = now - flight.start
@@ -160,6 +175,7 @@ function FlightTimer:Tick()
       Pathwise.db.flightTimes[FlightTimer.Key(flight.from, flight.to)] = math.floor(seconds + 0.5)
     end
     flight = nil
+    Pathwise.charDB.flight = nil
   end
   Pathwise:FireCallback("FLIGHT_TIMER")
 end
@@ -178,6 +194,11 @@ function FlightTimer:GetFlight()
     remaining = flight.duration and math.max(0, flight.duration - elapsed) or nil,
     estimated = flight.estimated,
   }
+end
+
+-- Forgets the flight under way (tests: as after a /reload).
+function FlightTimer:ClearState()
+  flight = nil
 end
 
 function FlightTimer:OnEnable()

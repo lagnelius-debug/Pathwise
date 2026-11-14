@@ -69,6 +69,7 @@ local CHAR_DEFAULTS = {
   professionAdvice = false,    -- the profession recommendation was shown in chat
   professionsOff = false,      -- /pw professions off: no profession steps
   notOffered = {},             -- [questID] = level: suggested pickup its giver didn't offer
+  questline = {},              -- [questID] = true: a quest of the questline the player is on
   flightNodes = {},            -- known flight points: [name] = { mapID, x, y, npc, continent }
   bind = {},                   -- where the hearthstone is set: { name, mapID } once known
   beastTraining = {},          -- hunter: pet ability ranks learned ([spellID] = true)

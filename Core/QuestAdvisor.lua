@@ -80,6 +80,75 @@ local DIFFICULTY_COLORS = {
 local updatePending = false
 local knownComplete -- [questID] = true; nil until the first scan
 
+-- The questline the player is on: a quest taken up to this long after
+-- turning in the one it follows on from (its pre-quest, or the one before
+-- it in the chain) counts as the questline; its steps come before what's
+-- merely close by, and its next quest is suggested even when it's
+-- elsewhere (reported: after travelling to turn a quest in, the guide led
+-- to the nearest quests instead of on with the chain).
+QuestAdvisor.QUESTLINE_SECONDS = 900
+-- At most this many next quests of the questline to pick up.
+QuestAdvisor.QUESTLINE_PICKUPS = 3
+local recentTurnIns = {} -- [questID] = time it was turned in
+local logBefore -- [questID] = true: the quest log at the last plan
+
+-- Quests turned in within QUESTLINE_SECONDS: list of IDs.
+local function RecentTurnIns()
+  local now, list = Platform.GetTime(), {}
+  for questID, time in pairs(recentTurnIns) do
+    if now - time <= QuestAdvisor.QUESTLINE_SECONDS then
+      list[#list + 1] = questID
+    end
+  end
+  return list
+end
+
+-- Marks the quests of the questline (quest.questline): the ones saved as
+-- such, and the ones new in the log that follow on from a quest just turned
+-- in. Returns the quests just turned in.
+local function MarkQuestline(quests)
+  local saved = Pathwise.charDB.questline
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local recent = RecentTurnIns()
+  local inLog = {}
+  for _, quest in ipairs(Platform.GetQuestLog()) do
+    if quest.questID then
+      inLog[quest.questID] = true
+    end
+  end
+  for _, quest in ipairs(quests) do
+    local id = quest.questID
+    if id and logBefore and not logBefore[id] and not saved[id] then
+      for _, done in ipairs(recent) do
+        if QuestieData:FollowsOn(id, done) then
+          saved[id] = true
+          break
+        end
+      end
+    end
+    quest.questline = id and saved[id] or nil
+  end
+  logBefore = inLog
+  return recent
+end
+
+-- A quest turned in: its follow-ups are the questline; it's no longer one.
+function QuestAdvisor:OnQuestTurnedIn(_, questID)
+  if questID then
+    recentTurnIns[questID] = Platform.GetTime()
+    Pathwise.charDB.questline[questID] = nil
+  end
+  self:ScheduleUpdate()
+end
+
+-- A quest left the log (abandoned): no longer a questline.
+function QuestAdvisor:OnQuestRemoved(_, questID)
+  if type(questID) == "number" then
+    Pathwise.charDB.questline[questID] = nil
+  end
+  self:ScheduleUpdate()
+end
+
 ---------------------------------------------------------------------------
 -- Pure helpers
 ---------------------------------------------------------------------------
@@ -466,6 +535,12 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
       priority = far and P.QUEST_FAR or P.QUEST_ELSEWHERE
       text = string.format(L.QA_ELSEWHERE, name, quest.zone or "?")
     end
+    -- The questline the player is on: before what's merely close by.
+    local detail = Detail(quest)
+    if quest.questline and priority >= P.QUEST_ELSEWHERE and priority < P.QUEST_CHAIN then
+      priority = P.QUEST_CHAIN
+      detail[#detail + 1] = L.QA_QUESTLINE
+    end
     if difficulty == "ORANGE" and priority >= P.QUEST_ELSEWHERE and not QuestAdvisor.IsReady(quest) then
       text = text .. " " .. L.QA_HARD
     end
@@ -477,7 +552,7 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
       id = "quest:" .. tostring(quest.questID or quest.title),
       priority = priority,
       text = text,
-      detail = Detail(quest),
+      detail = detail,
       target = target,
       kind = targetKind,
       title = quest.title,
@@ -530,9 +605,14 @@ function QuestAdvisor.Plan(quests, playerLevel, greenRange, location, locate, pi
       if pickup.note then
         detail[#detail + 1] = pickup.note
       end
+      local priority = (near and not leadsAway) and P.QUEST_NEAR or P.QUEST_FAR
+      if pickup.questline then
+        priority = P.QUEST_CHAIN
+        detail[#detail + 1] = L.QA_QUESTLINE_NEXT
+      end
       items[#items + 1] = {
         id = "pickup:" .. pickup.questID,
-        priority = (near and not leadsAway) and P.QUEST_NEAR or P.QUEST_FAR,
+        priority = priority,
         leadsAway = leadsAway,
         text = string.format(L.QA_PICKUP, name) .. string.format(L.QA_DISTANCE, Pathwise.FormatDistance(pickup.distance)),
         detail = detail,
@@ -1031,6 +1111,29 @@ local function PickupContext(quests, level, greenRange)
   }
 end
 
+-- The next quests of the questline to pick up: what follows on from the
+-- quests just turned in, wherever their givers are (marked questline).
+local function QuestlinePickups(recent, quests, level, greenRange)
+  local QuestieData = Pathwise:GetModule("QuestieData")
+  local only
+  for _, done in ipairs(recent) do
+    for questID in pairs(QuestieData:FollowUps(done) or {}) do
+      only = only or {}
+      only[questID] = true
+    end
+  end
+  if not only then
+    return {}
+  end
+  local ctx = PickupContext(quests, level, greenRange)
+  ctx.only = only
+  local list = QuestieData:GetPickups(ctx, QuestAdvisor.QUESTLINE_PICKUPS) or {}
+  for _, pickup in ipairs(list) do
+    pickup.questline = true
+  end
+  return list
+end
+
 -- Whether the guide suggests a quest (Core/AutoAccept.lua): a quest of an
 -- open class quest, or one it would suggest picking up - with the same
 -- rules as the pickups, wherever its giver is (so the next quest of a chain
@@ -1244,6 +1347,7 @@ function QuestAdvisor:Update()
   local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
   local level = snapshot.level or 1
   local quests, collapsed = QuestAdvisor.Guided(Platform.GetQuestLog())
+  local recentTurnIns = MarkQuestline(quests)
   local zone = snapshot.zone or {}
   local mapID, x, y = Platform.GetPlayerMapPosition()
   local location = { zone = zone.zone, subZone = zone.subZone, mapID = mapID, x = x, y = y }
@@ -1317,6 +1421,21 @@ function QuestAdvisor:Update()
               text = string.format(L.QA_AREA, Platform.GetMapName(focus) or "?", count),
               detail = { L.QA_AREA_DETAIL } }
           end
+        end
+      end
+    end
+    -- The questline's next quests: even elsewhere, or with a full log.
+    if Pathwise.db.questPickups then
+      for _, next in ipairs(QuestlinePickups(recentTurnIns, quests, level, greenRange)) do
+        local known = false
+        for _, pickup in ipairs(pickups or {}) do
+          if pickup.questID == next.questID then
+            pickup.questline, known = true, true
+          end
+        end
+        if not known then
+          pickups = pickups or {}
+          pickups[#pickups + 1] = next
         end
       end
     end
@@ -1589,8 +1708,8 @@ function QuestAdvisor:OnEnable()
   -- signal, in case QUEST_LOG_UPDATE came before the objective changed.)
   self:RegisterEvent("UNIT_QUEST_LOG_CHANGED", "OnUnitQuestLogChanged")
   self:RegisterEvent("QUEST_ACCEPTED", "OnQuestEvent")
-  self:RegisterEvent("QUEST_REMOVED", "OnQuestEvent")
-  self:RegisterEvent("QUEST_TURNED_IN", "OnQuestEvent")
+  self:RegisterEvent("QUEST_REMOVED", "OnQuestRemoved")
+  self:RegisterEvent("QUEST_TURNED_IN", "OnQuestTurnedIn")
   self:RegisterEvent("GOSSIP_SHOW", "OnQuestGiverShown")
   self:RegisterEvent("QUEST_GREETING", "OnQuestGiverShown")
 end

@@ -129,16 +129,49 @@ local function Nearest(points)
     return points[1]
   end
   local Waypoints = Pathwise:GetModule("Waypoints")
+  -- The travel distance (portals, boats) is dear and items many creatures
+  -- drop have thousands of spawns (Chapter I in Stranglethorn: 3800), so
+  -- the straight distance - cheap, never longer on foot - comes first, and
+  -- only spawns that straight distance doesn't rule out are measured.
+  local continent, north, west = Waypoints.ToWorld(mapID, x, y)
+  local straight = {}
+  local closest, closestUnvisited
+  for i, point in ipairs(points) do
+    local c, n, w = Waypoints.ToWorld(point.mapID, point.x, point.y)
+    if continent and c == continent then
+      local d = math.sqrt((n - north) * (n - north) + (w - west) * (w - west))
+      straight[i] = d
+      if not closest or d < straight[closest] then
+        closest = i
+      end
+      if (not closestUnvisited or d < straight[closestUnvisited]) and not Waypoints:IsVisited(point) then
+        closestUnvisited = i
+      end
+    end
+  end
+  local function Travel(i)
+    local point = points[i]
+    return Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
+  end
+  -- Nothing on this continent rules anything out.
+  local limit = math.huge
+  if closest then
+    limit = math.max(Travel(closest) or math.huge, closestUnvisited and Travel(closestUnvisited) or 0)
+  end
   local best, bestDistance = nil, math.huge
   local fallback, fallbackDistance = nil, math.huge
-  for _, point in ipairs(points) do
-    local distance = Waypoints.TravelDistance(mapID, x, y, point.mapID, point.x, point.y, true)
-    if distance then
-      if distance < fallbackDistance then
-        fallback, fallbackDistance = point, distance
-      end
-      if not Waypoints:IsVisited(point) and distance < bestDistance then
-        best, bestDistance = point, distance
+  for i, point in ipairs(points) do
+    if not straight[i] and closest then
+      -- (Another continent: farther than a spawn on this one.)
+    elseif not straight[i] or straight[i] <= limit then
+      local distance = Travel(i)
+      if distance then
+        if distance < fallbackDistance then
+          fallback, fallbackDistance = point, distance
+        end
+        if distance < bestDistance and not Waypoints:IsVisited(point) then
+          best, bestDistance = point, distance
+        end
       end
     end
   end
@@ -833,6 +866,7 @@ local pickupCandidates -- list once scanned; false: can't scan (old QuestieDB)
 local pickupScan       -- in progress: { ids, next, list, raceBit, classBit }
 local candidateIndex   -- the candidates by ID and by title (WouldSuggest)
 local dungeonQuests = {} -- [dungeon ID] = { questIDs } (for the player's race and class)
+local followUps = {} -- [questID] = set of the quests that follow on from it (FollowUps)
 
 -- bit: a power of two. Works without the bit library (and in tests).
 local function HasBit(mask, bit)
@@ -992,6 +1026,7 @@ end
 -- Forgets the scanned quest list (tests; another character's data).
 function QuestieData:ResetPickups()
   pickupCandidates, pickupScan, candidateIndex, dungeonQuests = nil, nil, nil, {}
+  followUps = {}
 end
 
 -- Where a candidate is started: points with .giver (NPC or object name),
@@ -1276,6 +1311,50 @@ local function CandidateIndex()
     end
   end
   return candidateIndex
+end
+
+-- Whether a quest follows on from another one: that one is its
+-- pre-quest, or it's the next in that one's chain.
+function QuestieData:FollowsOn(questID, doneID)
+  if not (questID and doneID) or not Load() then
+    return false
+  end
+  for _, key in ipairs({ "preQuestSingle", "preQuestGroup" }) do
+    local before = self:QuestInfo(questID, key)
+    for _, id in ipairs(type(before) == "table" and before or {}) do
+      if math.abs(id) == doneID then
+        return true
+      end
+    end
+  end
+  return self:QuestInfo(doneID, "nextQuestInChain") == questID
+end
+
+-- The quests that follow on from a quest (FollowsOn), among the ones the
+-- guide can suggest: a set [questID] = true, or nil while the quest list
+-- isn't scanned.
+function QuestieData:FollowUps(doneID)
+  if not self:PickupsReady() then
+    return nil
+  end
+  if not followUps[doneID] then
+    local set = {}
+    for _, candidate in ipairs(pickupCandidates) do
+      for _, list in ipairs({ candidate.preSingle, candidate.preGroup }) do
+        for _, id in ipairs(type(list) == "table" and list or {}) do
+          if math.abs(id) == doneID then
+            set[candidate.id] = true
+          end
+        end
+      end
+    end
+    local nextID = self:QuestInfo(doneID, "nextQuestInChain")
+    if type(nextID) == "number" and nextID > 0 then
+      set[nextID] = true
+    end
+    followUps[doneID] = set
+  end
+  return followUps[doneID]
 end
 
 function QuestieData:WouldSuggest(questID, title, ctx)

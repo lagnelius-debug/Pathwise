@@ -239,6 +239,28 @@ WoW.now = 2990
 WoW.RunTickers()
 check("landed: the player's own time is learned (it wins next time)",
   Pathwise.db.flightTimes["Rut'theran Village, Teldrassil > Auberdine, Darkshore"] == 89)
+-- A /reload in the air: the flight saved at take-off goes on.
+Pathwise.db.flightTimes = {}
+WoW.now = 3100
+TakeTaxiNode(2)
+UnitOnTaxi = function() return true end
+WoW.now = 3101
+WoW.RunTickers()
+FlightTimer:ClearState()
+WoW.now = 3111
+WoW.RunTickers()
+f = FlightTimer:GetFlight()
+check("after a /reload in the air: the same flight, 10 s in (" .. tostring(bar.text:GetText()) .. ")",
+  f and f.duration == 86 and math.floor(f.elapsed + 0.5) == 10 and bar.text:GetText() == "Flying to Auberdine · 1:16")
+UnitOnTaxi = nil
+WoW.now = 3190
+WoW.RunTickers()
+check("landed: nothing saved left", Pathwise.charDB.flight == nil and FlightTimer:GetFlight() == nil)
+FlightTimer:ClearState()
+Pathwise.charDB.flight = { from = "A", to = "B", picked = 1, start = 2, duration = 60 }
+WoW.RunTickers()
+check("a saved flight on the ground (logged out in the air, landed since): dropped",
+  Pathwise.charDB.flight == nil and FlightTimer:GetFlight() == nil)
 C_TaxiMap, GetTaxiMapID = nil, nil
 GetNumRoutes, TaxiGetNodeSlot = nil, nil
 WoW.now = 3000

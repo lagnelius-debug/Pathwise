@@ -3,6 +3,25 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.54.0
+
+- Questlines: after you turn a quest in, the quest that follows on from it
+  is the next step - even when its giver is elsewhere, or your log is
+  full - and once you've taken it, its steps come before quests that are
+  merely close by, wherever they lead (reported: after travelling to turn
+  a quest in, the guide led to the nearest quests instead of on with the
+  chain). A follow-up counts as your questline when taken within 15
+  minutes of the turn-in; turned in or abandoned, it no longer does.
+- Faster: the nearest spawn of an item many creatures drop (Chapter I-IV
+  in Stranglethorn: 3800 spawns) is found without measuring the way to
+  every one - Grom'gol's plan went from about 80 ms to 30 ms.
+- Flight timer: a /reload in the air keeps the countdown.
+- Auto-accept: the follow-up of a quest is recognised as soon as its
+  reward window opens (the game may offer it before saying the quest is
+  turned in).
+- Dungeon mode saved for the whole Scarlet Monastery is saved as the wing
+  from then on.
+
 ## 0.53.0
 
 - Dungeon mode: Scarlet Monastery is four dungeons in the list, one per

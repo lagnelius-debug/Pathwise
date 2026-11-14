@@ -42,19 +42,7 @@ local choosing -- { npc, time }: a list with several quests was shown
 -- Whether a quest follows on from another one (its pre-quest, or the next
 -- in its chain).
 function AutoAccept.FollowsOn(questID, doneID)
-  if not (questID and doneID) then
-    return false
-  end
-  local QuestieData = Pathwise:GetModule("QuestieData")
-  for _, key in ipairs({ "preQuestSingle", "preQuestGroup" }) do
-    local before = QuestieData:QuestInfo(questID, key)
-    for _, id in ipairs(type(before) == "table" and before or {}) do
-      if math.abs(id) == doneID then
-        return true
-      end
-    end
-  end
-  return QuestieData:QuestInfo(doneID, "nextQuestInChain") == questID
+  return Pathwise:GetModule("QuestieData"):FollowsOn(questID, doneID)
 end
 
 -- The quest just turned in (within FOLLOW_UP_SECONDS), or nil.
@@ -218,13 +206,17 @@ end
 -- With full bags it's left to the player: taking it would fail, and every
 -- visit to the NPC would open the quest again.
 function AutoAccept:OnQuestComplete()
-  if not TurnInActive() then
-    turningIn = nil
-    return
-  end
   local questID, title = Platform.GetQuestDetail()
   if questID == 0 then
     questID = nil
+  end
+  -- (Its follow-up may show before the game says it's turned in.)
+  if questID then
+    lastTurnIn = { questID = questID, time = Platform.GetTime() }
+  end
+  if not TurnInActive() then
+    turningIn = nil
+    return
   end
   local byID, byTitle = LogQuests()
   local ours = turningIn ~= nil and (turningIn == questID or turningIn == title)

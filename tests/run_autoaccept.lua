@@ -127,6 +127,16 @@ check("... and accepted", accepted == before + 1)
 WoW.now = WoW.now + 200
 WoW.FireEvent("GOSSIP_SHOW")
 check("long after the turn-in: not any more", #opened == 2)
+-- The reward window is enough (the game may show the follow-up before
+-- it says the quest is turned in).
+detail = { id = 8001, title = "Suggested Quest" }
+GetNumQuestChoices = function() return 2 end
+WoW.FireEvent("QUEST_COMPLETE")
+GetNumQuestChoices = nil
+WoW.now = WoW.now + 1
+WoW.FireEvent("GOSSIP_SHOW")
+check("the follow-up right after the reward window: opened", #opened == 3 and opened[3] == 8003)
+WoW.now = WoW.now + 200
 completed[8001] = nil
 -- Another giver later: a quest window straight away is accepted as before.
 S.npcName = "Someone Else"
@@ -144,8 +154,9 @@ WoW.FireEvent("QUEST_GREETING")
 check("greeting window: by title", opened[#opened] == "greeting 1")
 WoW.now = WoW.now + 5
 titles = { "Grey Quest", "Suggested Quest" }
+local openedBefore = #opened
 WoW.FireEvent("QUEST_GREETING")
-check("greeting window with several: the player chooses", opened[#opened] == "greeting 1" and #opened == 3)
+check("greeting window with several: the player chooses", #opened == openedBefore)
 GetNumAvailableQuests, GetAvailableTitle, SelectAvailableQuest = nil, nil, nil
 WoW.now = WoW.now + 200
 

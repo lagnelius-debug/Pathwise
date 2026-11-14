@@ -433,6 +433,10 @@ local savedLevel = snap.level
 snap.level = 37
 check("dungeon mode saved for the whole monastery: the wing for the level (37: the Library)",
   DungeonGuide.Get(796) == library)
+Pathwise.charDB.dungeon = 796
+check("... and saved as that wing from then on", DungeonGuide:GetActive() == library
+  and Pathwise.charDB.dungeon == "SMLibrary")
+Pathwise.charDB.dungeon = nil
 snap.level = savedLevel
 local ordered, previous = true, 0
 for _, entry in ipairs(DungeonGuide.List()) do
