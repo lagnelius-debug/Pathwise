@@ -459,7 +459,7 @@ WoW.items = {
   [9012] = { name = "Quest Token", equipLoc = "", classID = 12, subclassID = 0, sell = 0, stats = {} },
   [9013] = { name = "Thistlewood Staff", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 10,
               stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 4, ITEM_MOD_AGILITY_SHORT = 2 } },
-  [9014] = { name = "Thistlewood Maul", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 5,
+  [9014] = { name = "Thistlewood Maul", equipLoc = "INVTYPE_2HWEAPON", classID = 2, subclassID = 5, sell = 512,
               stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 4 } },
   [9015] = { name = "Thistlewood Dagger", equipLoc = "INVTYPE_WEAPON", classID = 2, subclassID = 15,
               stats = { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 2.5 } },

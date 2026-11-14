@@ -45,25 +45,32 @@ function QuestRewards.Pick(candidates)
         tier = "SMALL_LATER"
       end
       value = compare.newScore - (compare.oldScore or 0)
-    elseif (candidate.sellPrice or 0) > 0 then
-      tier = "SELL"
-      value = candidate.sellPrice * (candidate.count or 1)
-    end
-    if tier == "SELL" then
-      sellValues[#sellValues + 1] = { candidate.index, value }
     end
     if tier and (not best[tier] or value > best[tier].value) then
       best[tier] = { index = candidate.index, reason = tier, compare = compare, value = value }
     end
+    -- Every reward can be sold, a small later upgrade too (reported:
+    -- Kurzen Headshrinker's Cinch, 18s, "best to sell" over Jailer's
+    -- Discarded Chain, 22s 73c - a small upgrade at a later level).
+    if (candidate.sellPrice or 0) > 0 then
+      local sell = candidate.sellPrice * (candidate.count or 1)
+      sellValues[#sellValues + 1] = { candidate.index, sell }
+      -- (The same price: the one that's also an upgrade.)
+      if not best.SELL or sell > best.SELL.value
+        or (sell == best.SELL.value and tier == "SMALL_LATER" and best.SELL.compare ~= compare
+          and not (best.SELL.compare and best.SELL.compare.kind == "upgrade")) then
+        best.SELL = { index = candidate.index, reason = "SELL", compare = compare, value = sell }
+      end
+    end
   end
   if best.SMALL_LATER then
     best.SMALL_LATER.reason = "UPGRADE_LATER"
-    if best.SELL then
+    if best.SELL and best.SELL.index ~= best.SMALL_LATER.index then
       best.SELL.passedOver = best.SMALL_LATER
     end
   end
   local pick = best.UPGRADE or best.UPGRADE_LATER or best.SELL or best.SMALL_LATER
-  if pick and pick == best.SELL then
+  if pick and pick == best.SELL and not (pick.compare and pick.compare.kind == "upgrade") then
     local ties = {}
     for _, entry in ipairs(sellValues) do
       if entry[2] == pick.value then
@@ -103,6 +110,9 @@ local function Announce(recommendation, link)
     Pathwise:Printf(L.QUEST_BEST_UPGRADE_TRAIN, link, skill)
   elseif recommendation.reason == "UPGRADE_LATER" then
     Pathwise:Printf(L.QUEST_BEST_UPGRADE_LATER, link, compare.level)
+  elseif compare and compare.kind == "upgrade" then
+    -- (Sells for the most, and a small upgrade later too.)
+    Pathwise:Printf(L.QUEST_BEST_SELL_AND_SMALL, link, QuestRewards.FormatMoney(recommendation.value))
   elseif recommendation.ties then
     Pathwise:Printf(L.QUEST_SAME_SELL, JoinLinks(recommendation.tieLinks or {}),
       QuestRewards.FormatMoney(recommendation.value))

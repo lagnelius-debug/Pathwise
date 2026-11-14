@@ -182,6 +182,7 @@ Pathwise.Locales.frFR = {
   QUEST_BEST_UPGRADE_PERCENT = "Meilleure récompense : %s (+%.0f%% d'amélioration).",
   QUEST_BEST_UPGRADE = "Meilleure récompense : %s (amélioration).",
   QUEST_BEST_UPGRADE_LATER = "Meilleure récompense : %s (amélioration une fois au niveau %d).",
+  QUEST_BEST_SELL_AND_SMALL = "Meilleure récompense : %s se vend le plus cher (%s), et serait aussi une légère amélioration plus tard.",
   QUEST_BEST_SELL = "Aucune amélioration parmi les récompenses. %s se vend le plus cher (%s).",
   QUEST_BEST_SELL_OVER_SMALL = "Meilleure récompense : %s se vend le plus cher (%s). %s ne serait qu'une légère amélioration, et pas avant un apprentissage ou un niveau plus élevé.",
   QUEST_LABEL_UPGRADE = "Meilleure amélioration",

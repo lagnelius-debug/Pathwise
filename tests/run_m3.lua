@@ -47,6 +47,20 @@ pick = QuestRewards.Pick({
 })
 check("Pick: small upgrade that needs training loses to the best sell value", pick.index == 2
   and pick.reason == "SELL" and pick.passedOver.index == 1)
+-- Reported: Kurzen Headshrinker's Cinch (18s) as "best to sell" over
+-- Jailer's Discarded Chain (22s 73c), a small upgrade at a later level.
+pick = QuestRewards.Pick({
+  { index = 1, sellPrice = 1800, compare = { kind = "downgrade", newScore = 1, oldScore = 2 } },
+  { index = 2, sellPrice = 2273, compare = { kind = "upgrade", reason = "LEVEL", level = 40, percent = 2, newScore = 3, oldScore = 2 } },
+})
+check("Pick: a small later upgrade that sells for the most: best to sell, nothing passed over",
+  pick.index == 2 and pick.reason == "SELL" and pick.value == 2273 and pick.passedOver == nil)
+pick = QuestRewards.Pick({
+  { index = 1, sellPrice = 2273 },
+  { index = 2, sellPrice = 2273, compare = { kind = "upgrade", reason = "LEVEL", level = 40, percent = 2, newScore = 3, oldScore = 2 } },
+})
+check("Pick: ... the same price as another: the upgrade, no tie", pick.reason == "SELL" and pick.index == 2
+  and pick.ties == nil)
 pick = QuestRewards.Pick({
   { index = 1, sellPrice = 100, compare = { kind = "upgrade", reason = "TRAIN", percent = 25, newScore = 9, oldScore = 1 } },
   { index = 2, sellPrice = 512 },
@@ -106,6 +120,16 @@ TurnIn(9014, 9013)
 check("small untrained upgrade: best to sell instead", WoW.ChatContains("Best reward: [Thistlewood Maul] sells for the most")
   and WoW.ChatContains("[Thistlewood Staff] would only be a small upgrade") and highlight.label:GetText() == "Best to sell")
 WoW.FireEvent("QUEST_FINISHED")
+-- Reported: the reward that's a small upgrade later sells for the most
+-- (Jailer's Discarded Chain, 22s 73c, over an 18s Kurzen cinch): it's the
+-- pick, and chat doesn't say there's no upgrade.
+WoW.items[9013].sell = 900
+TurnIn(9014, 9013)
+check("a small later upgrade that sells for the most: best to sell",
+  WoW.ChatContains("Best reward: [Thistlewood Staff] sells for the most (9s), and would be a small upgrade later too.")
+  and highlight._parent == QuestInfoRewardsFrame.RewardButtons[2] and highlight.label:GetText() == "Best to sell")
+WoW.FireEvent("QUEST_FINISHED")
+WoW.items[9013].sell = nil
 
 TurnIn(9004, 9005)
 check("no upgrade: best to sell", WoW.ChatContains("No upgrade among the rewards. [Heavy Mace] sells for the most (1s 20c)."))

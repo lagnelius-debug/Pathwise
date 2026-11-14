@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.51.1
+
+- Quest rewards: "Best to sell" compares every reward's vendor price,
+  including a reward that would be a small upgrade at a later level - it
+  was left out, so a cheaper reward could win (reported: Kurzen
+  Headshrinker's Cinch, 18s, over Jailer's Discarded Chain, 22s 73c).
+  When that reward sells for the most, chat says so ("...sells for the
+  most, and would be a small upgrade later too") instead of "No upgrade
+  among the rewards"; at the same price, the upgrade wins.
+
 ## 0.51.0
 
 - Flight timer: the first flight on a route now counts down from a real

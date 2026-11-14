@@ -179,6 +179,7 @@ Pathwise.Locales.deDE = {
   QUEST_BEST_UPGRADE_PERCENT = "Beste Belohnung: %s (+%.0f%% besser).",
   QUEST_BEST_UPGRADE = "Beste Belohnung: %s (besser).",
   QUEST_BEST_UPGRADE_LATER = "Beste Belohnung: %s (besser ab Stufe %d).",
+  QUEST_BEST_SELL_AND_SMALL = "Beste Belohnung: %s bringt beim Händler am meisten (%s) und wäre später auch etwas besser.",
   QUEST_BEST_SELL = "Keine Verbesserung unter den Belohnungen. %s bringt beim Händler am meisten (%s).",
   QUEST_BEST_SELL_OVER_SMALL = "Beste Belohnung: %s bringt beim Händler am meisten (%s). %s wäre nur etwas besser, und erst nach dem Lehrer oder auf höherer Stufe.",
   QUEST_LABEL_UPGRADE = "Beste Verbesserung",

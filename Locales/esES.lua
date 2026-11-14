@@ -179,6 +179,7 @@ Pathwise.Locales.esES = {
   QUEST_BEST_UPGRADE_PERCENT = "Mejor recompensa: %s (+%.0f%% mejor).",
   QUEST_BEST_UPGRADE = "Mejor recompensa: %s (mejor).",
   QUEST_BEST_UPGRADE_LATER = "Mejor recompensa: %s (mejor cuando llegues a nivel %d).",
+  QUEST_BEST_SELL_AND_SMALL = "Mejor recompensa: %s se vende por más (%s), y más adelante también sería algo mejor.",
   QUEST_BEST_SELL = "Ninguna recompensa es mejor. %s se vende por más (%s).",
   QUEST_BEST_SELL_OVER_SMALL = "Mejor recompensa: %s se vende por más (%s). %s solo sería algo mejor, y no antes de entrenar o de un nivel más alto.",
   QUEST_LABEL_UPGRADE = "Mejor mejora",
