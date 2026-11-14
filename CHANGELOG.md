@@ -3,6 +3,18 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.53.0
+
+- Dungeon mode: Scarlet Monastery is four dungeons in the list, one per
+  wing - Graveyard (26-36), Library (29-39), Armory (32-42) and Cathedral
+  (35-45) - each with its own quests and bosses. A wing's mode only leads
+  to its own quests and their chains (reported: Down the Scarlet Path in
+  Desolace, the start of the Cathedral quest In the Name of the Light,
+  suggested for the Library). Monastery quests Pathwise doesn't place in
+  a wing count for every wing. `/pw dungeon library` (or graveyard,
+  armory, cathedral) picks a wing; a dungeon mode saved for the whole
+  monastery moves to the wing for your level.
+
 ## 0.52.0
 
 - Auto-accept: a quest giver with several quests to pick up leaves the

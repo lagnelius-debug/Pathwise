@@ -31,13 +31,29 @@ local function GetSnapshot()
   return Pathwise:GetModule("Character"):GetSnapshot()
 end
 
--- A dungeon by its ID, or nil.
+-- A dungeon by its ID, or nil. (An area ID shared by wings - saved before
+-- Scarlet Monastery was split - gives the wing for the player's level.)
 function DungeonGuide.Get(id)
+  if id == nil then
+    return nil
+  end
+  local wing
   for _, dungeon in ipairs(Data.Dungeons) do
     if dungeon.id == id then
       return dungeon
+    elseif dungeon.area == id then
+      local level = GetSnapshot().level or 1
+      if not wing or (level >= dungeon.min and level > wing.max) then
+        wing = dungeon
+      end
     end
   end
+  return wing
+end
+
+-- The area ID of a dungeon (where QuestieDB's spawns inside it are).
+function DungeonGuide.Area(dungeon)
+  return dungeon.area or dungeon.id
 end
 
 -- The dungeons for the player's faction, in level order.
@@ -57,6 +73,12 @@ function DungeonGuide:GetInside()
   local instanceID = Platform.GetDungeonInstanceID()
   if not instanceID then
     return nil
+  end
+  -- (Scarlet Monastery's wings share one: the one of dungeon mode, else the
+  -- first.)
+  local active = DungeonGuide:GetActive()
+  if active and active.instance == instanceID then
+    return active
   end
   for _, dungeon in ipairs(Data.Dungeons) do
     if dungeon.instance == instanceID then
@@ -301,7 +323,7 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
         -- (An item starts the quest before it, e.g. The Unsent Letter from
         -- Edwin VanCleef for The Stockade Riots.)
         line = string.format(L.DUNGEON_MISSING_FIRST_ITEM, name, Name(first), QuestieData:StarterItem(first))
-      elseif first and QuestieData:StartsInside(first, dungeon.id) then
+      elseif first and QuestieData:StartsInside(first, DungeonGuide.Area(dungeon)) then
         inside[#inside + 1] = name
       elseif first and inLog[first] then
         line = string.format(L.DUNGEON_MISSING_FINISH, name, Name(first))
@@ -318,7 +340,7 @@ function DungeonGuide:MissingItem(dungeon, log, ctx, pickups)
           line = string.format(L.DUNGEON_MISSING_FIRST, name, Name(first), giver, zone)
           Aim(first)
         end
-      elseif QuestieData:StartsInside(questID, dungeon.id) then
+      elseif QuestieData:StartsInside(questID, DungeonGuide.Area(dungeon)) then
         -- Picked up in the dungeon (an item, or a giver inside): nothing
         -- to get before going in.
         inside[#inside + 1] = name
@@ -400,7 +422,7 @@ function DungeonGuide:OpenQuests(dungeon)
       local giver, mapID = QuestieData:GiverInfo(questID)
       open[#open + 1] = { id = questID, title = QuestieData:QuestInfo(questID, "name") or ("#" .. questID),
         level = QuestieData:QuestInfo(questID, "questLevel"), giver = giver, mapID = mapID,
-        inLog = inLog[questID] == true, inside = QuestieData:StartsInside(questID, dungeon.id) == true }
+        inLog = inLog[questID] == true, inside = QuestieData:StartsInside(questID, DungeonGuide.Area(dungeon)) == true }
     end
   end
   table.sort(open, function(a, b)
@@ -551,7 +573,8 @@ Pathwise:RegisterCommand("dungeon", function(args)
   end
   local wanted = Normalize(args)
   for _, dungeon in ipairs(DungeonGuide.List()) do
-    if Normalize(dungeon.name):sub(1, #wanted) == wanted then
+    if Normalize(dungeon.name):sub(1, #wanted) == wanted
+      or (dungeon.wing and Normalize(dungeon.wing):sub(1, #wanted) == wanted) then
       DungeonGuide:SetDungeon(dungeon.id)
       return
     end

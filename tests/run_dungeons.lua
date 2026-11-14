@@ -393,3 +393,63 @@ for _, dungeon in ipairs(Pathwise.Data.Dungeons) do
 end
 check("Forever's new dungeons aren't in Classic Era's list", not foreverOnly)
 
+
+---------------------------------------------------------------------------
+section("Dungeons: Scarlet Monastery's wings")
+
+-- Reported: Down the Scarlet Path (Desolace), the start of the Cathedral
+-- quest's chain, suggested for the whole monastery. Each wing is a dungeon
+-- with its own quests; QuestieDB tags them all with area 796.
+local smQuests = {
+  [261] = { name = "Down the Scarlet Path", requiredLevel = 34, questLevel = 39, zoneOrSort = 405, startedBy = { { 9701 } } },
+  [1052] = { name = "Down the Scarlet Path", requiredLevel = 34, questLevel = 40, zoneOrSort = 405,
+    preQuestSingle = { 261 }, startedBy = { { 9701 } } },
+  [1053] = { name = "In the Name of the Light", requiredLevel = 34, questLevel = 40, zoneOrSort = 796,
+    preQuestSingle = { 1052 }, startedBy = { { 9701 } } },
+  [1050] = { name = "Mythology of the Titans", requiredLevel = 28, questLevel = 38, zoneOrSort = 796, startedBy = { { 9701 } } },
+  [9690] = { name = "Some Other Monastery Quest", requiredLevel = 28, questLevel = 38, zoneOrSort = 796, startedBy = { { 9701 } } },
+}
+local smGet, smAll = LibQuestieDB.Quest.Get, LibQuestieDB.Quest.GetAllIds
+LibQuestieDB.Quest.Get = function(id, key)
+  if smQuests[id] then return smQuests[id][key] end
+  return smGet(id, key)
+end
+LibQuestieDB.Quest.GetAllIds = function() return { 261, 1052, 1053, 1050, 9690 } end
+QuestieData:ResetPickups()
+QuestieData:PickupsReady()
+WoW.RunTimers()
+local function Has(list, id)
+  for _, value in ipairs(list or {}) do if value == id then return true end end
+  return false
+end
+local library, cathedral = DungeonGuide.Get("SMLibrary"), DungeonGuide.Get("SMCathedral")
+local libraryQuests = QuestieData:GetDungeonQuests("SMLibrary")
+check("the Library: its own quest and the monastery's unlisted ones, not the Cathedral's",
+  Has(libraryQuests, 1050) and Has(libraryQuests, 9690) and not Has(libraryQuests, 1053))
+check("the Cathedral's chain only for the Cathedral", DungeonGuide:GetQuests(cathedral).quests[261]
+  and DungeonGuide:GetQuests(cathedral).quests[1053] and not DungeonGuide:GetQuests(library).quests[261])
+local snap = Pathwise:GetModule("Character"):GetSnapshot()
+local savedLevel = snap.level
+snap.level = 37
+check("dungeon mode saved for the whole monastery: the wing for the level (37: the Library)",
+  DungeonGuide.Get(796) == library)
+snap.level = savedLevel
+local ordered, previous = true, 0
+for _, entry in ipairs(DungeonGuide.List()) do
+  ordered = ordered and entry.min >= previous
+  previous = entry.min
+end
+check("the wings in the list in level order", ordered and DungeonGuide.Get("SMGraveyard") and DungeonGuide.Get("SMArmory"))
+WoW.Slash("dungeon library")
+check("/pw dungeon library: the Library wing", DungeonGuide:GetActive() == library)
+WoW.Slash("dungeon cathedral")
+IsInInstance = function() return true, "party" end
+GetInstanceInfo = function() return "Scarlet Monastery", "party", 1, "Normal", 5, 0, false, 189 end
+check("inside: the wing of dungeon mode (one instance for all four)", DungeonGuide:GetInside() == cathedral)
+DungeonGuide:SetDungeon(nil)
+check("inside without dungeon mode: a wing all the same", DungeonGuide:GetInside() ~= nil
+  and DungeonGuide:GetInside().area == 796)
+IsInInstance, GetInstanceInfo = nil, nil
+LibQuestieDB.Quest.Get, LibQuestieDB.Quest.GetAllIds = smGet, smAll
+QuestieData:ResetPickups()
+UpdateLog({})

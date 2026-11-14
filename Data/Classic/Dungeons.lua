@@ -3,7 +3,12 @@ local addonName, Pathwise = ...
 -- Classic Era dungeons for the dungeon guide (Core/DungeonGuide.lua), in
 -- level order.
 --   id         the dungeon's area ID (what QuestieDB tags its quests with,
---              as zoneOrSort)
+--              as zoneOrSort), or a name when that's in `area` (a wing) or
+--              not known
+--   area       the area ID when `id` isn't it
+--   wing       a wing's own name (Scarlet Monastery), for /pw dungeon
+--   quests     quest IDs that belong to it, besides the ones QuestieDB tags
+--              with its area (a wing: only these and the area's unlisted)
 --   alt        more area IDs its quests may be tagged with
 --   min, max   the usual level range
 --   faction    only listed for that faction (it's in their capital)
@@ -95,6 +100,25 @@ Pathwise.Data.Dungeons = {
       { "Dextren Ward", "the last cells" },
     },
   },
+  -- Scarlet Monastery: four wings, each a dungeon of its own (own door,
+  -- levels, bosses and quests), sharing the area ID QuestieDB tags all
+  -- their quests with - so each lists its quests by ID. (Reported: Down the
+  -- Scarlet Path, the start of the Cathedral quest's chain in Desolace,
+  -- suggested for the whole monastery.) Quests of the area not listed here
+  -- count for every wing. Levels: the usual ranges of leveling guides.
+  {
+    id = "SMGraveyard", area = 796, alt = { 6109, 6386, 10008, 10009, 10010 }, wing = "Graveyard",
+    name = "Scarlet Monastery: Graveyard", min = 26, max = 36, instance = 189,
+    entrances = { { 85, 82.6, 33.8 } },
+    quests = {
+      1051, -- Vorrel's Revenge (Vorrel Sengutz, Graveyard)
+      1113, -- Hearts of Zeal (Scarlet mobs; the Graveyard's are the easiest)
+    },
+    bosses = {
+      { "Interrogator Vishas", "the crypt halfway" },
+      { "Bloodmage Thalnos", "the end" },
+    },
+  },
   {
     id = 721, name = "Gnomeregan", alt = { 133, 10030, 10031, 10032 }, min = 29, max = 38, instance = 90,
     entrances = { { 1, 24.3, 39.8 } },
@@ -119,17 +143,41 @@ Pathwise.Data.Dungeons = {
     },
   },
   {
-    id = 796, name = "Scarlet Monastery", alt = { 6109, 6386, 10008, 10009, 10010 }, min = 34, max = 45, instance = 189,
+    id = "SMLibrary", area = 796, alt = { 6109, 6386, 10008, 10009, 10010 }, wing = "Library",
+    name = "Scarlet Monastery: Library", min = 29, max = 39, instance = 189,
     entrances = { { 85, 82.6, 33.8 } },
+    quests = {
+      1049, -- Compendium of the Fallen (Horde)
+      1050, -- Mythology of the Titans (Alliance)
+      1160, -- Test of Lore (Horde)
+      96800, -- Past Due (WoW Forever: a book "from the Scarlet Monastery")
+    },
     bosses = {
-      { "Interrogator Vishas", "Graveyard" },
-      { "Bloodmage Thalnos", "Graveyard, the end" },
-      { "Houndmaster Loksey", "Library" },
-      { "Arcanist Doan", "Library, the end" },
-      { "Herod", "Armory, the end" },
-      { "High Inquisitor Fairbanks", "Cathedral, under the altar" },
-      { "Scarlet Commander Mograine", "Cathedral, the end" },
-      { "High Inquisitor Whitemane", "Cathedral, after Mograine" },
+      { "Houndmaster Loksey", "the gallery halfway" },
+      { "Arcanist Doan", "the end" },
+    },
+  },
+  {
+    id = "SMArmory", area = 796, alt = { 6109, 6386, 10008, 10009, 10010 }, wing = "Armory",
+    name = "Scarlet Monastery: Armory", min = 32, max = 42, instance = 189,
+    entrances = { { 85, 82.6, 33.8 } },
+    quests = {},
+    bosses = {
+      { "Herod", "the end" },
+    },
+  },
+  {
+    id = "SMCathedral", area = 796, alt = { 6109, 6386, 10008, 10009, 10010 }, wing = "Cathedral",
+    name = "Scarlet Monastery: Cathedral", min = 35, max = 45, instance = 189,
+    entrances = { { 85, 82.6, 33.8 } },
+    quests = {
+      1048, -- Into The Scarlet Monastery (Horde; Loksey and Herod in the other wings too)
+      1053, -- In the Name of the Light (Alliance; the same)
+    },
+    bosses = {
+      { "High Inquisitor Fairbanks", "under the altar" },
+      { "Scarlet Commander Mograine", "the end" },
+      { "High Inquisitor Whitemane", "after Mograine" },
     },
   },
   {

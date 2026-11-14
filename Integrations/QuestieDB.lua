@@ -872,10 +872,13 @@ local function ScanQuest(id, scan)
   -- Dungeon quests (tagged with the dungeon's area) for the dungeon guide -
   -- also the ones an item starts. (Not repeatable ones like Dire Maul's
   -- tributes: they never count as done.)
-  local dungeon = scan.dungeonAreas[sort or 0] or scan.questDungeons[id]
-  if dungeon then
-    scan.dungeons[dungeon] = scan.dungeons[dungeon] or {}
-    table.insert(scan.dungeons[dungeon], id)
+  -- (Listed by ID: that dungeon. Else every dungeon of its area.)
+  local listed = scan.questDungeons[id]
+  local dungeons = listed and { listed } or scan.dungeonAreas[sort or 0]
+  local dungeon = dungeons and dungeons[1]
+  for _, dungeonID in ipairs(dungeons or {}) do
+    scan.dungeons[dungeonID] = scan.dungeons[dungeonID] or {}
+    table.insert(scan.dungeons[dungeonID], id)
   end
   local startedBy = Get(id, "startedBy") or {}
   if not NonEmpty(startedBy[1]) and not NonEmpty(startedBy[2]) then
@@ -953,14 +956,22 @@ function QuestieData:PickupsReady()
       if enum and type(enum.raceMaskById) == "table" and enum.raceMaskById[snapshot.raceID] then
         raceBit = enum.raceMaskById[snapshot.raceID]
       end
-      -- Area ID -> dungeon ID, for the dungeon quests (Data/Classic/Dungeons.lua).
+      -- Area ID -> the dungeon IDs there (several for Scarlet Monastery's
+      -- wings), and quest ID -> dungeon ID for the ones the data lists, for
+      -- the dungeon quests (Data/Classic/Dungeons.lua).
       local dungeonAreas, questDungeons = {}, {}
+      local function AddArea(area, id)
+        dungeonAreas[area] = dungeonAreas[area] or {}
+        table.insert(dungeonAreas[area], id)
+      end
       for _, dungeon in ipairs(Pathwise.Data.Dungeons) do
-        dungeonAreas[dungeon.id] = dungeon.id
-        for _, area in ipairs(dungeon.alt or {}) do
-          dungeonAreas[area] = dungeon.id
+        local area = dungeon.area or (type(dungeon.id) == "number" and dungeon.id or nil)
+        if area then
+          AddArea(area, dungeon.id)
         end
-        -- (Quests QuestieDB doesn't tag with the dungeon, by ID.)
+        for _, alt in ipairs(dungeon.alt or {}) do
+          AddArea(alt, dungeon.id)
+        end
         for _, questID in ipairs(dungeon.quests or {}) do
           questDungeons[questID] = dungeon.id
         end
