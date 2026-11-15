@@ -168,6 +168,8 @@ UpdateLog({ Log(8104, "Near Work"), Log(8107, "Near Work Two"), Log(8108, "Near 
 check("questline quests here count as questing here: the far one waits",
   Item("quest:8102").priority ~= P.QUEST_CHAIN and QuestAdvisor:GetQuestlineState().localWork == 3
   and Position("quest:8104") < Position("quest:8102") and Position("quest:8107") < Position("quest:8102"))
+check("... and the ones here are ordinary quests here, by distance (reported: a questline turn-in 2 km away"
+  .. " before quests 300 m away)", Item("quest:8104").priority ~= P.QUEST_CHAIN and Item("quest:8107").priority ~= P.QUEST_CHAIN)
 Pathwise.charDB.questline = { [8102] = true }
 -- Next on the questline's step: it no longer comes first.
 Pathwise:FireCallback("STEP_SKIPPED", "quest:8102")

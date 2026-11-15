@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.54.3
+
+- Questlines: while you're questing in an area (three or more quests there),
+  a questline quest of that area is just one of its quests, on the route
+  by distance - no longer first wherever it is (reported in Stranglethorn:
+  turn in Water Elementals in Booty Bay, 2 km away, before quests 300 m
+  away).
+
 ## 0.54.2
 
 - Questlines: the "questing here" rule counts every quest of the area you're

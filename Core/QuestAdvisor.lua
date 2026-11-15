@@ -1435,24 +1435,23 @@ function QuestAdvisor:Update()
     -- Questline quests here count too (a chain in this area is questing
     -- here - reported: Desolace's own follow-ups left out, and the
     -- questline in Hillsbrad came first again).
-    local localWork, isHere = 0, {}
+    local localWork = 0
     for _, quest in ipairs(here and quests or {}) do
       local kind = TargetKind(quest, QuestAdvisor.Difficulty(quest.level, level, greenRange))
       local target = kind and LocateOnce(quest, kind)
       if kind and (target and Pathwise:GetModule("Travel").ZoneGroup(target.mapID) == here
         or not target and quest.zone ~= nil and quest.zone == zone.zone) then
         localWork = localWork + 1
-        isHere[quest] = true
       end
     end
     local questlineWaits = localWork >= QuestAdvisor.QUESTLINE_LOCAL_WORK
     questlineState = { localWork = localWork, waits = questlineWaits }
     if questlineWaits then
-      -- (Only the questline elsewhere waits.)
+      -- (The questline elsewhere waits, and one here is just one of the
+      -- quests here, on the route by distance - reported: a questline
+      -- turn-in 2 km away in Booty Bay before quests 300 m away.)
       for _, quest in ipairs(quests) do
-        if not isHere[quest] then
-          quest.questline = nil
-        end
+        quest.questline = nil
       end
     end
     local pickups, focus, areaItem
