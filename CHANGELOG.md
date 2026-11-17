@@ -3,6 +3,14 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.54.4
+
+- Target button and macro: with many kinds of mobs (a "Do together" step,
+  or an item lots of creatures drop), the kinds whose spawns are nearest
+  to you come first - the macro has room for about ten, and the ones
+  around you were left out (reported: Sand Crawler right there not
+  targeted, "Target: Twilight Worg +17").
+
 ## 0.54.3
 
 - Questlines: while you're questing in an area (three or more quests there),

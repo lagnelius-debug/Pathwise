@@ -66,6 +66,56 @@ function Waypoints.Vector(fromMap, fromX, fromY, toMap, toX, toY)
   return math.sqrt(dNorth * dNorth + dWest * dWest), math.atan2(dWest, dNorth)
 end
 
+-- Mob names ordered by how close to the player their nearest spawn among
+-- points ({ mapID, x, y, npcName }) is, straight; names without a spawn
+-- known keep their order, last. The target macro has room for about ten
+-- names and keeps the first ones (reported: Sand Crawler right there, not
+-- targeted - 18 names, in no order, for a "Beast Entrails" step).
+function Waypoints.NamesByDistance(names, points)
+  local mapID, x, y = Platform.GetPlayerMapPosition()
+  local continent, north, west
+  if mapID then
+    continent, north, west = Waypoints.ToWorld(mapID, x, y)
+  end
+  if not continent or not names or #names < 2 then
+    return names
+  end
+  local wanted, nearest = {}, {}
+  for _, name in ipairs(names) do
+    wanted[name] = true
+  end
+  for _, point in ipairs(points or {}) do
+    local name = point.npcName
+    if name and wanted[name] then
+      local c, n, w = Waypoints.ToWorld(point.mapID, point.x, point.y)
+      if c == continent then
+        local d = (n - north) * (n - north) + (w - west) * (w - west)
+        if not nearest[name] or d < nearest[name] then
+          nearest[name] = d
+        end
+      end
+    end
+  end
+  local order = {}
+  for i, name in ipairs(names) do
+    order[name] = i
+  end
+  local sorted = {}
+  for i, name in ipairs(names) do
+    sorted[i] = name
+  end
+  table.sort(sorted, function(a, b)
+    local da, db = nearest[a], nearest[b]
+    if da and db and da ~= db then
+      return da < db
+    elseif (da ~= nil) ~= (db ~= nil) then
+      return da ~= nil
+    end
+    return order[a] < order[b]
+  end)
+  return sorted
+end
+
 local CachedRoute
 
 -- Distance (yards) along the travel route - through portals and boats when

@@ -60,6 +60,32 @@ check("body fits the 255 character limit", #body <= 255)
 check("most important name kept when space runs out", body:find("number 1\n", 1, true) ~= nil
   and not body:find("number 20", 1, true))
 
+-- Reported: Sand Crawler right there but not targeted - a step with 18
+-- kinds of mobs, in no order, and room in the macro for about ten. The
+-- nearest kinds go first.
+do
+  local savedMap, savedX, savedY = S.mapID, S.mapX, S.mapY
+  S.mapID, S.mapX, S.mapY = 1438, 0.50, 0.50
+  local names, points = {}, {}
+  for i = 1, 18 do
+    local name = i == 15 and "Sand Crawler" or ("Faraway Beast Number " .. i)
+    names[#names + 1] = name
+    -- Sand Crawler a few yards away; the others further, the first ones furthest.
+    local offset = i == 15 and 0.002 or (0.40 - i * 0.02)
+    points[#points + 1] = { mapID = 1438, x = 0.50 + offset, y = 0.50, npcName = name }
+  end
+  local ordered = Waypoints.NamesByDistance(names, points)
+  check("names: the nearest kind first (" .. tostring(ordered[1]) .. ")", ordered[1] == "Sand Crawler"
+    and ordered[2] == "Faraway Beast Number 18" and #ordered == 18)
+  local manyBody = TargetMacro.BuildBody(ordered)
+  check("with 18 kinds, the macro keeps the nearest", manyBody:find("Sand Crawler", 1, true) ~= nil
+    and #manyBody <= 255)
+  check("names with no spawn known keep their order, last",
+    table.concat(Waypoints.NamesByDistance({ "Unknown", "Faraway Beast Number 3", "Sand Crawler" }, points), ",")
+      == "Sand Crawler,Faraway Beast Number 3,Unknown")
+  S.mapID, S.mapX, S.mapY = savedMap, savedX, savedY
+end
+
 ---------------------------------------------------------------------------
 section("Macro: follows the arrow")
 

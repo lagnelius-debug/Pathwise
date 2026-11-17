@@ -453,6 +453,9 @@ function QuestAdvisor.CombineNearby(items)
           end
         end
         target.spawnPoints = spawnPoints
+        -- (Every quest's mobs, the nearest kinds first: the macro has room
+        -- for about ten.)
+        target.names = Pathwise:GetModule("Waypoints").NamesByDistance(npcNames, spawnPoints)
         -- Short arrow label: where it points now, plus how many more quests.
         local more = #group == 2 and L.ARROW_MORE_QUEST or string.format(L.ARROW_MORE_QUESTS, #group - 1)
         target.label = (nearest.target.label or nearest.title) .. more

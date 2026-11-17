@@ -348,7 +348,8 @@ local function WithNames(best, points)
       Add(point.npcName)
     end
   end
-  best.names = names
+  -- (The nearest kinds first: the macro has room for about ten.)
+  best.names = Pathwise:GetModule("Waypoints").NamesByDistance(names, points)
   return best
 end
 
