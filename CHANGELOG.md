@@ -3,6 +3,21 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.54.5
+
+- Smoother play (reported: small stutters while questing). The guide no
+  longer re-plans when nothing changed:
+  - QUEST_LOG_UPDATE fires much more often than the quest log changes;
+    the guide now re-plans only when the log really changed (or the last
+    plan is over 10 seconds old).
+  - Every bag change (each loot) and skill change re-planned the whole
+    guide through the class quests; now only when a class quest step
+    changed. A quest log change no longer plans twice.
+- And a plan costs much less: routes are worked out once per plan instead
+  of up to three times, the spawns of a quest are kept until its progress
+  changes, and their world positions and the "on the way" grid with them
+  (Stranglethorn, Grom'gol: about 25 ms a plan before, 8 ms now).
+
 ## 0.54.4
 
 - Target button and macro: with many kinds of mobs (a "Do together" step,

@@ -19,6 +19,9 @@ local MATCH_YARDS = 600
 
 -- GetNodes results per continent; cleared whenever the saved points change.
 local nodeCache = {}
+-- Goes up whenever the known flight points change (Core/Travel.lua forgets
+-- the routes it worked out then).
+Flights.nodesVersion = 0
 
 local function Waypoints()
   return Pathwise:GetModule("Waypoints")
@@ -95,6 +98,7 @@ function Flights:OnTaxiMapOpened()
   end
   self:Debugf("Saved %d known flight points.", count)
   nodeCache = {}
+  Flights.nodesVersion = Flights.nodesVersion + 1
   Pathwise:FireCallback("FLIGHTS_UPDATED")
 end
 
@@ -141,6 +145,7 @@ function Flights:ReadDiscovered()
   if count > 0 then
     self:Debugf("Read %d discovered flight points.", count)
     nodeCache = {}
+    Flights.nodesVersion = Flights.nodesVersion + 1
     Pathwise:FireCallback("FLIGHTS_UPDATED")
   end
 end
@@ -160,6 +165,7 @@ function Flights:OnFlightMastersReady()
   end
   if changed then
     nodeCache = {}
+    Flights.nodesVersion = Flights.nodesVersion + 1
     Pathwise:FireCallback("FLIGHTS_UPDATED")
   end
 end
@@ -187,6 +193,7 @@ end
 -- Forgets the cached lists (the saved points were changed directly).
 function Flights:ClearCache()
   nodeCache = {}
+  Flights.nodesVersion = Flights.nodesVersion + 1
 end
 
 function Flights:OnInitialize()

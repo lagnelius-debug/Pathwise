@@ -21,6 +21,9 @@ end
 local function UpdateLog(entries)
   WoW.questLog = entries
   WoW.FireEvent("QUEST_LOG_UPDATE")
+  -- (A re-plan in any case: the tests also change QuestieDB's data and
+  -- the completed quests, which the log alone doesn't show.)
+  Pathwise:GetModule("QuestAdvisor"):ScheduleUpdate()
   WoW.RunTimers()
 end
 
@@ -253,3 +256,43 @@ WoW.Slash("")
 check("/pw hides the window and remembers", not frame:IsShown() and Pathwise.db.nextSteps.shown == false)
 WoW.Slash("")
 check("/pw shows it again", frame:IsShown() and Pathwise.db.nextSteps.shown == true)
+
+---------------------------------------------------------------------------
+section("Quests: no needless re-plans")
+
+-- Reported: small stutters while questing. QUEST_LOG_UPDATE fires much
+-- more often than the log changes, and every bag change re-planned through
+-- the class quests.
+do
+  local QA = Pathwise:GetModule("QuestAdvisor")
+  local plans = 0
+  local update = QA.Update
+  QA.Update = function(...) plans = plans + 1 return update(...) end
+  local entry = { title = "Same Quest", level = S.level, questID = 4242, objectives = { { text = "Boar slain: 1/5" } } }
+  WoW.questLog = { entry }
+  QA:ScheduleUpdate()
+  WoW.RunTimers()
+  plans = 0
+  WoW.FireEvent("QUEST_LOG_UPDATE")
+  WoW.RunTimers()
+  check("QUEST_LOG_UPDATE with the log unchanged: no re-plan", plans == 0)
+  entry.objectives[1].text = "Boar slain: 2/5"
+  WoW.FireEvent("QUEST_LOG_UPDATE")
+  WoW.RunTimers()
+  check("progress: re-planned", plans == 1)
+  WoW.FireEvent("BAG_UPDATE_DELAYED")
+  WoW.RunTimers()
+  WoW.RunTimers()
+  check("a bag change (loot) with the class quests unchanged: no re-plan", plans == 1)
+  WoW.now = WoW.now + QA.REPLAN_MAX_AGE + 1
+  WoW.FireEvent("QUEST_LOG_UPDATE")
+  WoW.RunTimers()
+  check("the last plan old: re-planned all the same", plans == 2)
+  WoW.FireEvent("QUEST_TURNED_IN", 9999)
+  WoW.RunTimers()
+  check("a turn-in: re-planned", plans == 3)
+  QA.Update = update
+  WoW.questLog = {}
+  QA:ScheduleUpdate()
+  WoW.RunTimers()
+end

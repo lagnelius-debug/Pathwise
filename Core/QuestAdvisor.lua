@@ -79,6 +79,11 @@ local DIFFICULTY_COLORS = {
 
 local updatePending = false
 local knownComplete -- [questID] = true; nil until the first scan
+local lastLogSignature -- QuestAdvisor.LogSignature of the log at the last plan
+local lastPlanTime -- when the last plan was made
+-- A QUEST_LOG_UPDATE with the log unchanged still re-plans when the last
+-- plan is this old (seconds): a cheap safety net.
+QuestAdvisor.REPLAN_MAX_AGE = 10
 
 -- The questline the player is on: a quest taken up to this long after
 -- turning in the one it follows on from (its pre-quest, or the one before
@@ -455,7 +460,16 @@ function QuestAdvisor.CombineNearby(items)
         target.spawnPoints = spawnPoints
         -- (Every quest's mobs, the nearest kinds first: the macro has room
         -- for about ten.)
-        target.names = Pathwise:GetModule("Waypoints").NamesByDistance(npcNames, spawnPoints)
+        local nameDistance = {}
+        for _, member in ipairs(group) do
+          for name, distance in pairs(member.target.nameDistance or {}) do
+            if not nameDistance[name] or distance < nameDistance[name] then
+              nameDistance[name] = distance
+            end
+          end
+        end
+        target.nameDistance = nameDistance
+        target.names = Pathwise:GetModule("Waypoints").SortNames(npcNames, nameDistance)
         -- Short arrow label: where it points now, plus how many more quests.
         local more = #group == 2 and L.ARROW_MORE_QUEST or string.format(L.ARROW_MORE_QUESTS, #group - 1)
         target.label = (nearest.target.label or nearest.title) .. more
@@ -852,6 +866,10 @@ local ON_THE_WAY_MAX_YARDS = 1200
 -- (a mountain, a boat): the line says nothing about the way.
 local ON_THE_WAY_DETOUR = 1.5
 local MAX_ON_THE_WAY = 2
+-- The grid cell (yards) spawns are sorted into: the corridor's width.
+local ON_THE_WAY_CELL = QuestAdvisor.ON_THE_WAY_YARDS
+-- [spawn list] = { continent, grid, count }; gone with the list.
+local onTheWayGrids = setmetatable({}, { __mode = "k" })
 
 -- The quests of an item: itself, or the members of a "do together" step.
 local function Members(item)
@@ -876,15 +894,29 @@ function QuestAdvisor.AddOnTheWay(items, location)
   for _, item in ipairs(items) do
     if item.kind == "do" and item.priority >= P.QUEST_ELSEWHERE then
       for _, member in ipairs(Members(item)) do
-        local spots = {}
-        for _, point in ipairs(member.target and member.target.spawnPoints or {}) do
-          local c, n, w = Waypoints.ToWorld(point.mapID, point.x, point.y)
-          if c == continent and point.task then
-            spots[#spots + 1] = { n, w, point.task }
+        -- (In a grid of corridor-sized cells: an item many creatures drop
+        -- has thousands of spawns - Chapter I in Stranglethorn: 3800 - and
+        -- only the cells along the way are looked at.)
+        -- (Kept with the spawn list, which stays the same while the
+        -- quest's progress does.)
+        local points = member.target and member.target.spawnPoints or {}
+        local cached = onTheWayGrids[points]
+        if not cached or cached.continent ~= continent then
+          local grid, count = {}, 0
+          for _, point in ipairs(points) do
+            local c, n, w = Waypoints.PointWorld(point)
+            if c == continent and point.task then
+              count = count + 1
+              local key = math.floor(n / ON_THE_WAY_CELL) .. ":" .. math.floor(w / ON_THE_WAY_CELL)
+              grid[key] = grid[key] or {}
+              table.insert(grid[key], { n, w, point.task, count })
+            end
           end
+          cached = { continent = continent, grid = grid, count = count }
+          onTheWayGrids[points] = cached
         end
-        if #spots > 0 then
-          sources[#sources + 1] = { item = item, title = member.title, spots = spots }
+        if cached.count > 0 then
+          sources[#sources + 1] = { item = item, title = member.title, grid = cached.grid }
         end
       end
     end
@@ -905,13 +937,36 @@ function QuestAdvisor.AddOnTheWay(items, location)
         local hints = {}
         for _, source in ipairs(sources) do
           if source.item ~= item and #hints < MAX_ON_THE_WAY then
+            -- The spots within the corridor: the cells along the line,
+            -- two cells to each side, then the exact distance.
+            local near, looked = {}, {}
+            local steps = math.ceil(length / ON_THE_WAY_CELL)
+            for step = 0, steps do
+              local cn = math.floor((n0 + dn * step / steps) / ON_THE_WAY_CELL)
+              local cw = math.floor((w0 + dw * step / steps) / ON_THE_WAY_CELL)
+              for i = -2, 2 do
+                for j = -2, 2 do
+                  local key = (cn + i) .. ":" .. (cw + j)
+                  if not looked[key] then
+                    looked[key] = true
+                    for _, spot in ipairs(source.grid[key] or {}) do
+                      -- Distance from the spot to the line player -> target.
+                      local t = ((spot[1] - n0) * dn + (spot[2] - w0) * dw) / (length * length)
+                      t = math.max(0, math.min(1, t))
+                      local en, ew = n0 + t * dn - spot[1], w0 + t * dw - spot[2]
+                      if en * en + ew * ew <= corridor then
+                        near[#near + 1] = spot
+                      end
+                    end
+                  end
+                end
+              end
+            end
+            -- (In the spawn list's order, as before.)
+            table.sort(near, function(a, b) return a[4] < b[4] end)
             local tasks, seen = {}, {}
-            for _, spot in ipairs(source.spots) do
-              -- Distance from the spot to the line player -> target.
-              local t = ((spot[1] - n0) * dn + (spot[2] - w0) * dw) / (length * length)
-              t = math.max(0, math.min(1, t))
-              local en, ew = n0 + t * dn - spot[1], w0 + t * dw - spot[2]
-              if en * en + ew * ew <= corridor and not seen[spot[3]] then
+            for _, spot in ipairs(near) do
+              if not seen[spot[3]] then
                 seen[spot[3]] = true
                 tasks[#tasks + 1] = spot[3]
               end
@@ -1376,7 +1431,10 @@ function QuestAdvisor:Update()
   end
   local snapshot = Pathwise:GetModule("Character"):GetSnapshot()
   local level = snapshot.level or 1
-  local quests, collapsed = QuestAdvisor.Guided(Platform.GetQuestLog())
+  local log, collapsedHeaders = Platform.GetQuestLog()
+  lastLogSignature = QuestAdvisor.LogSignature(log)
+  lastPlanTime = Platform.GetTime()
+  local quests, collapsed = QuestAdvisor.Guided(log, collapsedHeaders)
   local recentTurnIns = MarkQuestline(quests)
   -- (Dungeon mode plans one trip: no questline first there.)
   if inside or dungeon then
@@ -1709,15 +1767,49 @@ function QuestAdvisor:OnPickupPassedUp(_, questID, how)
   self:ScheduleUpdate()
 end
 
-function QuestAdvisor:ScheduleUpdate()
+-- The quest log in short: what a plan depends on in it (quests, their
+-- progress and state). QUEST_LOG_UPDATE fires much more often than the log
+-- changes (reported: small stutters while questing - every one re-planned).
+function QuestAdvisor.LogSignature(quests)
+  local parts = {}
+  for _, quest in ipairs(quests or {}) do
+    parts[#parts + 1] = tostring(quest.questID or quest.title) .. ":" .. tostring(quest.complete) .. ":"
+      .. tostring(quest.failed)
+    for _, objective in ipairs(quest.objectives or {}) do
+      parts[#parts + 1] = tostring(objective.text) .. (objective.finished and "+" or "-")
+    end
+  end
+  return table.concat(parts, "|")
+end
+
+-- ifLogChanged: only re-plan if the quest log changed since the last plan
+-- (QUEST_LOG_UPDATE); any other request re-plans in any case.
+local updateForced = false
+function QuestAdvisor:ScheduleUpdate(ifLogChanged)
+  if not ifLogChanged then
+    updateForced = true
+  end
   if updatePending then
     return
   end
   updatePending = true
   Platform.After(UPDATE_DELAY, function()
     updatePending = false
+    local forced = updateForced
+    updateForced = false
+    if not forced and lastLogSignature ~= nil and lastPlanTime
+      and Platform.GetTime() - lastPlanTime < QuestAdvisor.REPLAN_MAX_AGE
+      and QuestAdvisor.LogSignature(Platform.GetQuestLog()) == lastLogSignature then
+      return
+    end
     QuestAdvisor:Update()
   end)
+end
+
+-- The quest log changed - or not: QUEST_LOG_UPDATE also fires without a
+-- change.
+function QuestAdvisor:OnQuestLogUpdate()
+  self:ScheduleUpdate(true)
 end
 
 local UPDATE_SECTIONS = { all = true, level = true, zone = true }
@@ -1735,7 +1827,7 @@ end
 -- (Fires for party members too: only the player's own log matters.)
 function QuestAdvisor:OnUnitQuestLogChanged(_, unit)
   if unit == "player" then
-    self:ScheduleUpdate()
+    self:ScheduleUpdate(true)
   end
 end
 
@@ -1769,7 +1861,7 @@ function QuestAdvisor:OnEnable()
   Platform.Every(MOVE_CHECK_SECONDS, function()
     QuestAdvisor:CheckMovement()
   end)
-  self:RegisterEvent("QUEST_LOG_UPDATE", "OnQuestEvent")
+  self:RegisterEvent("QUEST_LOG_UPDATE", "OnQuestLogUpdate")
   -- (Also on quest progress; on the modern client (Forever) as a second
   -- signal, in case QUEST_LOG_UPDATE came before the objective changed.)
   self:RegisterEvent("UNIT_QUEST_LOG_CHANGED", "OnUnitQuestLogChanged")

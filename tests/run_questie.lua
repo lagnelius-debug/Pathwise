@@ -17,6 +17,10 @@ end
 local function UpdateLog(entries)
   WoW.questLog = entries
   WoW.FireEvent("QUEST_LOG_UPDATE")
+  -- (A re-plan in any case: the tests also change QuestieDB's data and
+  -- the completed quests, which the log alone doesn't show.)
+  QuestieData:ResetTargets()
+  Pathwise:GetModule("QuestAdvisor"):ScheduleUpdate()
   WoW.RunTimers()
 end
 

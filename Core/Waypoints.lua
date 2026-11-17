@@ -53,6 +53,20 @@ function Waypoints.ToWorld(mapID, x, y)
   return rect.continent, north, west
 end
 
+-- A point's world position (continent, north, west), worked out once and
+-- kept on the point: spawn lists are kept between plans, and an item many
+-- creatures drop has thousands of spawns.
+function Waypoints.PointWorld(point)
+  if point.worldContinent == nil then
+    local c, n, w = Waypoints.ToWorld(point.mapID, point.x, point.y)
+    point.worldContinent, point.worldNorth, point.worldWest = c or false, n, w
+  end
+  if not point.worldContinent then
+    return nil
+  end
+  return point.worldContinent, point.worldNorth, point.worldWest
+end
+
 -- Returns distance (yards) and bearing (radians counterclockwise from north,
 -- the same convention as GetPlayerFacing) from one map position to another,
 -- or nil if they are on different continents or unknown maps.
@@ -84,10 +98,15 @@ function Waypoints.NamesByDistance(names, points)
   for _, name in ipairs(names) do
     wanted[name] = true
   end
+  local PointWorld = Waypoints.PointWorld
   for _, point in ipairs(points or {}) do
     local name = point.npcName
     if name and wanted[name] then
-      local c, n, w = Waypoints.ToWorld(point.mapID, point.x, point.y)
+      -- (The kept world position, read directly: thousands of spawns.)
+      local c, n, w = point.worldContinent, point.worldNorth, point.worldWest
+      if c == nil then
+        c, n, w = PointWorld(point)
+      end
       if c == continent then
         local d = (n - north) * (n - north) + (w - west) * (w - west)
         if not nearest[name] or d < nearest[name] then
@@ -96,6 +115,16 @@ function Waypoints.NamesByDistance(names, points)
       end
     end
   end
+  return Waypoints.SortNames(names, nearest)
+end
+
+-- Names ordered by distanceByName ([name] = yards; any measure that grows
+-- with the distance); names without one keep their order, last.
+function Waypoints.SortNames(names, distanceByName)
+  if not names or #names < 2 then
+    return names
+  end
+  local nearest = distanceByName
   local order = {}
   for i, name in ipairs(names) do
     order[name] = i

@@ -25,6 +25,7 @@ local UPDATE_DELAY = 0.5
 ClassQuests.MAX_STEPS = 3
 
 local updatePending = false
+local lastPlanSignature -- the class quest steps the quest plan last got (Update)
 local shownStarts = {} -- [questID] = true for the reminders shown now
 
 local function GetSnapshot()
@@ -196,7 +197,8 @@ function ClassQuests:Update()
   local P = NextSteps.PRIORITY
   local reminded = Pathwise.charDB.classQuestsReminded
   local items = {}
-  for _, step in ipairs(self:GetSteps()) do
+  local steps = self:GetSteps()
+  for _, step in ipairs(steps) do
     if not ClassQuests.InQuestPlan(step) then
       items[#items + 1] = {
         id = "classquest:" .. step.key,
@@ -211,8 +213,20 @@ function ClassQuests:Update()
     end
   end
   NextSteps:SetItems("classQuests", items)
-  -- The steps with a giver are placed by the quest plan.
-  Pathwise:GetModule("QuestAdvisor"):ScheduleUpdate()
+  -- The steps with a giver are placed by the quest plan - re-planned only
+  -- when they changed (this runs on every bag change: a re-plan each time
+  -- made small stutters while looting).
+  local parts = {}
+  for _, step in ipairs(steps) do
+    local target = ClassQuests.InQuestPlan(step) and step.target
+    parts[#parts + 1] = tostring(step.key) .. ":" .. tostring(step.important) .. ":" .. tostring(step.text)
+      .. (target and (":" .. tostring(target.mapID) .. ":" .. tostring(target.x) .. ":" .. tostring(target.y)) or "")
+  end
+  local signature = table.concat(parts, "|")
+  if signature ~= lastPlanSignature then
+    lastPlanSignature = signature
+    Pathwise:GetModule("QuestAdvisor"):ScheduleUpdate()
+  end
 end
 
 function ClassQuests:ScheduleUpdate()

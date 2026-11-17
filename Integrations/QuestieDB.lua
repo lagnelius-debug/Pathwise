@@ -135,12 +135,22 @@ local function Nearest(points)
   -- only spawns that straight distance doesn't rule out are measured.
   local continent, north, west = Waypoints.ToWorld(mapID, x, y)
   local straight = {}
+  -- (And each mob's nearest spawn: the names go nearest first.)
+  local nameDistance = {}
   local closest, closestUnvisited
+  local PointWorld = Waypoints.PointWorld
   for i, point in ipairs(points) do
-    local c, n, w = Waypoints.ToWorld(point.mapID, point.x, point.y)
+    local c, n, w = point.worldContinent, point.worldNorth, point.worldWest
+    if c == nil then
+      c, n, w = PointWorld(point)
+    end
     if continent and c == continent then
       local d = math.sqrt((n - north) * (n - north) + (w - west) * (w - west))
       straight[i] = d
+      local name = point.npcName
+      if name and (not nameDistance[name] or d < nameDistance[name]) then
+        nameDistance[name] = d
+      end
       if not closest or d < straight[closest] then
         closest = i
       end
@@ -175,7 +185,7 @@ local function Nearest(points)
       end
     end
   end
-  return best or fallback or points[1]
+  return best or fallback or points[1], nameDistance
 end
 
 -- Arrow label for a spawn of `name` (an NPC or object).
@@ -328,7 +338,7 @@ end
 
 -- NPC names for the target macro: the chosen point's NPC first, then the
 -- other NPCs of the step in the same zone.
-local function WithNames(best, points)
+local function WithNames(best, points, nameDistance)
   if not best then
     return nil
   end
@@ -349,7 +359,9 @@ local function WithNames(best, points)
     end
   end
   -- (The nearest kinds first: the macro has room for about ten.)
-  best.names = Pathwise:GetModule("Waypoints").NamesByDistance(names, points)
+  local Waypoints = Pathwise:GetModule("Waypoints")
+  best.names = nameDistance and Waypoints.SortNames(names, nameDistance) or Waypoints.NamesByDistance(names, points)
+  best.nameDistance = nameDistance
   return best
 end
 
@@ -522,7 +534,51 @@ local function MarkTask(points, first, task)
   end
 end
 
+-- The spawns and tasks of a quest still to do: { points, tasks }. Kept per
+-- quest until its progress changes - building them for an item many
+-- creatures drop (3800 spawns) on every plan made small stutters.
+local doCache = {} -- [questID] = { signature, points, tasks }
+
+local function ProgressSignature(quest)
+  local parts = {}
+  for _, objective in ipairs(quest.objectives or {}) do
+    parts[#parts + 1] = tostring(objective.text) .. (objective.finished and "+" or "-")
+  end
+  return table.concat(parts, "|")
+end
+
+local BuildDoPoints
+
 local function DoTarget(quest)
+  local signature = ProgressSignature(quest)
+  local cached = doCache[quest.questID]
+  if not cached or cached.signature ~= signature then
+    local points, tasks = BuildDoPoints(quest)
+    cached = { signature = signature, points = points, tasks = tasks }
+    doCache[quest.questID] = cached
+  end
+  local nearest, nameDistance = Nearest(cached.points)
+  if not nearest then
+    return nil
+  end
+  -- (A copy: the kept spawns stay as they are.)
+  local best = {}
+  for key, value in pairs(nearest) do
+    best[key] = value
+  end
+  best = WithNames(best, cached.points, nameDistance)
+  best.tasks = cached.tasks
+  -- Every spawn of what's left (the "on the way" hints for other steps).
+  best.spawnPoints = cached.points
+  return best
+end
+
+-- Forgets the kept spawns (tests change QuestieDB's data).
+function QuestieData:ResetTargets()
+  doCache = {}
+end
+
+function BuildDoPoints(quest)
   local objectives = lib.Quest.Get(quest.questID, "objectives") or {}
   local points, tasks = {}, {}
   local creatures = #(objectives[1] or {}) + #(objectives[5] or {})
@@ -633,13 +689,7 @@ local function DoTarget(quest)
       MarkTask(points, first, task)
     end
   end
-  local best = WithNames(Nearest(points), points)
-  if best then
-    best.tasks = tasks
-    -- Every spawn of what's left (the "on the way" hints for other steps).
-    best.spawnPoints = points
-  end
-  return best
+  return points, tasks
 end
 
 -- Returns a target at the nearest NPC that gives quest questID, or any
@@ -1028,6 +1078,7 @@ end
 function QuestieData:ResetPickups()
   pickupCandidates, pickupScan, candidateIndex, dungeonQuests = nil, nil, nil, {}
   followUps = {}
+  self:ResetTargets()
 end
 
 -- Where a candidate is started: points with .giver (NPC or object name),

@@ -147,9 +147,17 @@ local function Arrivals(start, goal, fromMap, fromX, fromY)
   return list
 end
 
+-- Routes worked out this frame: one plan asks for the same ones many times
+-- (ordering the steps compares every pair) - about two of three asks were
+-- repeats (reported: small stutters while questing). Kept for the moment
+-- they were worked out in only, so nothing goes stale.
+local routeMemo, routeMemoTime, routeMemoNodes, routeMemoFaction = {}, nil, nil, nil
+local NO_ROUTE = {}
+
 -- Forgets the cached searches (tests change the connectors or the faction).
 function Travel.ClearCache()
   arrivalCache, arrivalCount = {}, 0
+  routeMemo, routeMemoTime = {}, nil
 end
 
 -- The way on foot (with portals, boats and zeppelins) from one map position
@@ -331,7 +339,27 @@ end
 -- The way from one map position to another: { legs = { connector, ... },
 -- distance }, where a connector is a portal, boat, zeppelin or flight; or
 -- nil when walking straight is the way (or there's no way to tell).
+local RouteUncached
 function Travel.Route(fromMap, fromX, fromY, toMap, toX, toY)
+  local now = Pathwise.Platform.GetTime()
+  -- (Routes depend on the known flight points and the faction too.)
+  local nodes, faction = Pathwise:GetModule("Flights").nodesVersion, PlayerFaction()
+  if now ~= routeMemoTime or nodes ~= routeMemoNodes or faction ~= routeMemoFaction then
+    routeMemo, routeMemoTime, routeMemoNodes, routeMemoFaction = {}, now, nodes, faction
+  end
+  local key = fromMap .. ":" .. fromX .. ":" .. fromY .. ">" .. toMap .. ":" .. toX .. ":" .. toY
+  local route = routeMemo[key]
+  if route == nil then
+    route = RouteUncached(fromMap, fromX, fromY, toMap, toX, toY) or NO_ROUTE
+    routeMemo[key] = route
+  end
+  if route == NO_ROUTE then
+    return nil
+  end
+  return route
+end
+
+function RouteUncached(fromMap, fromX, fromY, toMap, toX, toY)
   local fromContinent, toContinent = Continent(fromMap), Continent(toMap)
   if fromContinent and toContinent and fromContinent ~= toContinent then
     return CrossRoute(fromMap, fromX, fromY, toMap, toX, toY)
