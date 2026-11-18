@@ -31,6 +31,8 @@ local FEATURES = {
     function(on) Pathwise.db.hearthTips = on end, function() Module("Hearthstone"):Update() end },
   { "FEATURE_FLIGHT_TIMER", function() return Pathwise.db.flightTimer end,
     function(on) Pathwise.db.flightTimer = on end, function() Module("FlightTimerBar"):Render() end },
+  { "FEATURE_UPDATE_REMINDER", function() return Pathwise.db.updateReminder end,
+    function(on) Pathwise.db.updateReminder = on end },
   { "FEATURE_TRAINER", function() return Pathwise.db.trainerTips end,
     function(on) Pathwise.db.trainerTips = on end, function() Module("Trainer"):Refresh(false) end },
   { "FEATURE_TRAINER_PANEL", function() return Pathwise.db.trainerPanel end,

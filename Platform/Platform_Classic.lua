@@ -955,6 +955,47 @@ function Platform.GetTaxiNodes()
   return nodes
 end
 
+-- Hidden addon messages (Core/UpdateCheck.lua).
+function Platform.RegisterAddonPrefix(prefix)
+  local register = (C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix) or RegisterAddonMessagePrefix
+  if register then
+    pcall(register, prefix)
+  end
+end
+
+-- Sends one (channel: "PARTY", "RAID", "INSTANCE_CHAT", "GUILD" or
+-- "WHISPER" with target). Never raises an error.
+function Platform.SendAddonMessage(prefix, text, channel, target)
+  local send = (C_ChatInfo and C_ChatInfo.SendAddonMessage) or SendAddonMessage
+  if send and channel then
+    pcall(send, prefix, text, channel, target)
+  end
+end
+
+-- The channel of the player's group, or nil when not in one.
+function Platform.GroupChannel()
+  if IsInGroup and LE_PARTY_CATEGORY_INSTANCE and IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+    return "INSTANCE_CHAT"
+  elseif IsInRaid and IsInRaid() then
+    return "RAID"
+  elseif IsInGroup and IsInGroup() then
+    return "PARTY"
+  end
+end
+
+function Platform.IsInGuild()
+  return IsInGuild and IsInGuild() and true or false
+end
+
+-- Whether an addon message's sender ("Name" or "Name-Realm") is the player.
+function Platform.IsPlayerSender(sender)
+  local name = UnitName and UnitName("player")
+  if not sender or not name then
+    return false
+  end
+  return sender == name or sender:match("^([^%-]+)") == name
+end
+
 -- Reloads the interface (a new language takes effect).
 function Platform.ReloadUI()
   if ReloadUI then

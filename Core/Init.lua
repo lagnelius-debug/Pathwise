@@ -40,6 +40,7 @@ local DB_DEFAULTS = {
   hearthTips = true,            -- suggest moving the hearthstone (/pw hearth)
   flightTimer = true,           -- countdown bar under the To-do window while flying
   flightTimes = {},             -- learned flight times: ["From > To"] = seconds
+  updateReminder = true,        -- say when a newer Pathwise is out (heard from the group or guild)
   -- Feature switches (settings: Pathwise > Features), all on by default:
   questGuide = true,            -- quest steps in the To-do window (and the arrow on them)
   trainerTips = true,           -- trainer reminder: To-do line and chat

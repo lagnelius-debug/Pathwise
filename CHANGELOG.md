@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.55.0
+
+- Update reminder: copies of Pathwise in your group and guild tell each
+  other which version they are (a hidden addon message, as Questie does -
+  addons can't go online). When one is newer than yours, chat says so:
+  "A newer version of Pathwise is out (0.56.0) - you have 0.55.0. Update
+  it on CurseForge." Once per session, and again at each login until
+  you've updated. Players with an older one are told back, so the news
+  spreads. Switch it off on the Features page.
+
 ## 0.54.5
 
 - Smoother play (reported: small stutters while questing). The guide no
