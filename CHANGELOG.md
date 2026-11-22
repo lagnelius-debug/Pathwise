@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.57.0
+
+- New spell ranks onto the action bars: learning a higher rank (Frostbolt
+  Rank 5) puts it on every action button that held the highest lower rank
+  of that spell (Rank 4), and chat says so. A lower rank you keep on a
+  button of its own as well (Rank 1, to slow) stays. In combat, or with
+  something on the cursor, it waits until it can. Switch it off on the
+  Features page.
+
 ## 0.56.0
 
 - After dying: once you release, the arrow leads to your body so you can

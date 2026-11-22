@@ -3,7 +3,7 @@
 ## Notes: Follows your character's progression and tells you what to do next.
 ## Author: noelagnelius
 ## X-Curse-Project-ID: 1767676
-## Version: 0.56.0
+## Version: 0.57.0
 ## OptionalDeps: QuestieDB
 ## X-License: GPL-3.0-or-later
 ## SavedVariables: PathwiseDB
@@ -77,6 +77,7 @@ Core\Flights.lua
 Core\FlightTimer.lua
 Core\UpdateCheck.lua
 Core\Corpse.lua
+Core\ActionBarRanks.lua
 Core\Travel.lua
 Core\Waypoints.lua
 Core\TargetMacro.lua

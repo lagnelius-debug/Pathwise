@@ -606,6 +606,49 @@ function Platform.GetSpellDisplay(spellID)
   return name, subtext, icon
 end
 
+-- A spell's rank number (from "Rank 4", in any language), or nil.
+function Platform.GetSpellRank(spellID)
+  local _, subtext = Platform.GetSpellDisplay(spellID)
+  return subtext and tonumber(subtext:match("%d+")) or nil
+end
+
+---------------------------------------------------------------------------
+-- Action buttons (Core/ActionBarRanks.lua)
+---------------------------------------------------------------------------
+
+-- Action slots looked at (12 per bar; WoW Forever has more bars).
+Platform.ACTION_SLOTS = 180
+
+-- The spell on an action slot, or nil (empty, an item, a macro).
+function Platform.GetActionSpell(slot)
+  if not GetActionInfo then
+    return nil
+  end
+  local kind, id = GetActionInfo(slot)
+  if kind == "spell" and type(id) == "number" then
+    return id
+  end
+end
+
+-- Whether something is on the cursor (an item, a spell being dragged).
+function Platform.CursorHolds()
+  return GetCursorInfo and GetCursorInfo() ~= nil or false
+end
+
+-- Puts a spell on an action slot in place of what's there (only out of
+-- combat, with an empty cursor). True when done.
+function Platform.PlaceSpellOnAction(slot, spellID)
+  local pickup = (C_Spell and C_Spell.PickupSpell) or PickupSpell
+  if not (pickup and PlaceAction and ClearCursor) or Platform.InCombat() or Platform.CursorHolds() then
+    return false
+  end
+  pickup(spellID)
+  PlaceAction(slot)
+  -- (The old rank is on the cursor now.)
+  ClearCursor()
+  return true
+end
+
 ---------------------------------------------------------------------------
 -- Quest log
 ---------------------------------------------------------------------------

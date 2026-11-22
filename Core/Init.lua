@@ -42,6 +42,7 @@ local DB_DEFAULTS = {
   flightTimes = {},             -- learned flight times: ["From > To"] = seconds
   updateReminder = true,        -- say when a newer Pathwise is out (heard from the group or guild)
   corpseArrow = true,           -- after dying, the arrow leads to the body (Core/Corpse.lua)
+  actionBarRanks = true,        -- a new spell rank replaces the old one on the action bars
   -- Feature switches (settings: Pathwise > Features), all on by default:
   questGuide = true,            -- quest steps in the To-do window (and the arrow on them)
   trainerTips = true,           -- trainer reminder: To-do line and chat
