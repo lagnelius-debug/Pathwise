@@ -1433,6 +1433,14 @@ function QuestAdvisor:Update()
   local level = snapshot.level or 1
   local log, collapsedHeaders = Platform.GetQuestLog()
   lastLogSignature = QuestAdvisor.LogSignature(log)
+  -- (The kept spawns of quests that left the log go.)
+  local inLog = {}
+  for _, quest in ipairs(log) do
+    if quest.questID then
+      inLog[quest.questID] = true
+    end
+  end
+  Pathwise:GetModule("QuestieData"):KeepTargets(inLog)
   lastPlanTime = Platform.GetTime()
   local quests, collapsed = QuestAdvisor.Guided(log, collapsedHeaders)
   local recentTurnIns = MarkQuestline(quests)

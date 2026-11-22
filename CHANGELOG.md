@@ -3,6 +3,17 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.56.0
+
+- After dying: once you release, the arrow leads to your body so you can
+  resurrect there - before every other step, and even with the To-do
+  window closed. Straight there (no flight master serves a ghost). Where
+  the body is comes from the game; else where you died; died inside a
+  dungeon, its entrance. Next on the arrow leaves it until you die again
+  (for the spirit healer). Switch it off on the Features page.
+- Bug check: the spawns kept per quest (0.54.5) are let go when the quest
+  leaves the log - an item many creatures drop keeps thousands.
+
 ## 0.55.0
 
 - Update reminder: copies of Pathwise in your group and guild tell each

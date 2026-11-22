@@ -578,6 +578,16 @@ function QuestieData:ResetTargets()
   doCache = {}
 end
 
+-- Forgets the kept spawns of quests no longer in the log (inLog: [questID]
+-- = true): an item many creatures drop keeps thousands.
+function QuestieData:KeepTargets(inLog)
+  for questID in pairs(doCache) do
+    if not inLog[questID] then
+      doCache[questID] = nil
+    end
+  end
+end
+
 function BuildDoPoints(quest)
   local objectives = lib.Quest.Get(quest.questID, "objectives") or {}
   local points, tasks = {}, {}

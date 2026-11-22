@@ -37,6 +37,7 @@ local skippedSteps = {} -- [Next Steps item id] = time the player skipped it
 -- is), while the arrow follows the same step.
 local focus
 local focused -- the auto target moved to that spawn, or nil
+local corpse -- the player's body while a ghost (SetCorpse), or nil
 
 ---------------------------------------------------------------------------
 -- Math (pure apart from the map rectangles)
@@ -192,9 +193,10 @@ function Waypoints:GetDirection()
   if not mapID then
     return nil
   end
-  -- (On a flight: straight at the target; the flight goes where it goes.)
+  -- (On a flight: straight at the target; the flight goes where it goes.
+  -- A ghost to the body: straight too - no flight master serves ghosts.)
   local route
-  if not Platform.IsOnTaxi() then
+  if not Platform.IsOnTaxi() and not target.corpse then
     route = CachedRoute(mapID, x, y, target)
   end
   local via = route and route.legs[1]
@@ -223,6 +225,10 @@ function Waypoints:GetAutoItemId()
 end
 
 function Waypoints:GetTarget()
+  -- A ghost: the body first (Core/Corpse.lua).
+  if corpse then
+    return corpse, "corpse"
+  end
   if manual then
     return manual, "manual"
   end
@@ -285,6 +291,17 @@ local function Changed()
   Pathwise:FireCallback("WAYPOINT_CHANGED", (Waypoints:GetTarget()))
 end
 
+-- The player's body while a ghost (Core/Corpse.lua), or nil: before every
+-- other target.
+function Waypoints:SetCorpse(target)
+  local before = corpse
+  corpse = target
+  if (before == nil) ~= (target == nil) or (before and target and (before.mapID ~= target.mapID
+    or before.x ~= target.x or before.y ~= target.y or before.label ~= target.label)) then
+    Changed()
+  end
+end
+
 -- itemId: the target is a clicked Next Steps item's; it follows that item
 -- (a finished quest's turn-in instead of its mobs) and ends with it.
 function Waypoints:SetManual(target, itemId)
@@ -343,7 +360,11 @@ end
 -- Steps item; a manual waypoint is cleared.
 function Waypoints:Next()
   local target, kind = self:GetTarget()
-  if kind == "manual" then
+  if kind == "corpse" then
+    -- (To the spirit healer instead: not to the body until the next death.)
+    Pathwise:Print(L.ARROW_CORPSE_SKIPPED)
+    Pathwise:FireCallback("CORPSE_SKIPPED")
+  elseif kind == "manual" then
     self:ClearManual()
     Pathwise:Print(L.WAY_CLEARED)
   elseif kind == "auto" and target.spawn and not self:IsVisited(target) then

@@ -726,6 +726,44 @@ function Platform.GetPlayerMapPosition()
   return mapID, x, y
 end
 
+-- Whether the player is a ghost (released, on the way back to the body),
+-- and whether dead or a ghost.
+function Platform.IsGhost()
+  return UnitIsGhost and UnitIsGhost("player") and true or false
+end
+
+function Platform.IsDead()
+  return UnitIsDeadOrGhost and UnitIsDeadOrGhost("player") and true or false
+end
+
+-- Where the player's body is: mapID, x, y (0-1) on the player's map or one
+-- around it (the zone, the continent), or nil when the game doesn't say.
+function Platform.GetCorpsePosition()
+  if not (C_DeathInfo and C_DeathInfo.GetCorpseMapPosition and C_Map and C_Map.GetBestMapForUnit) then
+    return nil
+  end
+  local mapID = C_Map.GetBestMapForUnit("player")
+  for _ = 1, 6 do
+    if not mapID or mapID == 0 then
+      return nil
+    end
+    local ok, position = pcall(C_DeathInfo.GetCorpseMapPosition, mapID)
+    if ok and position then
+      local x, y
+      if position.GetXY then
+        x, y = position:GetXY()
+      else
+        x, y = position.x, position.y
+      end
+      if x and y and not (x == 0 and y == 0) then
+        return mapID, x, y
+      end
+    end
+    local info = C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
+    mapID = info and info.parentMapID
+  end
+end
+
 -- Player facing in radians, counterclockwise from north; nil if unavailable.
 function Platform.GetPlayerFacing()
   if GetPlayerFacing then

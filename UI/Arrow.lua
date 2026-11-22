@@ -78,7 +78,8 @@ end
 -- key binding, /pw) hides it too - except a waypoint the player set
 -- (/pw way).
 local function Wanted(target, kind)
-  return target ~= nil and (kind == "manual" or Pathwise.db.nextSteps.shown ~= false)
+  -- (A manual waypoint and the body after dying: even with the window closed.)
+  return target ~= nil and (kind == "manual" or kind == "corpse" or Pathwise.db.nextSteps.shown ~= false)
 end
 
 function Arrow:Update()
