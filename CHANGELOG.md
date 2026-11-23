@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.57.1
+
+- Development: real-data simulations in the repository (`tests/sim`) -
+  Pathwise with QuestieDB's WoW Forever data and the game's maps, in 140
+  scenarios (every zone band for both factions, every dungeon and
+  Scarlet Monastery wing, other languages) plus the reported cases, each
+  with a time budget per plan, so slowdowns and regressions are caught
+  before a release. Every release now runs them first. No change in game.
+
 ## 0.57.0
 
 - New spell ranks onto the action bars: learning a higher rank (Frostbolt

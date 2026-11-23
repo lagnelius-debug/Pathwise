@@ -7,7 +7,13 @@ Forever's modern API. Design: docs/PATHWISE_DESIGN.md, themes: docs/PATHWISE_THE
 
 After every change:
 1. Run the offline tests: `lua5.1 tests/run.lua` (all must pass; it also
-   runs the Forever suite, tests/run_forever.lua, in its own process).
+   runs the Forever suite, tests/run_forever.lua, in its own process), and
+   the real-data simulations: `tests/sim/run.sh` (it fetches QuestieDB at a
+   pinned commit into tests/sim/.cache the first time; 140 zone, dungeon
+   and language scenarios plus the reported cases in
+   tests/sim/regressions.lua, each with a time budget per plan). The
+   release workflow runs both before publishing. A reported bug that the
+   simulations can show gets a case in tests/sim/regressions.lua.
 2. Bump `## Version:` in all four TOCs - `Pathwise_Vanilla.toc` (11509),
    `Pathwise_Forever.toc` and `Pathwise_Camelot.toc` (16001) and the
    fallback `Pathwise.toc` (11509, 16001); they're identical but for the

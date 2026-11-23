@@ -62,6 +62,13 @@ jobs:
           sudo apt-get install -y -qq lua5.1
           lua5.1 tests/run.lua
 
+      - name: Run the real-data simulations
+        if: env.SKIP != '1'
+        # (A runner's speed varies: a looser time budget than at home.)
+        env:
+          SIM_BUDGET_MS: "100"
+        run: tests/sim/run.sh
+
       - name: Build the zip
         if: env.SKIP != '1'
         run: tools/build_zip.sh "Pathwise-$VERSION.zip"
