@@ -389,6 +389,22 @@ if Pathwise.Platform.flavor == "Forever" then
         { "Captain Dreadrise" },
       },
     },
+    -- The Shaper's Terrace, Un'Goro Crater: not in QuestieDB's dungeon list
+    -- and no instance ID known yet (issue #3). QuestieDB tags its quests
+    -- with its area (16985). Levels, entrance and bosses from guides
+    -- (Warcraft Wiki, Warcraft Tavern, guided.news); the boss order isn't
+    -- published, Nanaya is the end boss.
+    {
+      id = 16985, name = "The Shaper's Terrace", min = 58, max = 60,
+      entrances = { { 490, 48.1, 6.1 } },
+      bossOrder = false,
+      bosses = {
+        { "Bolt" },
+        { "Cinder" },
+        { "Snowtalon" },
+        { "Nanaya" },
+      },
+    },
     {
       id = 16544, name = "City of Dalaran", min = 30, max = 37, instance = 2959,
       entrances = { { 36, 8.46, 59.21 } },

@@ -133,6 +133,8 @@ Alliance 58 1453 0.6 0.6 dungeon:2057
 Horde 58 1454 0.5 0.5 dungeon:2057
 Alliance 58 1453 0.6 0.6 dungeon:2017
 Horde 58 1454 0.5 0.5 dungeon:2017
+Alliance 58 1453 0.6 0.6 dungeon:16985
+Horde 58 1454 0.5 0.5 dungeon:16985
 # The other languages.
 Alliance 20 1433 0.30 0.45 turnin deDE
 Horde 18 1421 0.43 0.41 turnin esES

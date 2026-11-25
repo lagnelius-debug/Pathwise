@@ -323,7 +323,14 @@ for _, dungeon in ipairs(DungeonGuide.List()) do
   previous = dungeon.min
 end
 check("Forever's dungeons in the list, in level order", names["The Hall of Thanes"] and names["Ruins of Lordaeron"]
-  and names["Excavation Site: Wetlands"] and names["City of Dalaran"] and names["The Drowned City"] and ordered)
+  and names["Excavation Site: Wetlands"] and names["City of Dalaran"] and names["The Drowned City"]
+  and names["The Shaper's Terrace"] and ordered)
+-- The Shaper's Terrace (issue #3): its quests by its area, for both factions,
+-- the entrance in Un'Goro Crater.
+local terrace = names["The Shaper's Terrace"]
+check("The Shaper's Terrace: area 16985, levels 58-60, both factions, Un'Goro's entrance", terrace
+  and terrace.id == 16985 and terrace.min == 58 and terrace.max == 60 and terrace.faction == nil
+  and terrace.entrances[1][1] == 490 and #terrace.bosses == 4 and terrace.bosses[4][1] == "Nanaya")
 -- The Drowned City: QuestieDB doesn't tag its quests with it - by ID.
 local drowned = names["The Drowned City"]
 local ids = {}
