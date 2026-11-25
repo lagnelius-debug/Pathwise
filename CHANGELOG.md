@@ -3,6 +3,13 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.57.2
+
+- Development: pull requests run the offline tests and the real-data
+  simulations on GitHub, and a nightly agent can work on issues labelled
+  `agent`, proposing each change as a pull request for review. No change
+  in game.
+
 ## 0.57.1
 
 - Development: real-data simulations in the repository (`tests/sim`) -

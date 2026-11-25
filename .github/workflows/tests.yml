@@ -1,0 +1,31 @@
+# Runs the offline tests and the real-data simulations on every pull request
+# (the agent's proposals and anyone else's), so a change is checked before
+# it's reviewed. Publishing stays with release.yml, on pushes to main only.
+name: Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Lua 5.1
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.1
+
+      - name: Run the offline tests
+        run: lua5.1 tests/run.lua
+
+      - name: Run the real-data simulations
+        # (A runner's speed varies: a looser time budget than at home.)
+        env:
+          SIM_BUDGET_MS: "100"
+        run: tests/sim/run.sh

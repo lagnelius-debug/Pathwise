@@ -37,3 +37,22 @@ After every change:
    (tools/curseforge_upload.sh) once the CURSEFORGE_API_TOKEN secret is
    set (project ID: "## X-Curse-Project-ID:" in the TOCs); a skipped or
    failed upload shows in the run's "Upload to CurseForge" step.
+
+## The nightly agent
+
+A scheduled task (the daily GitHub check) also works on issues labelled
+`agent`, one per night, in this order: the oldest labelled issue that has
+no open pull request yet.
+- Work on a branch `agent/issue-<number>` from the latest main; never push
+  to main (a push to main publishes a release on GitHub and CurseForge).
+  Don't bump the version or add a CHANGELOG section on the branch: that
+  happens when the user merges (see "After every change").
+- Keep to what the issue asks. Add tests; a bug the simulations can show
+  gets a case in tests/sim/regressions.lua.
+- `lua5.1 tests/run.lua` and `tests/sim/run.sh` must pass. If they can't be
+  made to pass, or the issue is unclear or too big for one change, open no
+  pull request: say so in the conversation instead.
+- Open a pull request ("Fixes #<number>"), build a test zip, send it and a
+  push notification, and stop. The Tests workflow runs on the pull request.
+- Never merge, and never comment on, close or label issues or pull
+  requests without the user's go-ahead.
