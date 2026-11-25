@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.58.0
+
+- Dungeon mode on WoW Forever: The Shaper's Terrace (levels 58-60) in the
+  dungeon list for both factions, with its six quests, the entrance above
+  Marshal's Refuge in Un'Goro Crater and its bosses (Bolt, Cinder,
+  Snowtalon, Nanaya; the order isn't known yet). Its instance ID isn't
+  known yet either, so its boss steps don't show inside. From guides:
+  tell us if the entrance or the bosses are off. (Prepared by the nightly
+  agent, issue #3.)
+
 ## 0.57.2
 
 - Development: pull requests run the offline tests and the real-data
