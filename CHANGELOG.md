@@ -3,6 +3,16 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.58.2
+
+- Dungeon mode on WoW Forever, The Drowned City: its six bosses in the
+  order you meet them, each with where it is (Zul'Alai at the top of the
+  hill past the entrance, ... Min'loth the Serpent at the far west end),
+  from the Warcraft Wiki and Warcraft Tavern. Deathless Marrow, Primeval
+  Elemental and Min'loth the Serpent were missing, and Zin'aka isn't one of
+  them. Levels 35-42. The instance ID isn't known yet, so the boss steps
+  don't show inside until it is. (Prepared by the nightly agent, issue #4.)
+
 ## 0.58.1
 
 - The Shaper's Terrace (0.58.0), corrected from the Warcraft Wiki: the
