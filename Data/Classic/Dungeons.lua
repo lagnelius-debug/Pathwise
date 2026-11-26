@@ -390,19 +390,27 @@ if Pathwise.Platform.flavor == "Forever" then
       },
     },
     -- The Shaper's Terrace, Un'Goro Crater: not in QuestieDB's dungeon list
-    -- and no instance ID known yet (issue #3). QuestieDB tags its quests
-    -- with its area (16985). Levels, entrance and bosses from guides
-    -- (Warcraft Wiki, Warcraft Tavern, guided.news); the boss order isn't
-    -- published, Nanaya is the end boss.
+    -- and no instance ID known yet. QuestieDB tags its quests with its area
+    -- (16985). Entrance, levels (58-60 intended; 55-60 can enter) and
+    -- encounters from the Warcraft Wiki ("Shaper's Terrace (instance)"):
+    -- five required bosses, Nanaya the end boss, then the optional ones
+    -- (Venomridge is one of Panic at the Digsite's targets). The wiki gives
+    -- no order or places.
     {
       id = 16985, name = "The Shaper's Terrace", min = 58, max = 60,
-      entrances = { { 490, 48.1, 6.1 } },
+      entrances = { { 490, 56, 12 } },
       bossOrder = false,
       bosses = {
-        { "Bolt" },
         { "Cinder" },
         { "Snowtalon" },
+        { "Bolt" },
+        { "Vitrix" },
         { "Nanaya" },
+        { "Titanosaur" },
+        { "Tor'Rel" },
+        { "Venomridge" },
+        { "Thunderhoof" },
+        { "Direhorn Matriarch" },
       },
     },
     {

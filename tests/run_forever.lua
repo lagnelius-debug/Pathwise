@@ -328,9 +328,15 @@ check("Forever's dungeons in the list, in level order", names["The Hall of Thane
 -- The Shaper's Terrace (issue #3): its quests by its area, for both factions,
 -- the entrance in Un'Goro Crater.
 local terrace = names["The Shaper's Terrace"]
-check("The Shaper's Terrace: area 16985, levels 58-60, both factions, Un'Goro's entrance", terrace
-  and terrace.id == 16985 and terrace.min == 58 and terrace.max == 60 and terrace.faction == nil
-  and terrace.entrances[1][1] == 490 and #terrace.bosses == 4 and terrace.bosses[4][1] == "Nanaya")
+check("The Shaper's Terrace: area 16985, levels 58-60, both factions, the entrance by Un'Goro's northern pylon",
+  terrace and terrace.id == 16985 and terrace.min == 58 and terrace.max == 60 and terrace.faction == nil
+  and terrace.entrances[1][1] == 490 and terrace.entrances[1][2] == 56 and terrace.entrances[1][3] == 12)
+-- (The Warcraft Wiki: five required bosses, Nanaya the end boss, and five
+-- optional ones - Venomridge among them, a target of Panic at the Digsite.)
+local bossNames = {}
+for _, boss in ipairs(terrace and terrace.bosses or {}) do bossNames[boss[1]] = true end
+check("The Shaper's Terrace: its required and optional bosses", terrace and #terrace.bosses == 10
+  and terrace.bosses[5][1] == "Nanaya" and bossNames["Vitrix"] and bossNames["Venomridge"])
 -- The Drowned City: QuestieDB doesn't tag its quests with it - by ID.
 local drowned = names["The Drowned City"]
 local ids = {}

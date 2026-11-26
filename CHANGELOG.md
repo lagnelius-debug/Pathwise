@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.58.1
+
+- The Shaper's Terrace (0.58.0), corrected from the Warcraft Wiki: the
+  entrance is by the northern pylon in Un'Goro Crater (56, 12), not above
+  Marshal's Refuge, so the arrow points the right way now; Vitrix was
+  missing among the required bosses (Cinder, Snowtalon, Bolt, Vitrix,
+  Nanaya), and the optional ones are known too (Titanosaur, Tor'Rel,
+  Venomridge, Thunderhoof, Direhorn Matriarch). The order isn't known yet.
+
 ## 0.58.0
 
 - Dungeon mode on WoW Forever: The Shaper's Terrace (levels 58-60) in the
