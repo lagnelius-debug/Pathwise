@@ -342,6 +342,13 @@ local drowned = names["The Drowned City"]
 local ids = {}
 for _, id in ipairs(drowned and drowned.quests or {}) do ids[id] = true end
 check("The Drowned City: its quests by ID (Shady Saltseers, The Saltseer Captain)", ids[95789] and ids[95791])
+-- (Issue #4: the bosses in order with their places, from the Warcraft Wiki
+-- and Warcraft Tavern; no Zin'aka; levels 35-42.)
+check("The Drowned City: six bosses in order, Zul'Alai first, Min'loth the Serpent the end", drowned
+  and #drowned.bosses == 6 and drowned.bosses[1][1] == "Zul'Alai" and drowned.bosses[6][1] == "Min'loth the Serpent"
+  and drowned.bossOrder == nil and drowned.bosses[6][2] ~= nil and drowned.max == 42)
+check("The Drowned City: boss steps say which boss of six and where", drowned
+  and DungeonGuide.Boss(drowned, "Captain Dreadrise") == 3 and select(2, DungeonGuide.Boss(drowned, "Zul'Alai")) == 6)
 IsInInstance = function() return true, "party" end
 GetInstanceInfo = function() return "Ruins of Lordaeron", "party", 1, "Normal", 5, 0, false, 2999 end
 check("inside the Ruins of Lordaeron: known by its instance", DungeonGuide:GetInside() == names["Ruins of Lordaeron"])

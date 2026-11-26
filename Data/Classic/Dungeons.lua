@@ -373,20 +373,24 @@ if Pathwise.Platform.flavor == "Forever" then
       entrances = { { 11, 47.79, 56.16 } },
     },
     -- Not in QuestieDB's dungeon list (no area ID, its quests have no
-    -- zone): its quests are listed here by ID. The entrance is the one
-    -- guides give, underwater west of the Vile Reef (21.4, 27.9); bosses
-    -- from Warcraft Tavern's guide. (Reported: its Booty Bay quests were
-    -- taken outside dungeon mode.)
+    -- zone): its quests are listed here by ID. Levels, entrance and bosses
+    -- from the Warcraft Wiki ("The Drowned City") and Warcraft Tavern's
+    -- guide: the six bosses in the guide's order with its places (Zul'Alai
+    -- first, Min'loth the Serpent the level 40 end boss). Not listed: its
+    -- three rare bosses (Umbra, Gill, "Pyromancer" Braxton), which aren't
+    -- always there. Its instance ID isn't known yet. (Reported: its Booty
+    -- Bay quests were taken outside dungeon mode.)
     {
-      id = "TheDrownedCity", name = "The Drowned City", min = 35, max = 40,
+      id = "TheDrownedCity", name = "The Drowned City", min = 35, max = 42,
       entrances = { { 33, 21.4, 27.9 } },
       quests = { 95775, 95776, 95787, 95788, 95789, 95791, 96774, 97130 },
-      bossOrder = false,
       bosses = {
-        { "Zul'Alai" },
-        { "Zin'aka" },
-        { "Var'Taka" },
-        { "Captain Dreadrise" },
+        { "Zul'Alai", "the top of the hill past the entrance cavern" },
+        { "Var'Taka", "up the stairs by the central pool, with two priestesses" },
+        { "Captain Dreadrise", "patrolling the north side of the central pool" },
+        { "Deathless Marrow", "the altar in the western area" },
+        { "Primeval Elemental", "underwater, down the pool in the south" },
+        { "Min'loth the Serpent", "the far west side, the end" },
       },
     },
     -- The Shaper's Terrace, Un'Goro Crater: not in QuestieDB's dungeon list
