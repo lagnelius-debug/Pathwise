@@ -368,9 +368,20 @@ if Pathwise.Platform.flavor == "Forever" then
         { "The Baron" },
       },
     },
+    -- Excavation Site: Wetlands: the bosses in order with their places from
+    -- Warcraft Tavern's guide (the Warcraft Wiki lists the same, with the
+    -- Relic Guardian the end boss). The Highland Horror is optional, for the
+    -- Alliance quest Horrors in the Highland. The entrance is up a winding
+    -- path that starts by the meeting stone near Thelgen Rock (53.9, 65.4).
     {
       id = 16732, name = "Excavation Site: Wetlands", min = 26, max = 33, instance = 2998,
       entrances = { { 11, 47.79, 56.16 } },
+      bosses = {
+        { "Saltspine", "patrolling the Lost Marsh, down the slope past the entrance" },
+        { "Shadetooth", "patrolling Stalker's Thicket, with two Thicket Hunters" },
+        { "Highland Horror", "north of the Lost Dig Site (optional)" },
+        { "Relic Guardian", "the Site of the Guardian, the end - wake it at the Archival Panel" },
+      },
     },
     -- Not in QuestieDB's dungeon list (no area ID, its quests have no
     -- zone): its quests are listed here by ID. Levels, entrance and bosses
