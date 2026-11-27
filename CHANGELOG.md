@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.58.3
+
+- Dungeon mode on WoW Forever, Excavation Site: Wetlands: its four bosses
+  in order, each with where it is - Saltspine (the Lost Marsh), Shadetooth
+  (Stalker's Thicket), the optional Highland Horror (for Horrors in the
+  Highland) and the Relic Guardian at the end - from Warcraft Tavern and
+  the Warcraft Wiki. Inside it, the guide now goes boss by boss.
+  (Prepared by the nightly agent, issue #5.)
+
 ## 0.58.2
 
 - Dungeon mode on WoW Forever, The Drowned City: its six bosses in the
