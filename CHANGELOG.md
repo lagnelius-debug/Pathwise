@@ -3,6 +3,15 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.58.4
+
+- No change in the game: a release skill for Claude Code in the repo
+  (.claude/skills/pathwise-release) that does every step of a release -
+  tests, simulations, the version in all four TOCs, the changelog, the push,
+  and checking the GitHub release and the CurseForge upload - and merges an
+  approved pull request from the nightly agent. The zip leaves the .claude
+  folder out.
+
 ## 0.58.3
 
 - Dungeon mode on WoW Forever, Excavation Site: Wetlands: its four bosses
