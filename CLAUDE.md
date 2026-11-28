@@ -5,7 +5,10 @@ Every TOC loads Platform/Platform_Forever.lua after Platform_Classic.lua;
 it does nothing outside Forever and there replaces only what differs on
 Forever's modern API. Design: docs/PATHWISE_DESIGN.md, themes: docs/PATHWISE_THEMES.md + docs/PATHWISE_THEMES_V2.md (painted corner art) + docs/PATHWISE_THEMES_V3.md (emblem themes) + docs/PATHWISE_THEMES_V4.md (Azure, tiled frame; 14 in all).
 
-After every change:
+After every change (the project skill `pathwise-release` in
+.claude/skills/pathwise-release does all of these steps, with scripts for
+the version bump and for checking the release; tools/release.sh is
+outdated, as it pushes a tag):
 1. Run the offline tests: `lua5.1 tests/run.lua` (all must pass; it also
    runs the Forever suite, tests/run_forever.lua, in its own process), and
    the real-data simulations: `tests/sim/run.sh` (it fetches QuestieDB at a
@@ -46,7 +49,9 @@ no open pull request yet.
 - Work on a branch `agent/issue-<number>` from the latest main; never push
   to main (a push to main publishes a release on GitHub and CurseForge).
   Don't bump the version or add a CHANGELOG section on the branch: that
-  happens when the user merges (see "After every change").
+  happens when the user merges (see "After every change"): on the user's
+  approval ("godkänn #N"), the `pathwise-release` skill fast-forwards the
+  branch into main and releases it.
 - Keep to what the issue asks. Add tests; a bug the simulations can show
   gets a case in tests/sim/regressions.lua.
 - `lua5.1 tests/run.lua` and `tests/sim/run.sh` must pass. If they can't be

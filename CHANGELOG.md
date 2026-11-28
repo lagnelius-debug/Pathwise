@@ -3,6 +3,12 @@
 Newest first. The release workflow uses the section for the version it
 publishes as the release notes.
 
+## 0.58.5
+
+- No change in the game: CLAUDE.md now points to the release skill
+  (0.58.4), for every release and for merging an approved pull request
+  from the nightly agent.
+
 ## 0.58.4
 
 - No change in the game: a release skill for Claude Code in the repo
